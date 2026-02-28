@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { settings } from '$lib';
+  import { settings, t } from '$lib';
   import type { FormattedNote } from '$lib/types/notes';
   import { listNotes } from '$lib/utils/folder';
 
@@ -35,7 +35,7 @@
       if (loadedNotes) notes = loadedNotes;
     } catch (err) {
       console.error('Error loading notes:', err);
-      error = 'Failed to load notes';
+      error = $t('notes.error.load');
     } finally {
       isLoading = false;
     }
@@ -44,11 +44,10 @@
 
 <div class="notes-section">
   {#if isLoading && $settings.notes_folder}
-    <div class="loading">Loading notes...</div>
+    <div class="loading">{$t('notes.loading')}</div>
   {:else if error}
     <div class="error">{error}</div>
   {:else if $settings.notes_folder && notes.length > 0}
-    <h2>Your Notes</h2>
     <div class="notes-list">
       {#each notes as note (note.filename)}
         <div class="note-item">
@@ -57,20 +56,13 @@
       {/each}
     </div>
   {:else if $settings.notes_folder}
-    <div class="empty-notes">No notes found. Create your first note!</div>
+    <div class="empty-notes">{$t('notes.list.empty')}</div>
   {/if}
 </div>
 
 <style>
-  h2 {
-    margin: 2rem 0 1rem;
-    font-size: 1.5rem;
-    color: #444;
-    text-align: center;
-  }
-
   .notes-section {
-    margin: 2rem auto;
+    margin: 1rem auto;
     max-width: 800px;
     width: 100%;
     padding: 0 1rem;
@@ -113,7 +105,7 @@
   .empty-notes {
     padding: 1rem;
     border-radius: 8px;
-    margin: 2rem auto 0;
+    margin: 1rem auto 0;
     max-width: 500px;
     text-align: center;
   }
@@ -133,10 +125,6 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    h2 {
-      color: #f6f6f6;
-    }
-
     .note-item {
       background-color: #3a3a3a;
       color: #f6f6f6;

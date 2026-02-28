@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appState } from '$lib';
+  import { appState, t } from '$lib';
   import type { PopupType } from '$lib/types/ui';
 
   const togglePopup = (type: PopupType) => {
@@ -14,8 +14,8 @@
   <button
     onclick={() => togglePopup('notesList')}
     class="nav-icon"
-    title="Notes List"
-    aria-label="Notes List"
+    title={$t('navigation.home')}
+    aria-label={$t('navigation.home')}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -32,8 +32,8 @@
   <button
     onclick={() => togglePopup('search')}
     class="nav-icon"
-    title="Search"
-    aria-label="Search"
+    title={$t('notes.search')}
+    aria-label={$t('notes.search')}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -50,8 +50,8 @@
   <button
     onclick={() => togglePopup('folderSelector')}
     class="nav-icon"
-    title="Settings"
-    aria-label="Settings"
+    title={$t('navigation.settings')}
+    aria-label={$t('navigation.settings')}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"

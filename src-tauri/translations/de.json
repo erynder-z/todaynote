@@ -1,0 +1,19 @@
+{
+	"app.title": "Heute Liste",
+	"navigation.home": "Startseite",
+	"navigation.search": "Notizen suchen",
+	"navigation.settings": "Einstellungen",
+	"notes.empty": "Keine Notizen gefunden",
+	"notes.list.title": "Deine Notizen",
+	"notes.loading": "Notizen werden geladen...",
+	"notes.error.load": "Notizen konnten nicht geladen werden",
+	"notes.list.empty": "Keine Notizen gefunden. Erstelle deine erste Notiz!",
+	"search.title": "Suchen",
+	"settings.title": "Einstellungen",
+	"settings.folder.title": "Notizen Ordner",
+	"settings.folder.select": "Ordner auswahlen",
+	"settings.folder.current": "Aktueller Ordner",
+	"setting.folder.no_folder": "Kein Ordner ausgewählt",
+	"settings.language": "Sprache",
+	"settings.save": "Einstellungen speichern"
+}

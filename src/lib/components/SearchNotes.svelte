@@ -1,9 +1,9 @@
 <script lang="ts">
-  // Search logic will go here
+  import { t } from '$lib';
 </script>
 
 <div class="search-placeholder">
-  <input type="text" placeholder="Search notes..." class="search-input" />
+  <input type="text" placeholder={$t('search.title')} class="search-input" />
   <p>Search functionality coming soon!</p>
 </div>
 

@@ -18,9 +18,13 @@ pub struct SearchResult {
     pub excerpt: String,
 }
 
+use std::collections::HashMap;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InitialAppState {
     pub notes_folder: Option<String>,
+    pub locale: String,
+    pub translations: HashMap<String, String>,
     pub today_note_path: Option<String>,
     pub today_note_content: Option<String>,
 }

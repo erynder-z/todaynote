@@ -6,7 +6,9 @@ use commands::notes::{
     check_todays_note_exists, create_todays_note, get_today_note_path, list_notes,
     read_note_content, search_notes,
 };
-use commands::settings::{get_config, set_locale, set_notes_folder, switch_notes_folder};
+use commands::settings::{
+    get_config, get_translations, set_locale, set_notes_folder, switch_notes_folder,
+};
 use commands::setup::initialize_app;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -22,6 +24,7 @@ pub fn run() {
             initialize_app,
             search_notes,
             get_config,
+            get_translations,
             list_notes,
             set_locale,
             set_notes_folder,

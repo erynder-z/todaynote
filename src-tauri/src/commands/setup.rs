@@ -1,3 +1,4 @@
+use crate::commands::settings::get_translations;
 use crate::models::config::AppConfig;
 use crate::models::response_types::InitialAppState;
 use std::fs;
@@ -19,6 +20,8 @@ pub fn get_initial_state(config: AppConfig) -> InitialAppState {
 
     let mut state = InitialAppState {
         notes_folder,
+        locale: config.locale.clone(),
+        translations: get_translations(config.locale),
         today_note_path: None,
         today_note_content: None,
     };

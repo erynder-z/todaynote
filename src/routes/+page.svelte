@@ -1,16 +1,20 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { 
-    initializeApp, 
-    MainView, 
-    Navigation, 
-    PopupManager 
+  import {
+    initializeApp,
+    lang,
+    locale,
+    MainView,
+    Navigation,
+    PopupManager,
   } from '$lib';
 
   onMount(async () => {
     await initializeApp();
   });
 </script>
+
+<svelte:body use:lang={$locale} />
 
 <main class="container">
   <MainView />
@@ -41,4 +45,3 @@
     }
   }
 </style>
-

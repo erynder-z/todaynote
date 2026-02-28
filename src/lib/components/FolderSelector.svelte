@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { settings } from '$lib';
+  import { settings, t } from '$lib';
   import { selectFolder } from '$lib/utils/folder';
 
   let selectedFolderPath: string | null = $state(null);
@@ -25,14 +25,11 @@
   };
 </script>
 
-<div class="folder-section">
+<div class="setting-item">
+  <label for="folder-select">{$t('settings.folder.title')}</label>
   <div class="button-container">
     <button onclick={handleSelectFolder} class="folder-button">
-      {#if $settings.notes_folder}
-        Change Folder
-      {:else}
-        Select Folder
-      {/if}
+      {$t('settings.folder.select')}
     </button>
 
     <button
@@ -40,26 +37,39 @@
       class="folder-button use-folder-button"
       disabled={!isUseFolderButtonEnabled}
     >
-      Use This Folder
+      {$t('settings.save')}
     </button>
   </div>
 
   {#if selectedFolderPath && selectedFolderPath !== $settings.notes_folder}
-    <p class="folder-path">Selected (pending): {selectedFolderPath}</p>
+    <p class="folder-path">{selectedFolderPath}</p>
   {:else if $settings.notes_folder}
-    <p class="folder-path">Current folder: {$settings.notes_folder}</p>
+    <p class="folder-path">
+      {$t('settings.folder.current')}
+      {$settings.notes_folder}
+    </p>
   {:else}
-    <p class="folder-path">No folder selected</p>
+    <p class="folder-path">{$t('settings.folder.no_folder')}</p>
   {/if}
 </div>
 
 <style>
-  .folder-section {
-    margin-top: 2rem;
+  .setting-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 0.8rem;
+    width: 100%;
+  }
+
+  label {
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .button-container {
+    display: flex;
+    gap: 0.5rem;
   }
 
   .folder-button {
@@ -102,7 +112,7 @@
   }
 
   .use-folder-button {
-    background-color: #28a745; /* Green color for action */
+    background-color: #28a745;
   }
 
   .use-folder-button:hover:not(:disabled) {

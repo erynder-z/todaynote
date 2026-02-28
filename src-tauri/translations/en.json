@@ -1,0 +1,19 @@
+{
+	"app.title": "Today List",
+	"navigation.home": "Home",
+	"navigation.search": "Search Notes",
+	"navigation.settings": "Settings",
+	"notes.empty": "No notes found",
+	"notes.list.title": "Your Notes",
+	"notes.loading": "Loading notes...",
+	"notes.error.load": "Failed to load notes",
+	"notes.list.empty": "No notes found. Create your first note!",
+	"search.title": "Search",
+	"settings.title": "Settings",
+	"settings.folder.title": "Notes Folder",
+	"settings.folder.select": "Select Folder",
+	"settings.folder.current": "Current Folder",
+	"setting.folder.no_folder": "No folder selected",
+	"settings.language": "Language",
+	"settings.save": "Save Settings"
+}

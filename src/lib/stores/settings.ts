@@ -1,10 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
 import { writable } from "svelte/store";
 import type { AppSettings } from "$lib/types/settings";
+import { translations, updateTranslations } from "../utils/i18n";
 import { appState } from "./appState";
 
 const createSettingsStore = () => {
-	const { subscribe, set } = writable<AppSettings>({ notes_folder: "", locale: "en" });
+	const { subscribe, set } = writable<AppSettings>({
+		notes_folder: "",
+		locale: "en",
+	});
 
 	return {
 		subscribe,
@@ -14,6 +18,7 @@ const createSettingsStore = () => {
 			try {
 				const settings: AppSettings = await invoke("get_config");
 				set(settings);
+				await updateTranslations(settings.locale);
 				return settings;
 			} catch (error) {
 				console.error("Error loading settings:", error);
@@ -28,6 +33,7 @@ const createSettingsStore = () => {
 				}
 				if (settings.locale) {
 					await invoke("set_locale", { locale: settings.locale });
+					await updateTranslations(settings.locale);
 				}
 				set(settings);
 				return true;
@@ -41,12 +47,15 @@ const createSettingsStore = () => {
 			try {
 				const newState: {
 					notes_folder: string | null;
+					locale: string;
+					translations: Record<string, string>;
 					today_note_path: string | null;
 					today_note_content: string | null;
 				} = await invoke("switch_notes_folder", { path });
 
 				if (newState.notes_folder) {
-					set({ notes_folder: newState.notes_folder, locale: "en" });
+					translations.set(newState.translations);
+					set({ notes_folder: newState.notes_folder, locale: newState.locale });
 				}
 
 				appState.update((state) => ({
