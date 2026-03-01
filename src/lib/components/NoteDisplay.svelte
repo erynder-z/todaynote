@@ -10,20 +10,23 @@
   .note-display {
     white-space: pre-wrap;
     word-wrap: break-word;
-    padding: 1.5rem;
+    padding: 2rem;
     background-color: var(--bg-surface);
-    border: 1px solid var(--border);
+    border: 0.0625rem solid var(--border);
     color: var(--text-main);
-    border-radius: 12px;
+    border-radius: 0.75rem;
     margin: 1rem 0;
     max-height: 70vh;
     overflow-y: auto;
+    tab-size: 4;
+    -moz-tab-size: 4;
   }
 
   pre {
     margin: 0;
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 0.95rem;
+    font-family: inherit;
+    font-size: 1rem;
     line-height: 1.6;
+    font-weight: 400;
   }
 </style>

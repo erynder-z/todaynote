@@ -24,7 +24,7 @@
 
   .divider {
     width: 100%;
-    height: 1px;
+    height: 0.0625rem;
     background-color: var(--border-color);
   }
 </style>

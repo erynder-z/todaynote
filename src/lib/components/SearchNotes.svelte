@@ -19,8 +19,8 @@
   .theme-input {
     width: 100%;
     padding: 0.8rem 1.2rem;
-    border-radius: 10px;
-    border: 1px solid var(--border);
+    border-radius: 0.625rem;
+    border: 0.0625rem solid var(--border);
     background-color: var(--bg-surface);
     color: var(--text-main);
     font-size: 1rem;

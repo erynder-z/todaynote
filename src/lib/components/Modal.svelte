@@ -33,18 +33,18 @@
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(0.25rem);
   }
 
   .popup {
     background-color: var(--bg-base);
     padding: 2rem;
-    border-radius: 16px;
-    border: 1px solid var(--border);
+    border-radius: 1rem;
+    border: 0.0625rem solid var(--border);
     max-width: 90vw;
     max-height: 85vh;
     overflow-y: auto;
-    width: 500px;
+    width: 31.25rem;
     color: var(--text-main);
   }
 

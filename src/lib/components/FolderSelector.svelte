@@ -67,7 +67,7 @@
     {#if selectedFolderPath}
       <p class="folder-path">
         <strong>{$t('settings.folder.selected')}</strong>
-        {selectedFolderPath}
+        <span class="path-text">{selectedFolderPath}</span>
       </p>
       {#if validationResult}
         <p
@@ -91,7 +91,7 @@
     {:else if $settings.notes_folder}
       <p class="folder-path">
         <strong>{$t('settings.folder.current')}</strong>
-        {$settings.notes_folder}
+        <span class="path-text">{$settings.notes_folder}</span>
       </p>
     {:else}
       <p class="folder-path">{$t('settings.folder.no_folder')}</p>
@@ -104,30 +104,31 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
     width: 100%;
   }
 
   label {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-main);
   }
 
   .button-container {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
 
   .btn-primary,
   .btn-success {
-    padding: 0.8rem 1.5rem;
+    padding: 0.8rem 1.75rem; /* Wider padding for monospace buttons */
     border: none;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s;
     color: var(--accent-text);
+    min-width: 15ch;
   }
 
   .btn-primary {
@@ -143,26 +144,39 @@
 
   .btn-primary:disabled,
   .btn-success:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 
+  .folder-status {
+    width: 100%;
+    max-width: 65ch;
+  }
+
   .folder-path {
-    max-width: 90%;
-    word-break: break-all;
     text-align: center;
-    padding: 0.5rem 1rem;
+    padding: 1rem;
     background-color: var(--bg-surface);
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    font-size: 0.9rem;
+    border-radius: 0.375rem;
+    border: 0.0625rem solid var(--border);
     color: var(--text-main);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .path-text {
+    font-size: 0.85rem;
+    overflow-wrap: break-word;
+    opacity: 0.9;
   }
 
   .validation-msg {
     font-size: 0.85rem;
     color: var(--success);
-    margin: 0;
+    margin-top: 0.5rem;
+    text-align: center;
   }
 
   .validation-msg.error {

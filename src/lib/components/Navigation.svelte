@@ -77,7 +77,7 @@
     border-radius: 50%;
     background-color: var(--bg-surface);
     color: var(--text-main);
-    border: 1px solid var(--border);
+    border: 0.0625rem solid var(--border);
     display: flex;
     justify-content: center;
     align-items: center;

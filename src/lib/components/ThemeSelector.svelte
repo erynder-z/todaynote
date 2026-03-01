@@ -39,11 +39,11 @@
 
   .theme-input {
     padding: 0.8rem 1.5rem;
-    border-radius: 8px;
-    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    border: 0.0625rem solid var(--border);
     background-color: var(--bg-surface);
     color: var(--text-main);
     cursor: pointer;
-    width: 200px;
+    width: 25ch;
   }
 </style>
