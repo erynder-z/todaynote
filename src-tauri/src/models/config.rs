@@ -10,9 +10,12 @@ pub struct AppConfig {
 
 impl Default for AppConfig {
     fn default() -> Self {
-        let app_data_dir = utils::app_data::get_app_data_dir();
-        let notes_folder = app_data_dir.join("notes");
-        Self { notes_folder, locale: "en".to_string() }
+        let home_dir = utils::app_data::get_home_dir();
+        let notes_folder = home_dir.join("Notes");
+        Self {
+            notes_folder,
+            locale: "en".to_string(),
+        }
     }
 }
 

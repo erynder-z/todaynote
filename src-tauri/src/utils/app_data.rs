@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
-pub fn get_app_data_dir() -> PathBuf {
-    if let Some(home_dir) = dirs::home_dir() {
-        return home_dir.join(".todaynote");
-    }
+pub fn get_home_dir() -> PathBuf {
+    dirs::home_dir().unwrap_or_else(|| PathBuf::from("."))
+}
 
-    PathBuf::from(".todaynote")
+pub fn get_app_data_dir() -> PathBuf {
+    get_home_dir().join(".todaynote")
 }
