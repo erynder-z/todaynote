@@ -1,18 +1,20 @@
 use crate::commands::i18n::get_translations;
 use crate::models::config::AppConfig;
 use crate::models::response_types::{InitialAppState, LocaleInfo};
-use std::fs;
-use std::path::PathBuf;
+use crate::AppState;
+use tauri::State;
 
 #[tauri::command]
-pub async fn initialize_app() -> Result<InitialAppState, String> {
+pub async fn initialize_app(state: State<'_, AppState>) -> Result<InitialAppState, String> {
     let config = AppConfig::load();
-    Ok(get_initial_state(config))
+    Ok(get_initial_state(config, state))
 }
 
-pub fn get_initial_state(config: AppConfig) -> InitialAppState {
+pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> InitialAppState {
+    let note_manager = state.note_manager.lock().unwrap();
+
     let notes_folder =
-        if config.notes_folder.exists() || fs::create_dir_all(&config.notes_folder).is_ok() {
+        if config.notes_folder.exists() || std::fs::create_dir_all(&config.notes_folder).is_ok() {
             Some(config.notes_folder.to_string_lossy().into_owned())
         } else {
             None
@@ -20,7 +22,7 @@ pub fn get_initial_state(config: AppConfig) -> InitialAppState {
 
     let translations = get_translations(config.locale.clone());
 
-    let mut state = InitialAppState {
+    let mut response = InitialAppState {
         notes_folder,
         locale: config.locale.clone(),
         available_locales: vec![
@@ -42,27 +44,23 @@ pub fn get_initial_state(config: AppConfig) -> InitialAppState {
         today_note_content: None,
     };
 
-    if let Some(folder) = &state.notes_folder {
-        let current_date = crate::utils::date::get_current_date();
-        let file_path = PathBuf::from(folder).join(format!("{}.md", current_date));
-
+    if response.notes_folder.is_some() {
+        let file_path = note_manager.get_today_note_path();
         let path_str = file_path.to_string_lossy().into_owned();
-        state.today_note_path = Some(path_str.clone());
+        response.today_note_path = Some(path_str);
 
-        if !file_path.exists() {
-            let note_header = state
-                .translations
-                .get("note.header")
-                .map(|s| s.as_str())
-                .unwrap_or("Note");
-            let note_content = format!("# {}: {}", note_header, current_date);
-            let _ = fs::write(&file_path, note_content);
-        }
+        let note_header = response
+            .translations
+            .get("note.header")
+            .map(|s| s.as_str())
+            .unwrap_or("Note");
 
-        if let Ok(content) = fs::read_to_string(&file_path) {
-            state.today_note_content = Some(content);
+        if let Ok(created_path) = note_manager.create_todays_note(note_header) {
+            if let Ok(content) = note_manager.read_note_content(&created_path) {
+                response.today_note_content = Some(content);
+            }
         }
     }
 
-    state
+    response
 }
