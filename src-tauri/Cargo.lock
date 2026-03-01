@@ -3918,7 +3918,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "todaylist"
+name = "todaynote"
 version = "0.1.0"
 dependencies = [
  "chrono",

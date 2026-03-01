@@ -70,7 +70,7 @@ pub async fn validate_folder(path: String) -> Result<FolderValidation, String> {
             return Ok(validation);
         }
 
-        let temp_file = path_buf.join(".todaylist_write_test");
+        let temp_file = path_buf.join(".todaynote_write_test");
         match fs::write(&temp_file, "test") {
             Ok(_) => {
                 validation.is_writable = true;
