@@ -58,7 +58,7 @@ pub async fn create_todays_note(path: String) -> Result<(), String> {
     }
 
     let config = AppConfig::load();
-    let translations = crate::commands::settings::get_translations(config.locale);
+    let translations = crate::commands::i18n::get_translations(config.locale);
     let note_header = translations
         .get("note.header")
         .map(|s| s.as_str())

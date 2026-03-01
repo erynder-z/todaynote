@@ -1,4 +1,4 @@
-use crate::commands::settings::get_translations;
+use crate::commands::i18n::get_translations;
 use crate::models::config::AppConfig;
 use crate::models::response_types::{InitialAppState, LocaleInfo};
 use std::fs;
