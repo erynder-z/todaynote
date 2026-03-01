@@ -1,4 +1,4 @@
-use crate::commands::i18n::get_translations;
+use crate::commands::i18n::{get_available_locales, get_translations};
 use crate::commands::theme::{get_available_themes, get_theme_colors};
 use crate::models::config::AppConfig;
 use crate::models::response_types::{InitialAppState, LocaleInfo, ThemeInfo};
@@ -29,24 +29,16 @@ pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> Initi
         .map(|(id, name)| ThemeInfo { id, name })
         .collect();
 
+    let available_locales = get_available_locales()
+        .into_iter()
+        .map(|(id, name)| LocaleInfo { id, name })
+        .collect();
+
     let mut response = InitialAppState {
         notes_folder,
         locale: config.locale.clone(),
         theme: config.theme.clone(),
-        available_locales: vec![
-            LocaleInfo {
-                id: "en".into(),
-                name: "English".into(),
-            },
-            LocaleInfo {
-                id: "de".into(),
-                name: "Deutsch".into(),
-            },
-            LocaleInfo {
-                id: "jp".into(),
-                name: "日本語".into(),
-            },
-        ],
+        available_locales,
         available_themes,
         translations,
         theme_colors,
