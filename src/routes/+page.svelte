@@ -25,8 +25,11 @@
 <style>
   :root {
     font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    background-color: #f6f6f6;
-    color: #0f0f0f;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    transition:
+      background-color 0.3s,
+      color 0.3s;
   }
 
   .container {
@@ -36,12 +39,5 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      background-color: #1a1a1a;
-      color: #f6f6f6;
-    }
   }
 </style>

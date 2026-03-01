@@ -1,12 +1,15 @@
 <script lang="ts">
   import FolderSelector from './FolderSelector.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
+  import ThemeSelector from './ThemeSelector.svelte';
 </script>
 
 <div class="settings-view">
   <FolderSelector />
   <div class="divider"></div>
   <LanguageSelector />
+  <div class="divider"></div>
+  <ThemeSelector />
 </div>
 
 <style>
@@ -22,12 +25,6 @@
   .divider {
     width: 100%;
     height: 1px;
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .divider {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
+    background-color: var(--border-color);
   }
 </style>

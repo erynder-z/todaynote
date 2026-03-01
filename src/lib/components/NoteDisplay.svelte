@@ -10,10 +10,11 @@
   .note-display {
     white-space: pre-wrap;
     word-wrap: break-word;
-    padding: 1rem;
-    background-color: #f9f9f9;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    padding: 1.5rem;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    border-radius: 12px;
     margin: 1rem 0;
     max-height: 70vh;
     overflow-y: auto;
@@ -21,16 +22,8 @@
 
   pre {
     margin: 0;
-    font-family: monospace;
-    font-size: 0.9em;
-    line-height: 1.4;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .note-display {
-      background-color: #333;
-      border: 1px solid #555;
-      color: #eee;
-    }
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.95rem;
+    line-height: 1.6;
   }
 </style>

@@ -14,6 +14,7 @@
 	"settings.folder.validation.valid_existing": "Folder contains {{count}} notes.",
 	"settings.folder.validation.invalid": "Invalid folder: {{error}}",
 	"settings.language": "Language",
+	"settings.theme": "Theme",
 	"settings.save": "Save Settings",
 	"folder.select": "Select Folder",
 	"notes.empty": "No notes found",

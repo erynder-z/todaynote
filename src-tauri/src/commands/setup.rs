@@ -1,6 +1,7 @@
 use crate::commands::i18n::get_translations;
+use crate::commands::theme::{get_available_themes, get_theme_colors};
 use crate::models::config::AppConfig;
-use crate::models::response_types::{InitialAppState, LocaleInfo};
+use crate::models::response_types::{InitialAppState, LocaleInfo, ThemeInfo};
 use crate::AppState;
 use tauri::State;
 
@@ -21,10 +22,17 @@ pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> Initi
         };
 
     let translations = get_translations(config.locale.clone());
+    let theme_colors = get_theme_colors(config.theme.clone());
+
+    let available_themes = get_available_themes()
+        .into_iter()
+        .map(|(id, name)| ThemeInfo { id, name })
+        .collect();
 
     let mut response = InitialAppState {
         notes_folder,
         locale: config.locale.clone(),
+        theme: config.theme.clone(),
         available_locales: vec![
             LocaleInfo {
                 id: "en".into(),
@@ -39,7 +47,9 @@ pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> Initi
                 name: "日本語".into(),
             },
         ],
+        available_themes,
         translations,
+        theme_colors,
         today_note_path: None,
         today_note_content: None,
     };

@@ -1,0 +1,12 @@
+{
+  "--bg-base": "#f6f6f6",
+  "--bg-surface": "#ffffff",
+  "--text-main": "#213547",
+  "--text-muted": "#666666",
+  "--accent": "#646cff",
+  "--accent-hover": "#535bf2",
+  "--accent-text": "#ffffff",
+  "--border": "rgba(0, 0, 0, 0.1)",
+  "--success": "#28a745",
+  "--error": "#dc3545"
+}

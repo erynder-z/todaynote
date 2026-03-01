@@ -1,23 +1,24 @@
 <script lang="ts">
-  import { availableLocales, settings, t } from '$lib';
+  import { settings, t } from '$lib';
+  import { availableThemes } from '../utils/theme';
 
-  const handleLocaleChange = async (e: Event) => {
+  const handleThemeChange = async (e: Event) => {
     const target = e.target as HTMLSelectElement;
-    const newLocale = target.value;
-    await settings.save({ ...$settings, locale: newLocale });
+    const newTheme = target.value;
+    await settings.save({ ...$settings, theme: newTheme });
   };
 </script>
 
 <div class="setting-item">
-  <label for="locale-select">{$t('settings.language')}</label>
+  <label for="theme-select">{$t('settings.theme')}</label>
   <select
-    id="locale-select"
+    id="theme-select"
     class="theme-input"
-    value={$settings.locale}
-    onchange={handleLocaleChange}
+    value={$settings.theme}
+    onchange={handleThemeChange}
   >
-    {#each $availableLocales as locale}
-      <option value={locale.id}>{locale.name}</option>
+    {#each $availableThemes as theme}
+      <option value={theme.id}>{theme.name}</option>
     {/each}
   </select>
 </div>

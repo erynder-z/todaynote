@@ -14,6 +14,7 @@
 	"settings.folder.validation.valid_existing": "Ordner enthält {{count}} Notizen.",
 	"settings.folder.validation.invalid": "Ungültiger Ordner: {{error}}",
 	"settings.language": "Sprache",
+	"settings.theme": "Farbschema",
 	"settings.save": "Einstellungen speichern",
 	"folder.select": "Ordner auswählen",
 	"notes.empty": "Keine Notizen gefunden",

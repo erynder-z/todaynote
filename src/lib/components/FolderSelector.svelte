@@ -50,13 +50,13 @@
 <div class="setting-item">
   <label for="folder-select">{$t('settings.folder.title')}</label>
   <div class="button-container">
-    <button onclick={handleSelectFolder} class="folder-button">
+    <button onclick={handleSelectFolder} class="btn-primary">
       {$t('settings.folder.select')}
     </button>
 
     <button
       onclick={handleUseFolder}
-      class="folder-button use-folder-button"
+      class="btn-success"
       disabled={!isUseFolderButtonEnabled}
     >
       {$t('settings.save')}
@@ -104,13 +104,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.8rem;
+    gap: 1rem;
     width: 100%;
   }
 
   label {
     font-weight: 600;
-    font-size: 1.1rem;
+    color: var(--text-main);
   }
 
   .button-container {
@@ -118,41 +118,33 @@
     gap: 0.5rem;
   }
 
-  .folder-button {
+  .btn-primary,
+  .btn-success {
     padding: 0.8rem 1.5rem;
-    background-color: #646cff;
-    color: white;
     border: none;
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition:
-      background-color 0.2s,
-      transform 0.1s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s;
+    color: var(--accent-text);
   }
 
-  .folder-button:hover:not(:disabled) {
-    background-color: #535bf2;
+  .btn-primary {
+    background-color: var(--accent);
+  }
+  .btn-primary:hover {
+    background-color: var(--accent-hover);
   }
 
-  .folder-button:active:not(:disabled) {
-    transform: scale(0.98);
+  .btn-success {
+    background-color: var(--success);
   }
 
-  .folder-button:disabled {
-    background-color: #cccccc;
+  .btn-primary:disabled,
+  .btn-success:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
-    box-shadow: none;
-  }
-
-  .folder-status {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
   }
 
   .folder-path {
@@ -160,47 +152,20 @@
     word-break: break-all;
     text-align: center;
     padding: 0.5rem 1rem;
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-surface);
     border-radius: 6px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border);
     font-size: 0.9rem;
-    margin: 0;
+    color: var(--text-main);
   }
 
   .validation-msg {
     font-size: 0.85rem;
-    color: #28a745;
+    color: var(--success);
     margin: 0;
   }
 
   .validation-msg.error {
-    color: #dc3545;
-  }
-
-  .use-folder-button {
-    background-color: #28a745;
-  }
-
-  .use-folder-button:hover:not(:disabled) {
-    background-color: #218838;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .folder-button {
-      background-color: #747bff;
-    }
-
-    .folder-path {
-      background-color: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .validation-msg {
-      color: #4cd137;
-    }
-
-    .validation-msg.error {
-      color: #ff7675;
-    }
+    color: var(--error);
   }
 </style>

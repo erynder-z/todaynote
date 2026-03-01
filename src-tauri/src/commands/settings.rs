@@ -11,6 +11,7 @@ pub async fn get_config() -> Result<ConfigResponse, String> {
     Ok(ConfigResponse {
         notes_folder: config.notes_folder.to_string_lossy().into_owned(),
         locale: config.locale,
+        theme: config.theme,
     })
 }
 

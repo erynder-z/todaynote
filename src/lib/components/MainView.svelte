@@ -25,12 +25,6 @@
   .loading-text {
     text-align: center;
     margin-top: 20vh;
-    color: #666;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .loading-text {
-      color: #aaa;
-    }
+    color: var(--text-muted);
   }
 </style>

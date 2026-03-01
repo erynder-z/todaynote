@@ -6,15 +6,17 @@ use std::path::PathBuf;
 pub struct AppConfig {
     pub notes_folder: PathBuf,
     pub locale: String,
+    pub theme: String,
 }
 
 impl Default for AppConfig {
     fn default() -> Self {
         let home_dir = utils::app_data::get_home_dir();
-        let notes_folder = home_dir.join("Notes");
+        let notes_folder = home_dir.join("notes");
         Self {
             notes_folder,
             locale: "en".to_string(),
+            theme: "light".to_string(),
         }
     }
 }

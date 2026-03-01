@@ -11,6 +11,7 @@ use commands::notes::{
 };
 use commands::settings::{get_config, set_locale, set_notes_folder, switch_notes_folder};
 use commands::setup::initialize_app;
+use commands::theme::{get_theme_colors, set_theme};
 use models::config::AppConfig;
 use services::note_manager::NoteManager;
 use std::sync::Mutex;
@@ -39,9 +40,11 @@ pub fn run() {
             search_notes,
             get_config,
             get_translations,
+            get_theme_colors,
             list_notes,
             set_locale,
             set_notes_folder,
+            set_theme,
             switch_notes_folder,
             validate_folder
         ])
