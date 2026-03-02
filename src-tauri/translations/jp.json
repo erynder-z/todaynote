@@ -16,6 +16,7 @@
 	"settings.folder.validation.invalid": "無効なフォルダ: {{error}}",
 	"settings.language": "言語",
 	"settings.theme": "テーマ",
+	"settings.remember_window_size": "ウィンドウサイズを記憶する",
 	"settings.save": "設定を保存",
 	"folder.select": "フォルダを選択",
 	"notes.empty": "ノートが見つかりません",

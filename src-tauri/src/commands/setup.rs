@@ -38,6 +38,7 @@ pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> Initi
         notes_folder,
         locale: config.locale.clone(),
         theme: config.theme.clone(),
+        remember_window_size: config.remember_window_size,
         available_locales,
         available_themes,
         translations,

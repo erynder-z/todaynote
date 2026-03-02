@@ -12,7 +12,16 @@ pub async fn get_config() -> Result<ConfigResponse, String> {
         notes_folder: config.notes_folder.to_string_lossy().into_owned(),
         locale: config.locale,
         theme: config.theme,
+        remember_window_size: config.remember_window_size,
     })
+}
+
+#[tauri::command]
+pub async fn set_remember_window_size(remember: bool) -> Result<(), String> {
+    let mut config = AppConfig::load();
+    config.remember_window_size = remember;
+    config.save();
+    Ok(())
 }
 
 #[tauri::command]

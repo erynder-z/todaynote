@@ -16,6 +16,7 @@
 	"settings.folder.validation.invalid": "Ungültiger Ordner: {{error}}",
 	"settings.language": "Sprache",
 	"settings.theme": "Farbschema",
+	"settings.remember_window_size": "Fenstergröße merken",
 	"settings.save": "Einstellungen speichern",
 	"folder.select": "Ordner auswählen",
 	"notes.empty": "Keine Notizen gefunden",

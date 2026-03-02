@@ -21,6 +21,7 @@ const createSettingsStore = () => {
 		notes_folder: "",
 		locale: "en",
 		theme: "light",
+		remember_window_size: true,
 	});
 
 	return {
@@ -37,7 +38,12 @@ const createSettingsStore = () => {
 				return settings;
 			} catch (error) {
 				console.error("Error loading settings:", error);
-				return { notes_folder: "", locale: "en", theme: "light" };
+				return {
+					notes_folder: "",
+					locale: "en",
+					theme: "light",
+					remember_window_size: true,
+				};
 			}
 		},
 
@@ -54,6 +60,11 @@ const createSettingsStore = () => {
 					await invoke("set_theme", { theme: newSettings.theme });
 					await updateTheme(newSettings.theme);
 				}
+				if (newSettings.remember_window_size !== undefined) {
+					await invoke("set_remember_window_size", {
+						remember: newSettings.remember_window_size,
+					});
+				}
 				set(newSettings);
 				return true;
 			} catch (error) {
@@ -68,6 +79,7 @@ const createSettingsStore = () => {
 					notes_folder: string | null;
 					locale: string;
 					theme: string;
+					remember_window_size: boolean;
 					available_locales: LocaleInfo[];
 					available_themes: ThemeInfo[];
 					translations: Record<string, string>;
@@ -89,6 +101,7 @@ const createSettingsStore = () => {
 						notes_folder: newState.notes_folder,
 						locale: newState.locale,
 						theme: newState.theme,
+						remember_window_size: newState.remember_window_size,
 					});
 				}
 

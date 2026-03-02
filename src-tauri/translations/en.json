@@ -16,6 +16,7 @@
 	"settings.folder.validation.invalid": "Invalid folder: {{error}}",
 	"settings.language": "Language",
 	"settings.theme": "Theme",
+	"settings.remember_window_size": "Remember Window Size",
 	"settings.save": "Save Settings",
 	"folder.select": "Select Folder",
 	"notes.empty": "No notes found",

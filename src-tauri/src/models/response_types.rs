@@ -6,6 +6,7 @@ pub struct ConfigResponse {
     pub notes_folder: String,
     pub locale: String,
     pub theme: String,
+    pub remember_window_size: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,6 +26,7 @@ pub struct InitialAppState {
     pub notes_folder: Option<String>,
     pub locale: String,
     pub theme: String,
+    pub remember_window_size: bool,
     pub available_locales: Vec<LocaleInfo>,
     pub available_themes: Vec<ThemeInfo>,
     pub translations: HashMap<String, String>,

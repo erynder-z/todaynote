@@ -2,6 +2,7 @@
   import FolderSelector from './FolderSelector.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
   import ThemeSelector from './ThemeSelector.svelte';
+  import WindowSizeSelector from './WindowSizeSelector.svelte';
 </script>
 
 <div class="settings-view">
@@ -10,6 +11,8 @@
   <LanguageSelector />
   <div class="divider"></div>
   <ThemeSelector />
+  <div class="divider"></div>
+  <WindowSizeSelector />
 </div>
 
 <style>

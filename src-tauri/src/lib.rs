@@ -9,7 +9,9 @@ use commands::notes::{
     check_todays_note_exists, create_todays_note, get_today_note_path, list_notes,
     read_note_content, search_notes,
 };
-use commands::settings::{get_config, set_locale, set_notes_folder, switch_notes_folder};
+use commands::settings::{
+    get_config, set_locale, set_notes_folder, set_remember_window_size, switch_notes_folder,
+};
 use commands::setup::initialize_app;
 use commands::theme::{get_theme_colors, set_theme};
 use models::config::AppConfig;
@@ -25,7 +27,7 @@ pub fn run() {
     let config = AppConfig::load();
     let note_manager = NoteManager::new(config.notes_folder.clone(), config.locale.clone());
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
@@ -44,10 +46,19 @@ pub fn run() {
             list_notes,
             set_locale,
             set_notes_folder,
+            set_remember_window_size,
             set_theme,
             switch_notes_folder,
             validate_folder
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .setup(|app| {
+            let _ = utils::window::setup_main_window(app.handle());
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(move |app_handle, event| {
+        utils::window::handle_window_event(app_handle, &event);
+    });
 }
