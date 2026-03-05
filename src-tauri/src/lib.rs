@@ -17,6 +17,7 @@ use commands::theme::{get_theme_colors, set_theme};
 use models::config::AppConfig;
 use services::note_manager::NoteManager;
 use std::sync::Mutex;
+use tauri::Manager;
 
 pub struct AppState {
     pub note_manager: Mutex<NoteManager>,
@@ -27,9 +28,15 @@ pub fn run() {
     let config = AppConfig::load();
     let note_manager = NoteManager::new(config.notes_folder.clone(), config.locale.clone());
 
-    let app = tauri::Builder::default()
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_dialog::init());
+
+    if config.remember_window_size {
+        builder = builder.plugin(tauri_plugin_window_state::Builder::default().build());
+    }
+
+    builder
         .manage(AppState {
             note_manager: Mutex::new(note_manager),
         })
@@ -52,13 +59,14 @@ pub fn run() {
             validate_folder
         ])
         .setup(|app| {
-            let _ = utils::window::setup_main_window(app.handle());
+            let config = AppConfig::load();
+            if !config.remember_window_size {
+                let _ = utils::window::setup_main_window(app.handle());
+            } else if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+            }
             Ok(())
         })
-        .build(tauri::generate_context!())
-        .expect("error while building tauri application");
-
-    app.run(move |app_handle, event| {
-        utils::window::handle_window_event(app_handle, &event);
-    });
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }

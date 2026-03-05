@@ -8,11 +8,6 @@ pub struct AppConfig {
     pub locale: String,
     pub theme: String,
     pub remember_window_size: bool,
-    pub window_width: Option<f64>,
-    pub window_height: Option<f64>,
-    pub window_x: Option<f64>,
-    pub window_y: Option<f64>,
-    pub window_maximized: Option<bool>,
 }
 
 impl Default for AppConfig {
@@ -24,11 +19,6 @@ impl Default for AppConfig {
             locale: "en".to_string(),
             theme: "light".to_string(),
             remember_window_size: true,
-            window_width: None,
-            window_height: None,
-            window_x: None,
-            window_y: None,
-            window_maximized: None,
         }
     }
 }
