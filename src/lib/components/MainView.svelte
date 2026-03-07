@@ -7,11 +7,14 @@
 {#if currentSettings.notes_folder === null}
   <div class="welcome-screen">
     <h1>Welcome to todaynote</h1>
-    <p>Please select a folder to start your daily notes journey.</p>
+    <p>Please select a folder!</p>
     <FolderSelector />
   </div>
 {:else if $appState.todayNoteContent}
-  <NoteDisplay noteContent={$appState.todayNoteContent} />
+  <NoteDisplay
+    noteContent={$appState.todayNoteContent}
+    notePath={$appState.todayNotePath}
+  />
 {:else}
   <p class="loading-text">Preparing your daily note...</p>
 {/if}

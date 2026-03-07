@@ -5,6 +5,7 @@ export { default as MainView } from "./components/MainView.svelte";
 export { default as Modal } from "./components/Modal.svelte";
 export { default as Navigation } from "./components/Navigation.svelte";
 export { default as NoteDisplay } from "./components/NoteDisplay.svelte";
+export { default as NoteLine } from "./components/NoteLine.svelte";
 export { default as NotesList } from "./components/NotesList.svelte";
 export { default as PopupManager } from "./components/PopupManager.svelte";
 export { default as SearchNotes } from "./components/SearchNotes.svelte";
