@@ -1,8 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { LocaleInfo } from "$lib/types/locale";
 import type { AppSettings, ThemeInfo } from "$lib/types/settings";
 import {
 	availableLocales,
-	type LocaleInfo,
 	locale,
 	translations,
 	updateTranslations,

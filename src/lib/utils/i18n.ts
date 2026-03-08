@@ -1,10 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { derived, writable } from "svelte/store";
-
-export type LocaleInfo = {
-	id: string;
-	name: string;
-};
+import type { LocaleInfo } from "$lib/types/locale";
 
 /**
  * Holds the current key-value pairs for translations.
