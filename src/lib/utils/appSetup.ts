@@ -7,6 +7,7 @@ import {
 	translations,
 } from "$lib";
 import type { LocaleInfo } from "$lib/types/locale";
+import type { NoteContentResponse } from "$lib/types/notes";
 import type { ThemeInfo } from "../types/settings";
 import { applyThemeColors, availableThemes, currentTheme } from "./theme";
 
@@ -25,7 +26,7 @@ export const initializeApp = async () => {
 			translations: Record<string, string>;
 			theme_colors: Record<string, string>;
 			today_note_path: string | null;
-			today_note_content: string | null;
+			today_note_content: NoteContentResponse | null;
 		} = await invoke("initialize_app");
 
 		translations.set(initialState.translations);

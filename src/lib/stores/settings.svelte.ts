@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { LocaleInfo } from "$lib/types/locale";
+import type { NoteContentResponse } from "$lib/types/notes";
 import type { AppSettings, ThemeInfo } from "$lib/types/settings";
 import {
 	availableLocales,
@@ -100,7 +101,7 @@ export class SettingsStore {
 				translations: Record<string, string>;
 				theme_colors: Record<string, string>;
 				today_note_path: string | null;
-				today_note_content: string | null;
+				today_note_content: NoteContentResponse | null;
 			} = await invoke("switch_notes_folder", { path });
 
 			if (newState.notes_folder) {

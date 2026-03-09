@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { NoteContentResponse } from "$lib/types/notes";
 import { MarkdownRenderCache } from "./renderCache";
 
 const renderCache = new MarkdownRenderCache<string, string>(500);
@@ -8,7 +9,9 @@ const renderCache = new MarkdownRenderCache<string, string>(500);
  */
 export const readNoteContent = async (path: string) => {
 	try {
-		const content = (await invoke("read_note_content", { path })) as string;
+		const content = (await invoke("read_note_content", {
+			path,
+		})) as NoteContentResponse;
 		return content;
 	} catch (error) {
 		console.error(`Error reading note content from ${path}:`, error);

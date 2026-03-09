@@ -4,7 +4,7 @@
    */
   import { untrack } from 'svelte';
   import { NoteLine } from '$lib';
-  import type { NoteLineData } from '$lib/types/notes';
+  import type { NoteContentResponse, NoteLineData } from '$lib/types/notes';
   import {
     deleteNoteLine,
     insertNoteLine,
@@ -12,7 +12,7 @@
   } from '$lib/utils/notes';
 
   let { noteContent, notePath } = $props<{
-    noteContent: string;
+    noteContent: NoteContentResponse | null;
     notePath: string | null;
   }>();
 
@@ -40,9 +40,20 @@
    * Parses the raw note content into an array of line objects.
    */
   const loadLines = () => {
-    lines = (noteContent || '')
-      .split('\n')
-      .map((m: string) => ({ markdown: m, html: '' }));
+    if (!noteContent) {
+      lines = [];
+      return;
+    }
+    lines = noteContent.lines.map((m: string) => ({ markdown: m, html: '' }));
+  };
+
+  /**
+   * Checks if a line index is within the metadata/frontmatter range.
+   */
+  const isMetadataLine = (index: number) => {
+    if (!noteContent?.metadata_range) return false;
+    const [start, end] = noteContent.metadata_range;
+    return index >= start && index <= end;
   };
 
   /**
@@ -68,6 +79,7 @@
       ensureTrailingEmptyLine();
 
       lastLoadedPath = notePath;
+      // Focus the last line (which we ensured is empty if needed)
       activeIndex = lines.length - 1;
       changedLineIndex = null;
     }
@@ -118,15 +130,32 @@
    */
   const deleteLine = async (i: number) => {
     lines.splice(i, 1);
-    activeIndex = Math.max(0, i - 1);
+    // Find previous visible line
+    let nextIndex = i - 1;
+    while (nextIndex >= 0 && isMetadataLine(nextIndex)) {
+      nextIndex--;
+    }
+    activeIndex = Math.max(0, nextIndex);
     await deleteNoteLine(i);
   };
 
   /**
-   * Moves the active line focus up or down.
+   * Moves the active line focus up or down, skipping hidden lines.
    */
   const navigateLines = (i: number, direction: 'up' | 'down') => {
-    activeIndex = direction === 'up' ? i - 1 : i + 1;
+    let nextIndex = direction === 'up' ? i - 1 : i + 1;
+
+    while (
+      nextIndex >= 0 &&
+      nextIndex < lines.length &&
+      isMetadataLine(nextIndex)
+    ) {
+      nextIndex = direction === 'up' ? nextIndex - 1 : nextIndex + 1;
+    }
+
+    if (nextIndex >= 0 && nextIndex < lines.length) {
+      activeIndex = nextIndex;
+    }
   };
 
   /**
@@ -145,16 +174,12 @@
         }
         break;
       case 'ArrowUp':
-        if (i > 0) {
-          e.preventDefault();
-          navigateLines(i, 'up');
-        }
+        e.preventDefault();
+        navigateLines(i, 'up');
         break;
       case 'ArrowDown':
-        if (i < lines.length - 1) {
-          e.preventDefault();
-          navigateLines(i, 'down');
-        }
+        e.preventDefault();
+        navigateLines(i, 'down');
         break;
     }
   };
@@ -176,17 +201,19 @@
 
 <div class="note-container">
   {#each lines as line, i (i)}
-    <NoteLine
-      bind:markdown={line.markdown}
-      isActive={activeIndex === i}
-      onActivate={() => (activeIndex = i)}
-      onDeactivate={(e: FocusEvent) => {
-        const target = e.relatedTarget as HTMLElement;
-        if (!target?.closest('.note-container')) activeIndex = null;
-      }}
-      onChange={(markdown) => handleLineChange(i, markdown)}
-      onKeyDown={(e) => handleKeyDown(e, i)}
-    />
+    {#if !isMetadataLine(i)}
+      <NoteLine
+        bind:markdown={line.markdown}
+        isActive={activeIndex === i}
+        onActivate={() => (activeIndex = i)}
+        onDeactivate={(e: FocusEvent) => {
+          const target = e.relatedTarget as HTMLElement;
+          if (!target?.closest('.note-container')) activeIndex = null;
+        }}
+        onChange={(markdown) => handleLineChange(i, markdown)}
+        onKeyDown={(e) => handleKeyDown(e, i)}
+      />
+    {/if}
   {/each}
 </div>
 

@@ -3,7 +3,7 @@
 //! This module provides functions for reading, writing, and manipulating note files, as well as managing the current note editing session.
 
 use crate::models::app_state::AppState;
-use crate::models::response_types::{FormattedNote, SearchResult};
+use crate::models::response_types::{FormattedNote, NoteContentResponse, SearchResult};
 use std::fs;
 use std::path::PathBuf;
 use tauri::State;
@@ -126,16 +126,23 @@ pub async fn create_todays_note(path: String, state: State<'_, AppState>) -> Res
 
 /// Reads the content of a note from disk and loads it into the current editing session.
 #[tauri::command]
-pub async fn read_note_content(path: String, state: State<'_, AppState>) -> Result<String, String> {
+pub async fn read_note_content(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<NoteContentResponse, String> {
     let content = {
         let note_manager = state.note_manager.lock().unwrap();
         note_manager.read_note_content(&PathBuf::from(&path))?
     };
 
     let mut session = state.note_session.lock().unwrap();
-    session.load(PathBuf::from(path), content.clone());
+    session.load(PathBuf::from(path), content);
 
-    Ok(content)
+    Ok(NoteContentResponse {
+        lines: session.lines.clone(),
+        metadata: session.get_metadata(),
+        metadata_range: session.frontmatter_range,
+    })
 }
 
 /// Returns a list of all notes available in the current notes folder.

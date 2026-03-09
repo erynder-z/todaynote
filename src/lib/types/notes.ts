@@ -8,6 +8,12 @@ export type NoteLineData = {
 	html: string;
 };
 
+export type NoteContentResponse = {
+	lines: string[];
+	metadata: Record<string, string>;
+	metadata_range: [number, number] | null;
+};
+
 export type NoteLineProps = {
 	markdown: string;
 	isActive: boolean;
