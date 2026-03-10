@@ -1,9 +1,9 @@
 <script lang="ts">
   /**
-   * Primary view orchestrator that decides whether to show the editor, 
+   * Primary view orchestrator that decides whether to show the editor,
    * the welcome screen (for first-time setup), or a loading state.
    */
-  import { appState, FolderSelector, NoteDisplay, settings } from '$lib';
+  import { FolderSelector, NoteDisplay, sessionState, settings } from '$lib';
 </script>
 
 {#if settings.notes_folder === ''}
@@ -12,10 +12,10 @@
     <p>Please select a folder!</p>
     <FolderSelector />
   </div>
-{:else if appState.todayNoteContent}
+{:else if sessionState.todayNoteContent}
   <NoteDisplay
-    noteContent={appState.todayNoteContent}
-    notePath={appState.todayNotePath}
+    noteContent={sessionState.todayNoteContent}
+    notePath={sessionState.todayNotePath}
   />
 {:else}
   <p class="loading-text">Preparing your daily note...</p>

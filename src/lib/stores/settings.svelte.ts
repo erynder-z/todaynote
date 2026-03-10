@@ -1,10 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { InitialAppState } from "$lib/types/appState";
+import type { AppPayload } from "$lib/types/appState";
 import type { AppSettings } from "$lib/types/settings";
 import { syncFullAppState } from "$lib/utils/appSetup";
 import { updateTranslations } from "../utils/i18n";
 import { updateTheme } from "../utils/theme";
-import { appState } from "./appState.svelte";
+import { sessionState } from "./sessionState.svelte";
 
 /**
  * Manages application-wide user settings and persists them to the backend.
@@ -77,7 +77,7 @@ export class SettingsStore {
 	 */
 	async switchNotesFolder(path: string) {
 		try {
-			const newState: InitialAppState = await invoke("switch_notes_folder", {
+			const newState: AppPayload = await invoke("switch_notes_folder", {
 				path,
 			});
 
@@ -85,7 +85,7 @@ export class SettingsStore {
 				syncFullAppState(newState);
 			}
 
-			appState.activePopup = null;
+			sessionState.activePopup = null;
 
 			return true;
 		} catch (error) {

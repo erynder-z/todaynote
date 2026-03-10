@@ -2,7 +2,7 @@
   /**
    * Displays list of all notes found in the user's notes folder.
    */
-  import { appState, settings, t } from '$lib';
+  import { sessionState, settings, t } from '$lib';
   import type { FormattedNote } from '$lib/types/notes';
   import { listNotes } from '$lib/utils/folder';
   import { readNoteContent } from '$lib/utils/notes';
@@ -28,9 +28,9 @@
     const path = `${settings.notes_folder}/${note.filename}`;
     const content = await readNoteContent(path);
     if (content !== null) {
-      appState.todayNotePath = path;
-      appState.todayNoteContent = content;
-      appState.activePopup = null;
+      sessionState.todayNotePath = path;
+      sessionState.todayNoteContent = content;
+      sessionState.activePopup = null;
     }
   };
 

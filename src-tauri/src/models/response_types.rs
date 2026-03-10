@@ -28,7 +28,7 @@ pub struct SearchResult {
 
 /// The complete state payload sent to the frontend during initialization.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct InitialAppState {
+pub struct AppPayload {
     pub notes_folder: Option<String>,
     pub locale: String,
     pub theme: String,

@@ -4,24 +4,24 @@ use crate::commands::i18n::{get_available_locales, get_translations};
 use crate::commands::theme::{get_available_themes, get_theme_colors};
 use crate::models::app_state::AppState;
 use crate::models::config::AppConfig;
-use crate::models::response_types::{InitialAppState, LocaleInfo, NoteContentResponse, ThemeInfo};
+use crate::models::response_types::{AppPayload, LocaleInfo, NoteContentResponse, ThemeInfo};
 use std::collections::HashMap;
 use tauri::State;
 
 /// Initializes the application and returns the complete initial state for the frontend.
 #[tauri::command]
-pub async fn initialize_app(state: State<'_, AppState>) -> Result<InitialAppState, String> {
+pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, String> {
     let config = AppConfig::load();
     Ok(get_initial_state(config, state))
 }
 
 /// Helper function to construct the full initial application state.
-pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> InitialAppState {
+pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> AppPayload {
     let notes_folder = resolve_notes_folder(&config);
     let (available_themes, available_locales, translations, theme_colors) =
         get_ui_metadata(&config);
 
-    let mut response = InitialAppState {
+    let mut response = AppPayload {
         notes_folder,
         locale: config.locale.clone(),
         theme: config.theme.clone(),

@@ -10,7 +10,7 @@ export { default as NotesList } from "./components/NotesList.svelte";
 export { default as PopupManager } from "./components/PopupManager.svelte";
 export { default as SearchNotes } from "./components/SearchNotes.svelte";
 export { default as SettingsView } from "./components/SettingsView.svelte";
-export * from "./stores/appState.svelte";
+export * from "./stores/sessionState.svelte";
 export * from "./stores/settings.svelte";
 export * from "./types/settings";
 export * from "./utils/appSetup";

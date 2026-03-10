@@ -3,13 +3,13 @@ import type { NoteContentResponse } from "./notes";
 import type { ThemeInfo } from "./settings";
 import type { PopupType } from "./ui";
 
-export type AppState = {
+export type SessionState = {
 	todayNotePath: string | null;
 	todayNoteContent: NoteContentResponse | null;
 	activePopup: PopupType;
 };
 
-export type InitialAppState = {
+export type AppPayload = {
 	notes_folder: string | null;
 	locale: string;
 	theme: string;
