@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 /// Serialized version of the application configuration.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ConfigResponse {
     pub notes_folder: String,
     pub locale: String,
@@ -14,6 +15,7 @@ pub struct ConfigResponse {
 
 /// Metadata for a single note file in the list.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FormattedNote {
     pub filename: String,
     pub formatted_name: String,
@@ -28,6 +30,7 @@ pub struct SearchResult {
 
 /// The complete state payload sent to the frontend during initialization.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AppPayload {
     pub notes_folder: Option<String>,
     pub locale: String,
@@ -43,6 +46,7 @@ pub struct AppPayload {
 
 /// Result of a folder validation check.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FolderValidation {
     pub is_valid: bool,
     pub is_writable: bool,
@@ -67,6 +71,7 @@ pub struct ThemeInfo {
 
 /// Structured response for note content.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NoteContentResponse {
     pub lines: Vec<String>,
     pub metadata: HashMap<String, String>,

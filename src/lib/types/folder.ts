@@ -1,7 +1,7 @@
 export type FolderValidation = {
-	is_valid: boolean;
-	is_writable: boolean;
+	isValid: boolean;
+	isWritable: boolean;
 	exists: boolean;
-	note_count: number;
+	noteCount: number;
 	error: string | null;
 };

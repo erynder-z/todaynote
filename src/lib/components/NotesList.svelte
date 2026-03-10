@@ -24,8 +24,8 @@
    * Loads the content of a specific note and sets it as active in the app.
    */
   const selectNote = async (note: FormattedNote) => {
-    if (!settings.notes_folder) return;
-    const path = `${settings.notes_folder}/${note.filename}`;
+    if (!settings.notesFolder) return;
+    const path = `${settings.notesFolder}/${note.filename}`;
     const content = await readNoteContent(path);
     if (content !== null) {
       sessionState.todayNotePath = path;
@@ -35,7 +35,7 @@
   };
 
   $effect(() => {
-    if (settings.notes_folder) loadNotes();
+    if (settings.notesFolder) loadNotes();
   });
 </script>
 
@@ -52,7 +52,7 @@
           onclick={() => selectNote(note)}
           onkeydown={(e) => e.key === 'Enter' && selectNote(note)}
         >
-          <span class="note-name">{note.formatted_name}</span>
+          <span class="note-name">{note.formattedName}</span>
         </div>
       {/each}
     </div>

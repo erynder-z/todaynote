@@ -42,34 +42,34 @@ export const syncFullAppState = (state: AppPayload) => {
 export const syncI18nState = (state: AppPayload) => {
 	translations.set(state.translations);
 	locale.set(state.locale);
-	availableLocales.set(state.available_locales);
+	availableLocales.set(state.availableLocales);
 };
 
 /**
  * Synchronizes theme-related stores and applies UI colors.
  */
 export const syncThemeState = (state: AppPayload) => {
-	availableThemes.set(state.available_themes);
+	availableThemes.set(state.availableThemes);
 	currentTheme.set(state.theme);
-	applyThemeColors(state.theme_colors);
+	applyThemeColors(state.themeColors);
 };
 
 /**
  * Synchronizes the global settings store.
  */
 export const syncSettingsState = (state: AppPayload) => {
-	settings.notes_folder = state.notes_folder || "";
+	settings.notesFolder = state.notesFolder || "";
 	settings.locale = state.locale;
 	settings.theme = state.theme;
-	settings.remember_window_size = state.remember_window_size;
+	settings.rememberWindowSize = state.rememberWindowSize;
 };
 
 /**
  * Synchronizes the application's runtime state (active note, etc.).
  */
 export const syncSessionState = (state: AppPayload) => {
-	if (state.notes_folder) {
-		sessionState.todayNotePath = state.today_note_path;
-		sessionState.todayNoteContent = state.today_note_content;
+	if (state.notesFolder) {
+		sessionState.todayNotePath = state.todayNotePath;
+		sessionState.todayNoteContent = state.todayNoteContent;
 	}
 };

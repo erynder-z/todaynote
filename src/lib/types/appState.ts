@@ -10,14 +10,14 @@ export type SessionState = {
 };
 
 export type AppPayload = {
-	notes_folder: string | null;
+	notesFolder: string | null;
 	locale: string;
 	theme: string;
-	remember_window_size: boolean;
-	available_locales: LocaleInfo[];
-	available_themes: ThemeInfo[];
+	rememberWindowSize: boolean;
+	availableLocales: LocaleInfo[];
+	availableThemes: ThemeInfo[];
 	translations: Record<string, string>;
-	theme_colors: Record<string, string>;
-	today_note_path: string | null;
-	today_note_content: NoteContentResponse | null;
+	themeColors: Record<string, string>;
+	todayNotePath: string | null;
+	todayNoteContent: NoteContentResponse | null;
 };

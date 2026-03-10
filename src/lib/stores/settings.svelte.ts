@@ -10,32 +10,32 @@ import { sessionState } from "./sessionState.svelte";
  * Manages application-wide user settings and persists them to the backend.
  */
 export class SettingsStore {
-	notes_folder = $state("");
+	notesFolder = $state("");
 	locale = $state("en");
 	theme = $state("light");
-	remember_window_size = $state(true);
+	rememberWindowSize = $state(true);
 
 	/**
 	 * Loads initial configuration from the backend and initializes UI stores.
 	 */
 	async load() {
 		try {
-			const settings: AppSettings = await invoke("get_config");
-			this.notes_folder = settings.notes_folder;
-			this.locale = settings.locale;
-			this.theme = settings.theme;
-			this.remember_window_size = settings.remember_window_size;
+			const config: AppSettings = await invoke("get_config");
+			this.notesFolder = config.notesFolder;
+			this.locale = config.locale;
+			this.theme = config.theme;
+			this.rememberWindowSize = config.rememberWindowSize;
 
 			await updateTranslations(this.locale);
 			await updateTheme(this.theme);
-			return settings;
+			return config;
 		} catch (error) {
 			console.error("Error loading settings:", error);
 			return {
-				notes_folder: "",
+				notesFolder: "",
 				locale: "en",
 				theme: "light",
-				remember_window_size: true,
+				rememberWindowSize: true,
 			};
 		}
 	}
@@ -45,9 +45,9 @@ export class SettingsStore {
 	 */
 	async save(newSettings: AppSettings) {
 		try {
-			if (newSettings.notes_folder !== undefined) {
-				await invoke("set_notes_folder", { path: newSettings.notes_folder });
-				this.notes_folder = newSettings.notes_folder;
+			if (newSettings.notesFolder !== undefined) {
+				await invoke("set_notes_folder", { path: newSettings.notesFolder });
+				this.notesFolder = newSettings.notesFolder;
 			}
 			if (newSettings.locale) {
 				await invoke("set_locale", { locale: newSettings.locale });
@@ -59,11 +59,11 @@ export class SettingsStore {
 				this.theme = newSettings.theme;
 				await updateTheme(newSettings.theme);
 			}
-			if (newSettings.remember_window_size !== undefined) {
+			if (newSettings.rememberWindowSize !== undefined) {
 				await invoke("set_remember_window_size", {
-					remember: newSettings.remember_window_size,
+					remember: newSettings.rememberWindowSize,
 				});
-				this.remember_window_size = newSettings.remember_window_size;
+				this.rememberWindowSize = newSettings.rememberWindowSize;
 			}
 			return true;
 		} catch (error) {
@@ -81,7 +81,7 @@ export class SettingsStore {
 				path,
 			});
 
-			if (newState.notes_folder) {
+			if (newState.notesFolder) {
 				syncFullAppState(newState);
 			}
 

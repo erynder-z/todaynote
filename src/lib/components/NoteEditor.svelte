@@ -51,8 +51,8 @@
    * Checks if a line index is within the metadata/frontmatter range.
    */
   const isMetadataLine = (index: number) => {
-    if (!noteContent?.metadata_range) return false;
-    const [start, end] = noteContent.metadata_range;
+    if (!noteContent?.metadataRange) return false;
+    const [start, end] = noteContent.metadataRange;
     return index >= start && index <= end;
   };
 

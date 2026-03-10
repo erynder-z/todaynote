@@ -16,9 +16,9 @@
   let isUseFolderButtonEnabled = $derived(
     selectedFolderPath !== null &&
       validationResult !== null &&
-      validationResult.is_valid &&
-      validationResult.is_writable &&
-      selectedFolderPath !== settings.notes_folder,
+      validationResult.isValid &&
+      validationResult.isWritable &&
+      selectedFolderPath !== settings.notesFolder,
   );
 
   /**
@@ -37,10 +37,10 @@
       } catch (error) {
         console.error('Validation failed:', error);
         validationResult = {
-          is_valid: false,
-          is_writable: false,
+          isValid: false,
+          isWritable: false,
           exists: false,
-          note_count: 0,
+          noteCount: 0,
           error: String(error),
         };
       }
@@ -84,26 +84,26 @@
       {#if validationResult}
         <p
           class="validation-msg"
-          class:error={!validationResult.is_valid ||
-            !validationResult.is_writable}
+          class:error={!validationResult.isValid ||
+            !validationResult.isWritable}
         >
-          {#if !validationResult.is_valid || !validationResult.is_writable}
+          {#if !validationResult.isValid || !validationResult.isWritable}
             {$t('settings.folder.validation.invalid', {
               error: validationResult.error || 'Unknown error',
             })}
           {:else if validationResult.exists}
             {$t('settings.folder.validation.valid_existing', {
-              count: validationResult.note_count,
+              count: validationResult.noteCount,
             })}
           {:else}
             {$t('settings.folder.validation.valid_new')}
           {/if}
         </p>
       {/if}
-    {:else if settings.notes_folder}
+    {:else if settings.notesFolder}
       <p class="folder-path">
         <strong>{$t('settings.folder.current')}</strong>
-        <span class="path-text">{settings.notes_folder}</span>
+        <span class="path-text">{settings.notesFolder}</span>
       </p>
     {:else}
       <p class="folder-path">{$t('settings.folder.no_folder')}</p>

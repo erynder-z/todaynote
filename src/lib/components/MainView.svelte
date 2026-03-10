@@ -6,7 +6,7 @@
   import { FolderSelector, NoteDisplay, sessionState, settings } from '$lib';
 </script>
 
-{#if settings.notes_folder === ''}
+{#if settings.notesFolder === ''}
   <div class="welcome-screen">
     <h1>Welcome to todaynote</h1>
     <p>Please select a folder!</p>

@@ -1,6 +1,6 @@
 export type FormattedNote = {
 	filename: string;
-	formatted_name: string;
+	formattedName: string;
 };
 
 export type NoteLineData = {
@@ -11,7 +11,7 @@ export type NoteLineData = {
 export type NoteContentResponse = {
 	lines: string[];
 	metadata: Record<string, string>;
-	metadata_range: [number, number] | null;
+	metadataRange: [number, number] | null;
 };
 
 export type NoteLineProps = {

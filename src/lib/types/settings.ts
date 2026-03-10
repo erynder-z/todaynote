@@ -1,8 +1,8 @@
 export type AppSettings = {
-	notes_folder: string;
+	notesFolder: string;
 	locale: string;
 	theme: string;
-	remember_window_size: boolean;
+	rememberWindowSize: boolean;
 };
 
 export type ThemeInfo = {
