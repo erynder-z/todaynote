@@ -1,7 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { AppPayload } from "$lib/types/appState";
+import type { NoteContentResponse } from "$lib/types/notes";
 import type { AppSettings } from "$lib/types/settings";
 import { syncFullAppState } from "$lib/utils/appSetup";
+import { readNoteContent } from "$lib/utils/notes";
 import { updateTranslations } from "../utils/i18n";
 import { updateTheme } from "../utils/theme";
 import { sessionState } from "./sessionState.svelte";
@@ -53,6 +55,13 @@ export class SettingsStore {
 				await invoke("set_locale", { locale: newSettings.locale });
 				this.locale = newSettings.locale;
 				await updateTranslations(newSettings.locale);
+
+				if (sessionState.todayNotePath) {
+					const updatedContent = await readNoteContent(
+						sessionState.todayNotePath,
+					);
+					if (updatedContent) this.updateNoteContent(updatedContent);
+				}
 			}
 			if (newSettings.theme) {
 				await invoke("set_theme", { theme: newSettings.theme });
@@ -70,6 +79,13 @@ export class SettingsStore {
 			console.error("Error saving settings:", error);
 			return false;
 		}
+	}
+
+	/**
+	 * Updates the content of the currently active note in the UI.
+	 */
+	updateNoteContent(updatedContent: NoteContentResponse) {
+		sessionState.todayNoteContent = updatedContent;
 	}
 
 	/**
