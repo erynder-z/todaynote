@@ -49,6 +49,25 @@ impl NoteSession {
         self.frontmatter_range = None;
     }
 
+    /// Ensures that the frontmatter block exists.
+    fn ensure_frontmatter(&mut self) {
+        if self.frontmatter_range.is_none() {
+            self.lines.insert(0, "---".to_string());
+            self.lines.insert(1, "---".to_string());
+            self.frontmatter_range = Some((0, 1));
+        }
+    }
+
+    /// Finds the index of a metadata line starting with the given key.
+    fn find_metadata_line(&self, key: &str) -> Option<usize> {
+        let (start, end) = self.frontmatter_range?;
+        let prefix = format!("{}:", key);
+        self.lines[start + 1..end]
+            .iter()
+            .position(|l| l.trim().starts_with(&prefix))
+            .map(|relative_idx| start + 1 + relative_idx)
+    }
+
     /// Parses the frontmatter block into a HashMap.
     pub fn get_metadata(&self) -> HashMap<String, String> {
         let mut metadata = HashMap::new();
@@ -124,31 +143,18 @@ impl NoteSession {
     /// Adds a tag to the note's frontmatter.
     /// Creates frontmatter if it doesn't exist.
     pub fn add_tag(&mut self, tag: String) {
-        if self.frontmatter_range.is_none() {
-            self.lines.insert(0, "---".to_string());
-            self.lines.insert(1, "---".to_string());
-            self.frontmatter_range = Some((0, 1));
-        }
+        self.ensure_frontmatter();
 
-        let (start, end) = self.frontmatter_range.unwrap();
-
-        let tags_line_idx = self.lines[start + 1..end]
-            .iter()
-            .position(|l| l.trim().starts_with("tags:"));
-
-        match tags_line_idx {
-            Some(relative_idx) => {
-                let absolute_idx = start + 1 + relative_idx;
-                let mut tags = self.get_tags();
-                if !tags.contains(&tag) {
-                    tags.push(tag);
-                    self.lines[absolute_idx] = format!("tags: [{}]", tags.join(", "));
-                }
+        if let Some(absolute_idx) = self.find_metadata_line("tags") {
+            let mut tags = self.get_tags();
+            if !tags.contains(&tag) {
+                tags.push(tag);
+                self.lines[absolute_idx] = format!("tags: [{}]", tags.join(", "));
             }
-            None => {
-                self.lines.insert(end, format!("tags: [{}]", tag));
-                self.frontmatter_range = Some((start, end + 1));
-            }
+        } else {
+            let (_, end) = self.frontmatter_range.expect("Frontmatter should exist");
+            self.lines.insert(end, format!("tags: [{}]", tag));
+            self.detect_frontmatter();
         }
     }
 }
