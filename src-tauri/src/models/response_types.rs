@@ -1,5 +1,8 @@
 //! Serializable data structures for frontend communication.
 
+use crate::models::note_session::NoteSession;
+use crate::services::note_manager::NoteManager;
+use crate::services::tag_manager::TagManager;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -85,4 +88,34 @@ pub struct NoteContentResponse {
     pub lines: Vec<String>,
     pub metadata: NoteMetadata,
     pub metadata_range: Option<(usize, usize)>,
+}
+
+impl NoteContentResponse {
+    /// Helper to create a NoteContentResponse from session data and services.
+    pub fn from_session(
+        session: &NoteSession,
+        note_manager: &NoteManager,
+        tag_manager: &TagManager,
+    ) -> Self {
+        let filename = session
+            .path
+            .as_ref()
+            .and_then(|p| p.file_name())
+            .and_then(|f| f.to_str())
+            .unwrap_or("");
+
+        let formatted_date = note_manager.format_note_name(filename);
+        let tags = tag_manager.get_tags_from_session(session);
+        let raw_metadata = session.get_metadata();
+
+        Self {
+            lines: session.lines.clone(),
+            metadata: NoteMetadata {
+                formatted_date,
+                tags,
+                raw: raw_metadata,
+            },
+            metadata_range: session.frontmatter_range,
+        }
+    }
 }

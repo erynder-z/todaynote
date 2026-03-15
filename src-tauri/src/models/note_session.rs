@@ -32,7 +32,7 @@ impl NoteSession {
     }
 
     /// Detects YAML frontmatter (delimited by '---' on the first line and another '---').
-    fn detect_frontmatter(&mut self) {
+    pub fn detect_frontmatter(&mut self) {
         if self.lines.len() < 2 {
             self.frontmatter_range = None;
             return;
@@ -50,7 +50,7 @@ impl NoteSession {
     }
 
     /// Ensures that the frontmatter block exists.
-    fn ensure_frontmatter(&mut self) {
+    pub fn ensure_frontmatter(&mut self) {
         if self.frontmatter_range.is_none() {
             self.lines.insert(0, "---".to_string());
             self.lines.insert(1, "---".to_string());
@@ -59,7 +59,7 @@ impl NoteSession {
     }
 
     /// Finds the index of a metadata line starting with the given key.
-    fn find_metadata_line(&self, key: &str) -> Option<usize> {
+    pub fn find_metadata_line(&self, key: &str) -> Option<usize> {
         let (start, end) = self.frontmatter_range?;
         let prefix = format!("{}:", key);
         self.lines[start + 1..end]
@@ -80,32 +80,6 @@ impl NoteSession {
             }
         }
         metadata
-    }
-
-    /// Parses tags from the metadata if they exist.
-    /// Expects a format like `[tag1, tag2]` or just a comma-separated list.
-    pub fn get_tags(&self) -> Vec<String> {
-        let metadata = self.get_metadata();
-        if let Some(tags_str) = metadata.get("tags") {
-            let trimmed = tags_str.trim();
-            if trimmed.is_empty() {
-                return Vec::new();
-            }
-
-            // Remove brackets if present: [tag1, tag2] -> tag1, tag2
-            let inner = if trimmed.starts_with('[') && trimmed.ends_with(']') {
-                &trimmed[1..trimmed.len() - 1]
-            } else {
-                trimmed
-            };
-
-            return inner
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect();
-        }
-        Vec::new()
     }
 
     /// Replaces the content of a specific line in the session.
@@ -138,66 +112,5 @@ impl NoteSession {
     /// Reconstructs the full note content by joining the lines with newlines.
     pub fn get_full_content(&self) -> String {
         self.lines.join("\n")
-    }
-
-    /// Parses tags from the metadata of a note, given its content.
-    pub fn parse_tags_from_content(content: &str) -> Vec<String> {
-        let lines: Vec<&str> = content.lines().collect();
-        if lines.len() < 2 || lines[0].trim() != "---" {
-            return Vec::new();
-        }
-
-        let mut end_fm = None;
-        for (i, line) in lines.iter().enumerate().skip(1) {
-            if line.trim() == "---" {
-                end_fm = Some(i);
-                break;
-            }
-        }
-
-        if let Some(end) = end_fm {
-            for i in 1..end {
-                let line = lines[i];
-                if let Some((key, value)) = line.split_once(':') {
-                    if key.trim() == "tags" {
-                        let trimmed = value.trim();
-                        if trimmed.is_empty() {
-                            return Vec::new();
-                        }
-
-                        let inner = if trimmed.starts_with('[') && trimmed.ends_with(']') {
-                            &trimmed[1..trimmed.len() - 1]
-                        } else {
-                            trimmed
-                        };
-
-                        return inner
-                            .split(',')
-                            .map(|s| s.trim().to_string())
-                            .filter(|s| !s.is_empty())
-                            .collect();
-                    }
-                }
-            }
-        }
-        Vec::new()
-    }
-
-    /// Adds a tag to the note's frontmatter.
-    /// Creates frontmatter if it doesn't exist.
-    pub fn add_tag(&mut self, tag: String) {
-        self.ensure_frontmatter();
-
-        if let Some(absolute_idx) = self.find_metadata_line("tags") {
-            let mut tags = self.get_tags();
-            if !tags.contains(&tag) {
-                tags.push(tag);
-                self.lines[absolute_idx] = format!("tags: [{}]", tags.join(", "));
-            }
-        } else {
-            let (_, end) = self.frontmatter_range.expect("Frontmatter should exist");
-            self.lines.insert(end, format!("tags: [{}]", tag));
-            self.detect_frontmatter();
-        }
     }
 }

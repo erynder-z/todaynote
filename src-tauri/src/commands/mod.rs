@@ -9,4 +9,5 @@ pub mod markdown;
 pub mod notes;
 pub mod settings;
 pub mod setup;
+pub mod tags;
 pub mod theme;

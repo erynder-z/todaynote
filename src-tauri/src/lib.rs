@@ -7,19 +7,21 @@ use commands::folder::validate_folder;
 use commands::i18n::get_translations;
 use commands::markdown::render_markdown;
 use commands::notes::{
-    add_note_tag, check_todays_note_exists, create_todays_note, delete_note_line, get_all_tags,
-    get_today_note_path, insert_note_line, list_notes, read_note_content, save_note_content,
-    search_notes, update_note_line,
+    check_todays_note_exists, create_todays_note, delete_note_line, get_today_note_path,
+    insert_note_line, list_notes, read_note_content, save_note_content, search_notes,
+    update_note_line,
 };
 use commands::settings::{
     get_config, set_locale, set_notes_folder, set_remember_window_size, switch_notes_folder,
 };
 use commands::setup::initialize_app;
+use commands::tags::{add_note_tag, get_all_tags};
 use commands::theme::{get_theme_colors, set_theme};
 use models::app_state::AppState;
 use models::config::AppConfig;
 use models::note_session::NoteSession;
 use services::note_manager::NoteManager;
+use services::tag_manager::TagManager;
 use std::sync::Mutex;
 use utils::window::show_window;
 
@@ -54,10 +56,12 @@ pub fn run() {
     builder
         .manage(AppState {
             note_manager: Mutex::new(note_manager),
+            tag_manager: Mutex::new(TagManager::new()),
             note_session: Mutex::new(NoteSession::new()),
         })
         .invoke_handler(tauri::generate_handler![
             add_note_tag,
+            remove_note_tag,
             check_todays_note_exists,
             create_todays_note,
             get_today_note_path,

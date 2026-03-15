@@ -3,9 +3,7 @@
 //! This module provides functions for reading, writing, and manipulating note files, as well as managing the current note editing session.
 
 use crate::models::app_state::AppState;
-use crate::models::response_types::{
-    FormattedNote, NoteContentResponse, NoteMetadata, SearchResult,
-};
+use crate::models::response_types::{FormattedNote, NoteContentResponse, SearchResult};
 use std::fs;
 use std::path::PathBuf;
 use tauri::State;
@@ -70,44 +68,6 @@ pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Resul
         fs::write(path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
     }
     Ok(())
-}
-
-/// Adds a tag to the current note session and writes it to disk.
-///
-/// Returns the updated `NoteContentResponse`.
-#[tauri::command]
-pub async fn add_note_tag(
-    tag: String,
-    state: State<'_, AppState>,
-) -> Result<NoteContentResponse, String> {
-    let mut session = state.note_session.lock().unwrap();
-    session.add_tag(tag);
-
-    let path = session
-        .path
-        .clone()
-        .ok_or_else(|| "No active note session".to_string())?;
-    let full_content = session.get_full_content();
-    fs::write(&path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
-
-    let formatted_date = {
-        let note_manager = state.note_manager.lock().unwrap();
-        let filename = path.file_name().and_then(|f| f.to_str()).unwrap_or("");
-        note_manager.format_note_name(filename)
-    };
-
-    let tags = session.get_tags();
-    let raw_metadata = session.get_metadata();
-
-    Ok(NoteContentResponse {
-        lines: session.lines.clone(),
-        metadata: NoteMetadata {
-            formatted_date,
-            tags,
-            raw: raw_metadata,
-        },
-        metadata_range: session.frontmatter_range,
-    })
 }
 
 /// Performs a full-text search across all notes. (Currently not implemented)
@@ -176,32 +136,19 @@ pub async fn read_note_content(
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     let path_buf = PathBuf::from(&path);
-    let content = {
-        let note_manager = state.note_manager.lock().unwrap();
-        note_manager.read_note_content(&path_buf)?
-    };
+    let note_manager = state.note_manager.lock().unwrap();
+    let content = note_manager.read_note_content(&path_buf)?;
 
     let mut session = state.note_session.lock().unwrap();
     session.load(path_buf.clone(), content);
 
-    let formatted_date = {
-        let note_manager = state.note_manager.lock().unwrap();
-        let filename = path_buf.file_name().and_then(|f| f.to_str()).unwrap_or("");
-        note_manager.format_note_name(filename)
-    };
+    let tag_manager = state.tag_manager.lock().unwrap();
 
-    let tags = session.get_tags();
-    let raw_metadata = session.get_metadata();
-
-    Ok(NoteContentResponse {
-        lines: session.lines.clone(),
-        metadata: NoteMetadata {
-            formatted_date,
-            tags,
-            raw: raw_metadata,
-        },
-        metadata_range: session.frontmatter_range,
-    })
+    Ok(NoteContentResponse::from_session(
+        &session,
+        &*note_manager,
+        &*tag_manager,
+    ))
 }
 
 /// Returns a list of all notes available in the current notes folder.
@@ -209,11 +156,4 @@ pub async fn read_note_content(
 pub async fn list_notes(state: State<'_, AppState>) -> Result<Vec<FormattedNote>, String> {
     let note_manager = state.note_manager.lock().unwrap();
     note_manager.list_notes()
-}
-
-/// Returns all unique tags from all notes, sorted by usage frequency.
-#[tauri::command]
-pub async fn get_all_tags(state: State<'_, AppState>) -> Result<Vec<String>, String> {
-    let note_manager = state.note_manager.lock().unwrap();
-    note_manager.get_all_tags()
 }

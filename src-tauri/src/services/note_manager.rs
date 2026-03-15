@@ -1,10 +1,8 @@
 //! Manager to handle note operations and formatting.
 
-use crate::models::note_session::NoteSession;
 use crate::models::response_types::FormattedNote;
 use crate::utils;
 use chrono::{Locale, NaiveDate};
-use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -125,34 +123,5 @@ impl NoteManager {
     /// Reads the content of a note file from the specified path.
     pub fn read_note_content(&self, path: &PathBuf) -> Result<String, String> {
         fs::read_to_string(path).map_err(|e| format!("Failed to read note content: {}", e))
-    }
-
-    /// Retrieves all tags across all notes, sorted by frequency.
-    pub fn get_all_tags(&self) -> Result<Vec<String>, String> {
-        if !self.notes_folder.exists() {
-            return Ok(vec![]);
-        }
-
-        let entries = fs::read_dir(&self.notes_folder)
-            .map_err(|e| format!("Failed to read directory: {}", e))?;
-
-        let mut tag_counts: HashMap<String, usize> = HashMap::new();
-
-        for entry in entries.filter_map(|e| e.ok()) {
-            let file_name = entry.file_name().into_string().unwrap_or_default();
-            if file_name.ends_with(".md") && !file_name.starts_with(".") {
-                if let Ok(content) = fs::read_to_string(entry.path()) {
-                    let tags = NoteSession::parse_tags_from_content(&content);
-                    for tag in tags {
-                        *tag_counts.entry(tag).or_insert(0) += 1;
-                    }
-                }
-            }
-        }
-
-        let mut tags: Vec<(String, usize)> = tag_counts.into_iter().collect();
-        tags.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
-
-        Ok(tags.into_iter().map(|(tag, _)| tag).collect())
     }
 }
