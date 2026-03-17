@@ -14,12 +14,9 @@
   };
 
   onMount(() => {
-    const unregister = inputManager.register({
-      key: 'k',
-      ctrl: true,
-      callback: () => togglePopup('search'),
-      description: 'Toggle search',
-    });
+    const unregister = inputManager.registerAction('toggleSearch', () =>
+      togglePopup('search'),
+    );
 
     return unregister;
   });
