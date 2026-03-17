@@ -13,6 +13,7 @@ export { default as NoteTags } from "./components/NoteTags.svelte";
 export { default as PopupManager } from "./components/PopupManager.svelte";
 export { default as SearchNotes } from "./components/SearchNotes.svelte";
 export { default as SettingsView } from "./components/SettingsView.svelte";
+export * from "./stores/input.svelte";
 export * from "./stores/sessionState.svelte";
 export * from "./stores/settings.svelte";
 export * from "./types/settings";

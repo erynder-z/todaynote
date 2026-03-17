@@ -5,8 +5,14 @@
   import { t } from '$lib';
 </script>
 
+<!-- svelte-ignore a11y_autofocus -->
 <div class="search-placeholder">
-  <input type="text" placeholder={$t('search.title')} class="theme-input" />
+  <input
+    type="text"
+    placeholder={$t('search.title')}
+    class="theme-input"
+    autofocus
+  />
   <p class="muted">Search functionality coming soon!</p>
 </div>
 

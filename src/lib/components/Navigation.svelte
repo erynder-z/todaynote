@@ -2,7 +2,8 @@
   /**
    * Navigation bar that provides access to the several app features.
    */
-  import { sessionState, t } from '$lib';
+  import { onMount } from 'svelte';
+  import { inputManager, sessionState, t } from '$lib';
   import type { PopupType } from '$lib/types/ui';
 
   /**
@@ -11,6 +12,17 @@
   const togglePopup = (type: PopupType) => {
     sessionState.activePopup = sessionState.activePopup === type ? null : type;
   };
+
+  onMount(() => {
+    const unregister = inputManager.register({
+      key: 'k',
+      ctrl: true,
+      callback: () => togglePopup('search'),
+      description: 'Toggle search',
+    });
+
+    return unregister;
+  });
 </script>
 
 <nav class="navigation">
