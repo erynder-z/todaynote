@@ -44,6 +44,9 @@
   }
 
   .theme-input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
     padding: 0.8rem 1.5rem;
     border-radius: 0.5rem;
     border: 0.0625rem solid var(--border);
@@ -51,5 +54,12 @@
     color: var(--text-main);
     cursor: pointer;
     width: 25ch;
+  }
+
+  .theme-input option {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: aqua;
   }
 </style>

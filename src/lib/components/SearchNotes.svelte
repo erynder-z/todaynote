@@ -26,6 +26,9 @@
   }
 
   .theme-input {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
     width: 100%;
     padding: 0.8rem 1.2rem;
     border-radius: 0.625rem;
