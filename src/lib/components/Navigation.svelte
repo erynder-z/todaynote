@@ -2,8 +2,7 @@
   /**
    * Navigation bar that provides access to the several app features.
    */
-  import { onMount } from 'svelte';
-  import { inputManager, sessionState, t } from '$lib';
+  import { sessionState, t, useShortcuts } from '$lib';
   import type { PopupType } from '$lib/types/ui';
 
   /**
@@ -13,20 +12,10 @@
     sessionState.activePopup = sessionState.activePopup === type ? null : type;
   };
 
-  onMount(() => {
-    const unregisters = [
-      inputManager.registerAction('toggleSearch', () => togglePopup('search')),
-      inputManager.registerAction('toggleNotesList', () =>
-        togglePopup('notesList'),
-      ),
-      inputManager.registerAction('toggleSettings', () =>
-        togglePopup('folderSelector'),
-      ),
-    ];
-
-    return () => {
-      for (const unregister of unregisters) unregister();
-    };
+  useShortcuts({
+    toggleSearch: () => togglePopup('search'),
+    toggleNotesList: () => togglePopup('notesList'),
+    toggleSettings: () => togglePopup('folderSelector'),
   });
 </script>
 

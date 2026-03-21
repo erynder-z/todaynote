@@ -1,7 +1,3 @@
-/**
- * Centralized Input Manager for handling global keyboard shortcuts and tracking key states.
- */
-
 import { defaultShortcuts } from "$lib/config/shortcuts";
 import type {
 	ShortcutAction,
@@ -9,6 +5,9 @@ import type {
 	ShortcutRegistration,
 } from "$lib/types/input";
 
+/**
+ * Centralized Input Manager for handling global keyboard shortcuts and tracking key states.
+ */
 class InputManager {
 	shiftPressed = $state(false);
 	ctrlPressed = $state(false);
@@ -29,10 +28,7 @@ class InputManager {
 	}
 
 	/**
-	 * Registers a global shortcut by action name defined in the centralized configuration.
-	 * @param action The name of the action to register.
-	 * @param callback The function to execute when the shortcut is triggered.
-	 * @returns An unregister function to remove the shortcut.
+	 * Registers a shortcut action based on the central configuration.
 	 */
 	registerAction(action: ShortcutAction, callback: ShortcutCallback) {
 		const config = defaultShortcuts[action];
@@ -50,9 +46,19 @@ class InputManager {
 	}
 
 	/**
-	 * Registers a manual global shortcut.
-	 * @param registration The shortcut configuration and callback.
-	 * @returns An unregister function to remove the shortcut.
+	 * Registers multiple shortcut actions at once.
+	 */
+	registerActions(actions: Partial<Record<ShortcutAction, ShortcutCallback>>) {
+		const unregisters = Object.entries(actions).map(([action, callback]) =>
+			this.registerAction(action as ShortcutAction, callback),
+		);
+		return () => {
+			for (const unregister of unregisters) unregister();
+		};
+	}
+
+	/**
+	 * Low-level method to register a manual shortcut.
 	 */
 	register(registration: ShortcutRegistration) {
 		this.shortcuts.push(registration);
@@ -63,6 +69,7 @@ class InputManager {
 
 	/**
 	 * Processes keydown events to match against registered shortcuts.
+	 * Favoring the most recently registered shortcuts by iterating backwards.
 	 */
 	private handleKeyDown(e: KeyboardEvent) {
 		this.updateModifiers(e);
@@ -73,7 +80,8 @@ class InputManager {
 			target?.tagName === "TEXTAREA" ||
 			target?.isContentEditable;
 
-		for (const shortcut of this.shortcuts) {
+		for (let i = this.shortcuts.length - 1; i >= 0; i--) {
+			const shortcut = this.shortcuts[i];
 			if (
 				e.key.toLowerCase() === shortcut.key.toLowerCase() &&
 				!!shortcut.ctrl === (e.ctrlKey || e.metaKey) &&

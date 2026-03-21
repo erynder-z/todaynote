@@ -22,3 +22,4 @@ export * from "./utils/dailyNote";
 export * from "./utils/folder";
 export * from "./utils/i18n";
 export * from "./utils/notes";
+export * from "./utils/shortcuts";

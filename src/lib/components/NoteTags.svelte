@@ -4,7 +4,7 @@
    */
 
   import { onMount } from 'svelte';
-  import { inputManager, sessionState, t } from '$lib';
+  import { inputManager, sessionState, t, useShortcuts } from '$lib';
   import type { NoteContentResponse } from '$lib/types/notes';
   import { addNoteTag, getAllTags, removeNoteTag } from '$lib/utils/notes';
 
@@ -96,6 +96,8 @@
     allTags = await getAllTags();
   };
 
+  useShortcuts({ addTag: () => startAddingTag() });
+
   /**
    * Moves the selection down in the suggestions list.
    */
@@ -135,14 +137,6 @@
         break;
     }
   };
-
-  onMount(() => {
-    const unregister = inputManager.registerAction('addTag', () =>
-      startAddingTag(),
-    );
-
-    return unregister;
-  });
 </script>
 
 <div class="tags-container">
