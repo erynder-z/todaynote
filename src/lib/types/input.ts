@@ -5,6 +5,7 @@ export type ShortcutAction =
 	| "toggleNotesList"
 	| "toggleSettings"
 	| "addTag"
+	| "removeTag"
 	| "closePopup";
 
 export type ShortcutConfig = {

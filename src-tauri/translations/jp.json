@@ -25,5 +25,6 @@
 	"notes.error.load": "ノートの読み込みに失敗しました",
 	"notes.list.empty": "ノートが見つかりません",
 	"note.header": "ノート",
-	"tag.placeholder": "タグ..."
+	"tag.placeholder": "タグ...",
+	"tag.remove_placeholder": "タグを削除..."
 }

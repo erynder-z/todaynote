@@ -2,7 +2,6 @@
   /**
    * Component for displaying and managing tags for a note.
    */
-
   import { onMount } from 'svelte';
   import { inputManager, sessionState, t, useShortcuts } from '$lib';
   import type { NoteContentResponse } from '$lib/types/notes';
@@ -11,11 +10,12 @@
   let { noteContent } = $props<{
     noteContent: NoteContentResponse | null;
   }>();
-
   let tags = $derived(noteContent?.metadata.tags || []);
   let isAddingTag = $state(false);
+  let isRemovingTag = $state(false);
   let tagToRemove = $state<string | null>(null);
   let newTag = $state('');
+  let removeSearch = $state('');
   let allTags = $state<string[]>([]);
   let selectedIndex = $state(-1);
 
@@ -29,11 +29,13 @@
       .slice(0, 8),
   );
 
-  // Reset selection when input changes
-  $effect(() => {
-    newTag;
-    selectedIndex = -1;
-  });
+  let filteredTagsToRemove = $derived(
+    tags
+      .filter((tag: string) =>
+        tag.toLowerCase().includes(removeSearch.trim().toLowerCase()),
+      )
+      .slice(0, 8),
+  );
 
   // Close input when clicking outside
   onMount(() => {
@@ -47,7 +49,9 @@
    */
   const closeInput = () => {
     isAddingTag = false;
+    isRemovingTag = false;
     newTag = '';
+    removeSearch = '';
     selectedIndex = -1;
   };
 
@@ -76,6 +80,15 @@
   };
 
   /**
+   * Removes a specific tag from the note.
+   */
+  const handleRemoveSpecificTag = async (tag: string) => {
+    const updatedContent = await removeNoteTag(tag);
+    if (updatedContent) sessionState.todayNoteContent = updatedContent;
+    closeInput();
+  };
+
+  /**
    * Handles click on a tag pill. Sets the tag for removal if Shift is held.
    */
   const handleTagClick = (e: MouseEvent, tag: string) => {
@@ -84,6 +97,7 @@
       e.stopPropagation();
       tagToRemove = tag;
       isAddingTag = false;
+      isRemovingTag = false;
     }
   };
 
@@ -92,26 +106,37 @@
    */
   const startAddingTag = async () => {
     tagToRemove = null;
+    isRemovingTag = false;
     isAddingTag = true;
     allTags = await getAllTags();
   };
 
-  useShortcuts({ addTag: () => startAddingTag() });
+  /**
+   * Starts the removal process for existing tags.
+   */
+  const startRemovingTag = () => {
+    if (tags.length === 0) return;
+    tagToRemove = null;
+    isAddingTag = false;
+    isRemovingTag = true;
+    removeSearch = '';
+    selectedIndex = 0;
+  };
 
   /**
    * Moves the selection down in the suggestions list.
    */
   const moveSelectionDown = () => {
-    selectedIndex =
-      selectedIndex < suggestedTags.length - 1 ? selectedIndex + 1 : -1;
+    const list = isAddingTag ? suggestedTags : filteredTagsToRemove;
+    selectedIndex = selectedIndex < list.length - 1 ? selectedIndex + 1 : -1;
   };
 
   /**
    * Moves the selection up in the suggestions list.
    */
   const moveSelectionUp = () => {
-    selectedIndex =
-      selectedIndex > -1 ? selectedIndex - 1 : suggestedTags.length - 1;
+    const list = isAddingTag ? suggestedTags : filteredTagsToRemove;
+    selectedIndex = selectedIndex > -1 ? selectedIndex - 1 : list.length - 1;
   };
 
   /**
@@ -120,7 +145,13 @@
   const handleKeyDown = (e: KeyboardEvent): void => {
     switch (e.key) {
       case 'Enter':
-        handleAddTag(suggestedTags[selectedIndex]);
+        if (isAddingTag) {
+          handleAddTag(suggestedTags[selectedIndex]);
+        } else if (isRemovingTag) {
+          if (filteredTagsToRemove[selectedIndex]) {
+            handleRemoveSpecificTag(filteredTagsToRemove[selectedIndex]);
+          }
+        }
         break;
       case 'Escape':
         closeInput();
@@ -137,6 +168,11 @@
         break;
     }
   };
+
+  useShortcuts({
+    addTag: () => startAddingTag(),
+    removeTag: () => startRemovingTag(),
+  });
 </script>
 
 <div class="tags-container">
@@ -166,7 +202,7 @@
           width="1rem"
           fill="currentColor"
           ><path
-            d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"
+            d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224 -224-224 224Z"
           /></svg
         >
       </button>
@@ -176,6 +212,7 @@
         type="text"
         class="tag-input"
         bind:value={newTag}
+        oninput={() => (selectedIndex = -1)}
         onkeydown={handleKeyDown}
         onblur={() => setTimeout(closeInput, 200)}
         autofocus
@@ -189,6 +226,33 @@
               class="suggestion-item"
               class:selected={i === selectedIndex}
               onclick={() => handleAddTag(tag)}
+              onmouseenter={() => (selectedIndex = i)}
+            >
+              {tag}
+            </button>
+          {/each}
+        </div>
+      {/if}
+    {:else if isRemovingTag}
+      <!-- svelte-ignore a11y_autofocus -->
+      <input
+        type="text"
+        class="tag-input remove-mode"
+        bind:value={removeSearch}
+        oninput={() => (selectedIndex = -1)}
+        onkeydown={handleKeyDown}
+        onblur={() => setTimeout(closeInput, 200)}
+        autofocus
+        placeholder={$t('tag.remove_placeholder')}
+      />
+
+      {#if filteredTagsToRemove.length > 0}
+        <div class="suggestions">
+          {#each filteredTagsToRemove as tag, i}
+            <button
+              class="suggestion-item remove"
+              class:selected={i === selectedIndex}
+              onclick={() => handleRemoveSpecificTag(tag)}
               onmouseenter={() => (selectedIndex = i)}
             >
               {tag}
@@ -281,6 +345,11 @@
     border-radius: 999rem;
     outline: none;
     width: 6rem;
+    transition: border-color 0.2s ease;
+  }
+
+  .tag-input.remove-mode {
+    border-color: var(--remove);
   }
 
   .suggestions {
@@ -314,5 +383,11 @@
   .suggestion-item.selected {
     background-color: var(--accent);
     color: var(--accent-text);
+  }
+
+  .suggestion-item.remove:hover,
+  .suggestion-item.remove.selected {
+    background-color: var(--remove);
+    color: white;
   }
 </style>

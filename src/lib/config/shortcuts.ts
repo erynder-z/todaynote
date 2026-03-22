@@ -21,6 +21,12 @@ export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 		ctrl: true,
 		description: "Add tag",
 	},
+	removeTag: {
+		key: "t",
+		ctrl: true,
+		shift: true,
+		description: "Remove tag",
+	},
 	closePopup: {
 		key: "Escape",
 		description: "Close popup",

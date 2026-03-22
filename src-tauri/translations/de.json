@@ -25,5 +25,6 @@
 	"notes.error.load": "Notizen konnten nicht geladen werden",
 	"notes.list.empty": "Keine Notizen gefunden",
 	"note.header": "Notiz",
-	"tag.placeholder": "Tag..."
+	"tag.placeholder": "Tag...",
+	"tag.remove_placeholder": "Tag entfernen..."
 }
