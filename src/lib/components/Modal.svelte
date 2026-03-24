@@ -1,8 +1,9 @@
 <script lang="ts">
   /**
-   * Wrapper that handles displaying a modal popup as a child component.
+   * Modal wrapper that handles displaying a popup as a child component.
+   * Consolidates focus management and scroll locking into a single setup action.
    */
-  import { sessionState, useShortcuts } from '$lib';
+  import { focusTrap, sessionState, useShortcuts } from '$lib';
 
   let { title, children } = $props();
 
@@ -16,15 +17,48 @@
   useShortcuts({
     closePopup: () => close(),
   });
+
+  /**
+   * Manages the lifecycle of the modal:
+   * 1. Locks background scrolling.
+   * 2. Sets initial focus to the modal.
+   * 3. Restores both scroll and focus on destruction.
+   */
+  const setupModal = (node: HTMLElement) => {
+    const previousFocus = document.activeElement as HTMLElement;
+    const previousOverflow = document.body.style.overflow;
+
+    const lockScroll = () => (document.body.style.overflow = 'hidden');
+    const unlockScroll = () =>
+      (document.body.style.overflow = previousOverflow);
+    const setFocus = () => node.focus();
+    const restoreFocus = () => previousFocus?.focus();
+
+    lockScroll();
+    setFocus();
+
+    return {
+      destroy() {
+        unlockScroll();
+        restoreFocus();
+      },
+    };
+  };
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="overlay" onclick={close}>
-  <div class="popup" onclick={(e) => e.stopPropagation()}>
+  <div
+    class="popup"
+    use:setupModal
+    use:focusTrap
+    tabindex="-1"
+    onclick={(e) => e.stopPropagation()}
+  >
     <div class="popup-header">
       {#if title}<h2>{title}</h2>{/if}
-      <button onclick={close} class="close-button">×</button>
+      <button onclick={close} class="close-button" aria-label="Close">×</button>
     </div>
     <div class="popup-content">
       {@render children()}
@@ -57,6 +91,7 @@
     overflow-y: auto;
     width: 31.25rem;
     color: var(--text-main);
+    outline: none;
   }
 
   .popup-header {
@@ -82,5 +117,11 @@
 
   .close-button:hover {
     color: var(--error);
+  }
+
+  .popup-content {
+    /* Ensure content within popup still scrolls if needed */
+    max-height: calc(85vh - 6rem);
+    overflow-y: auto;
   }
 </style>
