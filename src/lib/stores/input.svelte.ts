@@ -10,15 +10,36 @@ import { sessionState } from "./sessionState.svelte";
  * Centralized Input Manager for handling global keyboard shortcuts and tracking key states.
  */
 class InputManager {
-	shiftPressed = $state(false);
-	ctrlPressed = $state(false);
 	altPressed = $state(false);
 	metaPressed = $state(false);
 
 	/**
-	 * Returns the platform-specific label for the Alt/Option key.
+	 * Returns the 'Primary' modifier based on physical location (next to spacebar).
+	 * Mac: Command (meta), Others: Alt (alt)
 	 */
-	get superLabel() {
+	get primaryPressed() {
+		return sessionState.isMac ? this.metaPressed : this.altPressed;
+	}
+
+	/**
+	 * Returns the 'Secondary' modifier based on physical location (moving away from space).
+	 * Mac: Option (alt), Others: Super/Windows (meta)
+	 */
+	get secondaryPressed() {
+		return sessionState.isMac ? this.altPressed : this.metaPressed;
+	}
+
+	/**
+	 * Returns the platform-specific label for the primary modifier.
+	 */
+	get primaryLabel() {
+		return sessionState.isMac ? "⌘" : "Alt";
+	}
+
+	/**
+	 * Returns the platform-specific label for the secondary modifier.
+	 */
+	get secondaryLabel() {
 		return sessionState.isMac ? "⌥" : "Super";
 	}
 
@@ -90,18 +111,26 @@ class InputManager {
 
 		for (let i = this.shortcuts.length - 1; i >= 0; i--) {
 			const shortcut = this.shortcuts[i];
-			if (
-				e.key.toLowerCase() === shortcut.key.toLowerCase() &&
-				!!shortcut.ctrl === (e.ctrlKey || e.metaKey) &&
-				!!shortcut.shift === e.shiftKey &&
-				!!shortcut.alt === e.altKey
-			) {
-				// If typing in an input, ONLY allow shortcuts that use a modifier (Ctrl/Cmd/Alt)
-				// or are specifically the Escape key. This prevents Shift+K from being
-				// intercepted while typing a capital 'K'.
+
+			// Strictly match primary and secondary modifiers
+			const matchesPrimary = !!shortcut.primary === this.primaryPressed;
+			const matchesSecondary = !!shortcut.secondary === this.secondaryPressed;
+			const matchesKey = e.key.toLowerCase() === shortcut.key.toLowerCase();
+
+			// If any other key is pressed (shift/ctrl) we don't match for simplicity
+			// unless we explicitly add support later.
+			const otherModifiers = e.shiftKey || e.ctrlKey;
+
+			if (matchesKey && matchesPrimary && matchesSecondary && !otherModifiers) {
+				// If typing in an input, ONLY allow shortcuts that use a modifier
+				// or are specifically the Escape key.
 				if (isInput) {
-					const hasModifier = e.ctrlKey || e.metaKey || e.altKey;
-					if (!hasModifier && e.key !== "Escape") continue;
+					if (
+						!this.primaryPressed &&
+						!this.secondaryPressed &&
+						e.key !== "Escape"
+					)
+						continue;
 				}
 
 				e.preventDefault();
@@ -122,8 +151,6 @@ class InputManager {
 	 * Synchronizes the internal modifier states with the current event state.
 	 */
 	private updateModifiers(e: KeyboardEvent | MouseEvent) {
-		this.shiftPressed = e.shiftKey;
-		this.ctrlPressed = e.ctrlKey || e.metaKey;
 		this.altPressed = e.altKey;
 		this.metaPressed = e.metaKey;
 	}
@@ -132,8 +159,6 @@ class InputManager {
 	 * Resets all modifier states to false (typically on window blur).
 	 */
 	private resetModifiers() {
-		this.shiftPressed = false;
-		this.ctrlPressed = false;
 		this.altPressed = false;
 		this.metaPressed = false;
 	}

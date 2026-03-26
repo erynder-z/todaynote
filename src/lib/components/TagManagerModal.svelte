@@ -97,8 +97,11 @@
 
   /** Handles keyboard events for navigation and actions. */
   const handleKeyDown = (e: KeyboardEvent) => {
-    // Check for shortcut combinations (Alt/Option + Physical Key)
-    if (e.altKey && !e.metaKey && !e.ctrlKey) {
+    // Check for shortcut combinations (Secondary Modifier + Physical Key)
+    // Mac: Option (alt), Others: Super (meta)
+    const isSecondary = sessionState.isMac ? e.altKey : e.metaKey;
+
+    if (isSecondary && !e.shiftKey && !e.ctrlKey) {
       const shortcutIndex = tagSuggestionShortcuts.codes.indexOf(e.code);
 
       if (shortcutIndex !== -1 && shortcutIndex < suggestedTags.length) {
@@ -146,8 +149,11 @@
     <span class="tag-label">{tag}</span>
 
     {#if shortcutLabel}
-      <span class="shortcut-hint">
-        <span class="mod">{inputManager.superLabel}</span>
+      <span
+        class="shortcut-hint"
+        class:is-pressed={inputManager.secondaryPressed}
+      >
+        <span class="mod">{inputManager.secondaryLabel}</span>
         <span class="key">{shortcutLabel}</span>
       </span>
     {/if}

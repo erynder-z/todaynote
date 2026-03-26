@@ -3,22 +3,22 @@ import type { ShortcutAction, ShortcutConfig } from "$lib/types/input";
 export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 	toggleSearch: {
 		key: "k",
-		ctrl: true,
+		primary: true,
 		description: "Toggle search",
 	},
 	toggleNotesList: {
 		key: "l",
-		ctrl: true,
+		primary: true,
 		description: "Toggle notes list",
 	},
 	toggleSettings: {
 		key: ",",
-		ctrl: true,
+		primary: true,
 		description: "Toggle settings",
 	},
 	manageTags: {
 		key: "t",
-		ctrl: true,
+		primary: true,
 		description: "Manage tags",
 	},
 	closePopup: {

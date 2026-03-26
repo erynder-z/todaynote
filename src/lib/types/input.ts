@@ -9,10 +9,8 @@ export type ShortcutAction =
 
 export type ShortcutConfig = {
 	key: string;
-	ctrl?: boolean;
-	shift?: boolean;
-	alt?: boolean;
-	meta?: boolean;
+	primary?: boolean;
+	secondary?: boolean;
 	description?: string;
 };
 
