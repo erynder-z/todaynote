@@ -32,6 +32,7 @@ pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> AppPa
         theme_colors,
         today_note_path: None,
         today_note_content: None,
+        is_mac: cfg!(target_os = "macos"),
     };
 
     if response.notes_folder.is_some() {

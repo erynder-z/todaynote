@@ -7,4 +7,5 @@ export const sessionState = $state<SessionState>({
 	todayNotePath: null,
 	todayNoteContent: null,
 	activePopup: null,
+	isMac: false,
 });

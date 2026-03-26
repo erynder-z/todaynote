@@ -45,6 +45,7 @@ pub struct AppPayload {
     pub theme_colors: HashMap<String, String>,
     pub today_note_path: Option<String>,
     pub today_note_content: Option<NoteContentResponse>,
+    pub is_mac: bool,
 }
 
 /// Result of a folder validation check.

@@ -68,6 +68,7 @@ export const syncSettingsState = (state: AppPayload) => {
  * Synchronizes the application's runtime state (active note, etc.).
  */
 export const syncSessionState = (state: AppPayload) => {
+	sessionState.isMac = state.isMac;
 	if (state.notesFolder) {
 		sessionState.todayNotePath = state.todayNotePath;
 		sessionState.todayNoteContent = state.todayNoteContent;

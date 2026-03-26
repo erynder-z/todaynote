@@ -4,6 +4,7 @@ import type {
 	ShortcutCallback,
 	ShortcutRegistration,
 } from "$lib/types/input";
+import { sessionState } from "./sessionState.svelte";
 
 /**
  * Centralized Input Manager for handling global keyboard shortcuts and tracking key states.
@@ -13,6 +14,13 @@ class InputManager {
 	ctrlPressed = $state(false);
 	altPressed = $state(false);
 	metaPressed = $state(false);
+
+	/**
+	 * Returns the platform-specific label for the Alt/Option key.
+	 */
+	get superLabel() {
+		return sessionState.isMac ? "⌥" : "Super";
+	}
 
 	private shortcuts: ShortcutRegistration[] = [];
 

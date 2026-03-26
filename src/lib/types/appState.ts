@@ -7,6 +7,7 @@ export type SessionState = {
 	todayNotePath: string | null;
 	todayNoteContent: NoteContentResponse | null;
 	activePopup: PopupType;
+	isMac: boolean;
 };
 
 export type AppPayload = {
@@ -20,4 +21,5 @@ export type AppPayload = {
 	themeColors: Record<string, string>;
 	todayNotePath: string | null;
 	todayNoteContent: NoteContentResponse | null;
+	isMac: boolean;
 };

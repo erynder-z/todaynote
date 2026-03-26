@@ -4,7 +4,15 @@
    * Refactored for better readability and Svelte 5 idiomatic patterns.
    */
   import { onMount } from 'svelte';
-  import { addNoteTag, getAllTags, removeNoteTag, sessionState, t } from '$lib';
+  import {
+    addNoteTag,
+    getAllTags,
+    inputManager,
+    removeNoteTag,
+    sessionState,
+    t,
+  } from '$lib';
+  import { tagSuggestionShortcuts } from '$lib/config/shortcuts';
 
   let newTag = $state('');
   let allTags = $state<string[]>([]);
@@ -89,6 +97,17 @@
 
   /** Handles keyboard events for navigation and actions. */
   const handleKeyDown = (e: KeyboardEvent) => {
+    // Check for shortcut combinations (Alt/Option + Physical Key)
+    if (e.altKey && !e.metaKey && !e.ctrlKey) {
+      const shortcutIndex = tagSuggestionShortcuts.codes.indexOf(e.code);
+
+      if (shortcutIndex !== -1 && shortcutIndex < suggestedTags.length) {
+        e.preventDefault();
+        handleToggleTag(suggestedTags[shortcutIndex]);
+        return;
+      }
+    }
+
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
@@ -116,6 +135,7 @@
 {#snippet tagItem(tag: string)}
   {@const isAdded = currentTags.includes(tag)}
   {@const globalIndex = suggestedTags.indexOf(tag)}
+  {@const shortcutLabel = tagSuggestionShortcuts.labels[globalIndex]}
   <button
     class="suggestion-item"
     class:selected={globalIndex === selectedIndex}
@@ -124,6 +144,14 @@
   >
     <span class="hashtag">#</span>
     <span class="tag-label">{tag}</span>
+
+    {#if shortcutLabel}
+      <span class="shortcut-hint">
+        <span class="mod">{inputManager.superLabel}</span>
+        <span class="key">{shortcutLabel}</span>
+      </span>
+    {/if}
+
     {#if isAdded}
       <span class="status-badge">{$t('tag.remove')}</span>
     {/if}
@@ -270,6 +298,41 @@
 
   .tag-label {
     flex: 1;
+  }
+
+  .shortcut-hint {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background-color: var(--bg-surface);
+    border: 0.0625rem solid var(--border);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .suggestion-item:hover .shortcut-hint,
+  .suggestion-item.selected .shortcut-hint {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: transparent;
+    color: var(--accent-text);
+    opacity: 1;
+  }
+
+  .mod {
+    font-size: 0.7rem;
+    line-height: 1;
+    opacity: 0.8;
+    margin-right: 0.125rem;
+  }
+
+  .key {
+    font-weight: 700;
+    text-transform: uppercase;
   }
 
   .status-badge {
