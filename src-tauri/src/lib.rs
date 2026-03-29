@@ -15,7 +15,7 @@ use commands::settings::{
     get_config, set_locale, set_notes_folder, set_remember_window_size, switch_notes_folder,
 };
 use commands::setup::initialize_app;
-use commands::tags::{add_note_tag, get_all_tags, remove_note_tag};
+use commands::tags::{add_note_tag, get_all_tags, get_tag_suggestions, remove_note_tag};
 use commands::theme::{get_theme_colors, set_theme};
 use models::app_state::AppState;
 use models::config::AppConfig;
@@ -78,6 +78,7 @@ pub fn run() {
             get_translations,
             get_theme_colors,
             get_all_tags,
+            get_tag_suggestions,
             list_notes,
             set_locale,
             set_notes_folder,

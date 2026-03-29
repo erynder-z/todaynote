@@ -133,3 +133,16 @@ export const getAllTags = async () => {
 		return [];
 	}
 };
+
+/**
+ * Retrieves tag suggestions based on a search query.
+ */
+export const getTagSuggestions = async (query: string) => {
+	try {
+		const tags = (await invoke("get_tag_suggestions", { query })) as string[];
+		return tags;
+	} catch (error) {
+		console.error("Error getting tag suggestions:", error);
+		return [];
+	}
+};

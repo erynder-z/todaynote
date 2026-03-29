@@ -7,17 +7,29 @@ use std::fs;
 use std::path::Path;
 
 /// Service for handling high-level tag domain operations.
-pub struct TagManager;
+pub struct TagManager {
+    /// Cached list of all unique tags across all notes, sorted by frequency.
+    pub cached_tags: Option<Vec<String>>,
+}
 
 impl TagManager {
     /// Creates a new `TagManager`.
     pub fn new() -> Self {
-        Self
+        Self { cached_tags: None }
+    }
+
+    /// Clears the tag cache, forcing a re-scan on the next request.
+    pub fn invalidate_cache(&mut self) {
+        self.cached_tags = None;
     }
 
     /// Aggregates all unique tags from notes in the specified folder,
     /// sorted by usage frequency (descending) and alphabetical tie-breaker.
-    pub fn get_all_tags(&self, notes_folder: &Path) -> Result<Vec<String>, String> {
+    pub fn get_all_tags(&mut self, notes_folder: &Path) -> Result<Vec<String>, String> {
+        if let Some(tags) = &self.cached_tags {
+            return Ok(tags.clone());
+        }
+
         if !notes_folder.exists() {
             return Ok(vec![]);
         }
@@ -43,7 +55,31 @@ impl TagManager {
         // Sort by frequency (desc), then alphabetically (asc)
         tags.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
-        Ok(tags.into_iter().map(|(tag, _)| tag).collect())
+        let result: Vec<String> = tags.into_iter().map(|(tag, _)| tag).collect();
+        self.cached_tags = Some(result.clone());
+
+        Ok(result)
+    }
+
+    /// Returns a filtered list of tag suggestions based on a search query.
+    pub fn suggest_tags(
+        &mut self,
+        notes_folder: &Path,
+        query: &str,
+        exclude: &[String],
+        limit: usize,
+    ) -> Vec<String> {
+        let all_tags = self.get_all_tags(notes_folder).unwrap_or_default();
+        let search = query.trim().to_lowercase();
+
+        all_tags
+            .into_iter()
+            .filter(|tag| {
+                !exclude.contains(tag)
+                    && (search.is_empty() || tag.to_lowercase().contains(&search))
+            })
+            .take(limit)
+            .collect()
     }
 
     /// Returns tags from the session metadata.
