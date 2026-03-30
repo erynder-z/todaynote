@@ -236,7 +236,9 @@
 <style>
   .note-container {
     width: clamp(20rem, 90%, 70ch);
-    min-height: min(75vh, 600px);
+    min-height: 85dvh;
+    height: auto;
+    flex-shrink: 0;
     padding: 3rem 1rem;
     background-color: var(--bg-surface);
     border: 0.0625rem solid var(--border);
@@ -319,5 +321,11 @@
   .note-container :global(.rendered-line td) {
     border: 0.0625rem solid var(--border);
     padding: 0.5rem;
+  }
+
+  @media (max-width: 480px) {
+    .note-container {
+      min-height: 100dvh;
+    }
   }
 </style>

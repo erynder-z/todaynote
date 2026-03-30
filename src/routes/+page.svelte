@@ -34,7 +34,8 @@
     src: url(../assets/SUSEMono-VariableFont_wght.ttf) format('truetype');
   }
 
-  :root {
+  :global(:root) {
+    box-sizing: border-box;
     font-family: 'SUSE Mono', monospace;
     font-weight: 600;
     background-color: var(--bg-base);
@@ -43,7 +44,17 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  :global(*),
+  :global(*::before),
+  :global(*::after) {
+    box-sizing: inherit;
+    margin: 0;
+    padding: 0;
+  }
+
   .container {
+    height: 100dvh;
+    width: 100%;
     margin: 0 auto;
     padding: 3rem 1rem;
     display: flex;
@@ -52,5 +63,11 @@
     transition:
       background-color 0.3s,
       color 0.3s;
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      padding: 0;
+    }
   }
 </style>
