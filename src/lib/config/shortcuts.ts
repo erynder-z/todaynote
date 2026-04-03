@@ -34,7 +34,7 @@ export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 		key: "1,2,3,4,5,6,7,8,9",
 		primary: true,
 		secondary: true,
-		description: "Jump to section 1-9",
+		description: "Jump to section",
 	},
 };
 

@@ -13,6 +13,7 @@ class InputManager {
 	altPressed = $state(false);
 	metaPressed = $state(false);
 	ctrlPressed = $state(false);
+	shiftPressed = $state(false);
 
 	/**
 	 * Returns the 'Primary' modifier based on physical location (next to spacebar).
@@ -24,10 +25,10 @@ class InputManager {
 
 	/**
 	 * Returns the 'Secondary' modifier based on physical location (moving away from space).
-	 * Mac: Option (alt), Others: Super/Windows (meta)
+	 * Mac: Option (alt), Others: Shift
 	 */
 	get secondaryPressed() {
-		return sessionState.isMac ? this.altPressed : this.metaPressed;
+		return sessionState.isMac ? this.altPressed : this.shiftPressed;
 	}
 
 	/**
@@ -41,7 +42,7 @@ class InputManager {
 	 * Returns the platform-specific label for the secondary modifier.
 	 */
 	get secondaryLabel() {
-		return sessionState.isMac ? "⌥" : "Super";
+		return sessionState.isMac ? "⌥" : "Shift";
 	}
 
 	/** List of registered shortcut configurations. */
@@ -122,11 +123,16 @@ class InputManager {
 				!!shortcut.secondary === this.secondaryPressed;
 
 			const matchesShift =
-				shortcut.shift === undefined || !!shortcut.shift === e.shiftKey;
+				shortcut.shift === undefined || !!shortcut.shift === this.shiftPressed;
 
-			const keys = shortcut.key.split(",");
+			// Handle comma key (',') as a special case because it's the split delimiter
+			const keys =
+				shortcut.key === ","
+					? [","]
+					: shortcut.key.split(",").map((k) => k.trim());
+
 			const matchesKey = keys.some((k) => {
-				const lowerK = k.trim().toLowerCase();
+				const lowerK = k.toLowerCase();
 				return (
 					e.key.toLowerCase() === lowerK ||
 					e.code.toLowerCase() === lowerK ||
@@ -141,7 +147,7 @@ class InputManager {
 					if (
 						!this.primaryPressed &&
 						!this.secondaryPressed &&
-						!e.shiftKey &&
+						!this.shiftPressed &&
 						e.key !== "Escape"
 					)
 						continue;
@@ -168,6 +174,7 @@ class InputManager {
 		this.altPressed = e.altKey;
 		this.metaPressed = e.metaKey;
 		this.ctrlPressed = e.ctrlKey;
+		this.shiftPressed = e.shiftKey;
 	}
 
 	/**
@@ -177,6 +184,7 @@ class InputManager {
 		this.altPressed = false;
 		this.metaPressed = false;
 		this.ctrlPressed = false;
+		this.shiftPressed = false;
 	}
 }
 

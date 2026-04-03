@@ -39,5 +39,6 @@
 	"shortcuts.action.toggle_settings": "設定を切り替える",
 	"shortcuts.action.manage_tags": "タグを管理する",
 	"shortcuts.action.close_popup": "ポップアップを閉じる",
-	"shortcuts.action.focus_last_line": "最後の行にフォーカスする"
+	"shortcuts.action.focus_last_line": "最後の行にフォーカスする",
+	"shortcuts.action.jump_to_section": "ノートセクションへ移動"
 }

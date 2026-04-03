@@ -30,7 +30,13 @@
             <kbd>{inputManager.secondaryLabel}</kbd>
             <span class="plus">+</span>
           {/if}
-          <kbd>{shortcut.key === ' ' ? 'Space' : shortcut.key}</kbd>
+          <kbd
+            >{shortcut.key === ' '
+              ? 'Space'
+              : shortcut.key === '1,2,3,4,5,6,7,8,9'
+                ? '1-9'
+                : shortcut.key}</kbd
+          >
         </div>
       </div>
     {/each}
@@ -41,6 +47,8 @@
     <div class="shortcut-item">
       <span class="shortcut-description">{$t('shortcuts.tags.toggle')}</span>
       <div class="shortcut-keys">
+        <kbd>{inputManager.primaryLabel}</kbd>
+        <span class="plus">+</span>
         <kbd>{inputManager.secondaryLabel}</kbd>
         <span class="plus">+</span>
         <kbd>1-9, A-Z</kbd>

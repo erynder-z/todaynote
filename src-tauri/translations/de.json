@@ -39,5 +39,6 @@
 	"shortcuts.action.toggle_settings": "Einstellungen einblenden",
 	"shortcuts.action.manage_tags": "Tags verwalten",
 	"shortcuts.action.close_popup": "Popup schließen",
-	"shortcuts.action.focus_last_line": "Letzte Notizzeile fokussieren"
+	"shortcuts.action.focus_last_line": "Letzte Notizzeile fokussieren",
+	"shortcuts.action.jump_to_section": "Zu Notizsektion springen"
 }

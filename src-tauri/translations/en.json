@@ -39,5 +39,6 @@
 	"shortcuts.action.toggle_settings": "Toggle Settings",
 	"shortcuts.action.manage_tags": "Manage Tags",
 	"shortcuts.action.close_popup": "Close Popup",
-	"shortcuts.action.focus_last_line": "Focus Last Note-Line"
+	"shortcuts.action.focus_last_line": "Focus Last Note-Line",
+	"shortcuts.action.jump_to_section": "Jump to Note Section"
 }
