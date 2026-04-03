@@ -83,9 +83,12 @@
    * Handles keyboard events for navigation and actions.
    */
   const handleKeyDown = (e: KeyboardEvent) => {
-    const isSecondary = sessionState.isMac ? e.altKey : e.metaKey || e.altKey;
+    inputManager.updateModifiers(e);
 
-    if (isSecondary && !e.shiftKey && !e.ctrlKey) {
+    const isPrimary = inputManager.primaryPressed;
+    const isSecondary = inputManager.secondaryPressed;
+
+    if (isPrimary && isSecondary && !e.shiftKey) {
       const shortcutIndex = tagSuggestionShortcuts.codes.indexOf(e.code);
 
       if (shortcutIndex !== -1 && shortcutIndex < navigationTags.length) {
@@ -135,6 +138,7 @@
     {#if shortcutLabel}
       <span class="shortcut-hint">
         <span class="mod">{inputManager.secondaryLabel}</span>
+        <span class="mod">{inputManager.primaryLabel}</span>
         <span class="key">{shortcutLabel}</span>
       </span>
     {/if}
