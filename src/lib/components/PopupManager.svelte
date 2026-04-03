@@ -32,7 +32,7 @@
     <TagManagerModal />
   </Modal>
 {:else if sessionState.activePopup === 'shortcuts'}
-  <Modal title={$t('shortcuts.title', 'Keyboard Shortcuts')}>
+  <Modal title={$t('shortcuts.title')}>
     <ShortcutListModal />
   </Modal>
 {/if}

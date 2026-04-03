@@ -15,9 +15,8 @@
    */
   let isUseFolderButtonEnabled = $derived(
     selectedFolderPath !== null &&
-      validationResult !== null &&
-      validationResult.isValid &&
-      validationResult.isWritable &&
+      validationResult?.isValid &&
+      validationResult?.isWritable &&
       selectedFolderPath !== settings.notesFolder,
   );
 

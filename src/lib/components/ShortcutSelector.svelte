@@ -11,7 +11,7 @@
 
 <div class="shortcut-selector">
   <button onclick={openShortcuts} class="btn-primary">
-    {$t('settings.shortcuts.button', 'Keyboard Shortcuts')}
+    {$t('settings.shortcuts.button')}
   </button>
 </div>
 

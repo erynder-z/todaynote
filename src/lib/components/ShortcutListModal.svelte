@@ -13,10 +13,13 @@
     {#each shortcuts as shortcut}
       <div class="shortcut-item">
         <span class="shortcut-description">
-          {$t(
-            `shortcuts.action.${shortcut.description.toLowerCase().replace(/\s+/g, '_')}`,
-            shortcut.description,
-          )}
+          {#if shortcut.description}
+            {$t(
+              `shortcuts.action.${shortcut.description.toLowerCase().replace(/\s+/g, '_')}`,
+            )}
+          {:else}
+            {shortcut.key}
+          {/if}
         </span>
         <div class="shortcut-keys">
           {#if shortcut.primary}
