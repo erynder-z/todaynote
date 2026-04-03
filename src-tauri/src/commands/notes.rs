@@ -28,7 +28,7 @@ pub async fn update_note_line(
     state: State<'_, AppState>,
 ) -> Result<(), String> {
     let mut session = state.note_session.lock().unwrap();
-    session.update_line(index, content);
+    session.update_content_line(index, content);
     if let Some(path) = &session.path {
         let full_content = session.get_full_content();
         fs::write(path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
@@ -46,7 +46,7 @@ pub async fn insert_note_line(
     state: State<'_, AppState>,
 ) -> Result<(), String> {
     let mut session = state.note_session.lock().unwrap();
-    session.insert_line(index, content);
+    session.insert_content_line(index, content);
 
     if let Some(path) = &session.path {
         let full_content = session.get_full_content();
@@ -61,7 +61,7 @@ pub async fn insert_note_line(
 #[tauri::command]
 pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Result<(), String> {
     let mut session = state.note_session.lock().unwrap();
-    session.delete_line(index);
+    session.delete_content_line(index);
 
     if let Some(path) = &session.path {
         let full_content = session.get_full_content();
@@ -156,4 +156,59 @@ pub async fn read_note_content(
 pub async fn list_notes(state: State<'_, AppState>) -> Result<Vec<FormattedNote>, String> {
     let note_manager = state.note_manager.lock().unwrap();
     note_manager.list_notes()
+}
+
+/// Finds or creates a section by name and returns its content-relative line index.
+///
+/// If the section does not exist, it is appended to the end of the note.
+#[tauri::command]
+pub async fn jump_to_section(
+    name: String,
+    state: State<'_, AppState>,
+) -> Result<NoteContentResponse, String> {
+    let mut session = state.note_session.lock().unwrap();
+
+    let section_idx = session.sections.iter().position(|s| s.name == name);
+    let target_idx = match section_idx {
+        Some(idx) => {
+            // Section exists, jump to the end of this section
+            let end_line = session.sections[idx].end_line;
+
+            // If the line before the end is not empty, insert a new one unless the section is has no content
+            if end_line > 0 {
+                let last_content_line_idx = end_line - 1;
+                if !session.lines[last_content_line_idx].trim().is_empty() {
+                    session.insert_line(end_line, "".to_string());
+                    end_line
+                } else {
+                    last_content_line_idx
+                }
+            } else {
+                end_line
+            }
+        }
+        None => {
+            // Section doesn't exist, create it at the end with the [#] marker
+            let last_idx = session.lines.len();
+            session.insert_line(last_idx, format!("[#] {}", name));
+            let new_line_idx = last_idx + 1;
+            session.insert_line(new_line_idx, "".to_string());
+            new_line_idx
+        }
+    };
+
+    if let Some(path) = &session.path {
+        let full_content = session.get_full_content();
+        fs::write(path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+    }
+
+    let note_manager = state.note_manager.lock().unwrap();
+    let tag_manager = state.tag_manager.lock().unwrap();
+
+    Ok(NoteContentResponse::from_session_with_target(
+        &session,
+        &note_manager,
+        &tag_manager,
+        Some(target_idx),
+    ))
 }

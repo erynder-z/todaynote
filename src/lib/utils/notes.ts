@@ -23,7 +23,7 @@ export const readNoteContent = async (path: string) => {
  * Renders a markdown string to HTML, utilizing a client-side cache for performance.
  */
 export const renderMarkdown = async (markdown: string) => {
-	if (!markdown || !markdown.trim()) return "&nbsp;";
+	if (!markdown?.trim()) return "&nbsp;";
 
 	// Return from cache if string is in cache
 	const cached = renderCache.get(markdown);
@@ -118,6 +118,21 @@ export const removeNoteTag = async (tag: string) => {
 		return content;
 	} catch (error) {
 		console.error("Error removing note tag:", error);
+	}
+};
+
+/**
+ * Asks the backend to find or create a section and returns the updated note.
+ */
+export const jumpToSection = async (name: string) => {
+	try {
+		const content = (await invoke("jump_to_section", {
+			name,
+		})) as NoteContentResponse;
+		return content;
+	} catch (error) {
+		console.error(`Error jumping to section ${name}:`, error);
+		return null;
 	}
 };
 

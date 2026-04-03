@@ -8,6 +8,7 @@
 
   let {
     markdown = $bindable(),
+    sectionShortcut,
     isActive,
     onActivate,
     onDeactivate,
@@ -87,6 +88,9 @@
       onkeydown={(e) => e.key === 'Enter' && onActivate()}
     >
       {@html html}
+      {#if sectionShortcut}
+        <span class="shortcut-badge">({sectionShortcut})</span>
+      {/if}
     </div>
   {/if}
 </div>
@@ -118,5 +122,16 @@
     font-size: 1rem;
     line-height: 1.6;
     min-height: 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .shortcut-badge {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0.7;
   }
 </style>

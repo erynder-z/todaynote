@@ -6,6 +6,7 @@ export type FormattedNote = {
 export type NoteLineData = {
 	markdown: string;
 	html: string;
+	sectionShortcut?: string;
 };
 
 export type NoteMetadata = {
@@ -14,14 +15,24 @@ export type NoteMetadata = {
 	raw: Record<string, string>;
 };
 
+export type NoteSection = {
+	name: string;
+	startLine: number;
+	endLine: number;
+	level: number;
+	shortcut?: string;
+};
+
 export type NoteContentResponse = {
 	lines: string[];
 	metadata: NoteMetadata;
-	metadataRange: [number, number] | null;
+	sections: NoteSection[];
+	targetIndex?: number;
 };
 
 export type NoteLineProps = {
 	markdown: string;
+	sectionShortcut?: string;
 	isActive: boolean;
 	onActivate: () => void;
 	onDeactivate: (e: FocusEvent) => void;

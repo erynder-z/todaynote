@@ -3,23 +3,61 @@
    * The main note display component. Displays a note's content in an editable form.
    */
   import { untrack } from 'svelte';
-  import { NoteLine, sessionState, useShortcuts } from '$lib';
+  import { inputManager, NoteLine, sessionState, useShortcuts } from '$lib';
   import type { NoteContentResponse, NoteLineData } from '$lib/types/notes';
   import {
     deleteNoteLine,
     insertNoteLine,
+    jumpToSection,
     updateNoteLine,
   } from '$lib/utils/notes';
   import NoteHeader from './NoteHeader.svelte';
 
-  let { noteContent, notePath } = $props<{
+  let { noteContent = $bindable(), notePath } = $props<{
     noteContent: NoteContentResponse | null;
     notePath: string | null;
   }>();
 
+  /**
+   * Triggers a jump to a named section and updates the editor state.
+   */
+  const handleJump = async (name: string) => {
+    const updated = await jumpToSection(name);
+    if (updated) {
+      noteContent = updated;
+      loadLines();
+
+      if (updated.targetIndex !== undefined) {
+        setTimeout(() => (activeIndex = updated.targetIndex ?? null), 10);
+      } else {
+        setTimeout(() => {
+          activeIndex = null;
+          focusLastLine();
+        }, 10);
+      }
+    }
+  };
+  /**
+   * Jumps to a section based on its index (0-8).
+   */
+  const jumpToSectionByIndex = (idx: number) => {
+    if (noteContent?.sections?.[idx]?.name)
+      handleJump(noteContent.sections[idx].name);
+  };
+
   useShortcuts({
     focusLastLine: () => {
       if (sessionState.activePopup === null) focusLastLine();
+    },
+    jumpByNumber: (e) => {
+      if (sessionState.activePopup === null) {
+        // Use e.code (e.code.match(/Digit(\d)/)) for reliable number key detection
+        const match = e.code.match(/Digit(\d)/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > 0 && num <= 9) jumpToSectionByIndex(num - 1);
+        }
+      }
     },
   });
 
@@ -44,23 +82,37 @@
   };
 
   /**
-   * Parses the raw note content into an array of line objects.
+   * Parses the raw note content into an array of line objects and
+   * assigns shortcuts to headers.
    */
   const loadLines = () => {
     if (!noteContent) {
       lines = [];
       return;
     }
-    lines = noteContent.lines.map((m: string) => ({ markdown: m, html: '' }));
-  };
 
-  /**
-   * Checks if a line index is within the metadata/frontmatter range.
-   */
-  const isMetadataLine = (index: number) => {
-    if (!noteContent?.metadataRange) return false;
-    const [start, end] = noteContent.metadataRange;
-    return index >= start && index <= end;
+    const secondary = inputManager.secondaryLabel;
+    const primary = inputManager.primaryLabel;
+
+    lines = noteContent.lines.map((lineContent: string, i: number) => {
+      // Find if this line is a header and what its shortcut is
+      const section = noteContent?.sections.find(
+        (s: { startLine: number }) => s.startLine === i,
+      );
+      let shortcut = '';
+      if (section) {
+        const sectionIdx = noteContent?.sections.indexOf(section);
+        if (sectionIdx !== undefined && sectionIdx < 9) {
+          shortcut = `${secondary}${primary}${sectionIdx + 1}`;
+        }
+      }
+
+      return {
+        markdown: lineContent,
+        html: '',
+        sectionShortcut: shortcut,
+      };
+    });
   };
 
   /**
@@ -143,28 +195,15 @@
    */
   const deleteLine = async (i: number) => {
     lines.splice(i, 1);
-    // Find previous visible line
-    let nextIndex = i - 1;
-    while (nextIndex >= 0 && isMetadataLine(nextIndex)) {
-      nextIndex--;
-    }
-    activeIndex = Math.max(0, nextIndex);
+    activeIndex = Math.max(0, i - 1);
     await deleteNoteLine(i);
   };
 
   /**
-   * Moves the active line focus up or down, skipping hidden lines.
+   * Moves the active line focus up or down.
    */
   const navigateLines = (i: number, direction: 'up' | 'down') => {
     let nextIndex = direction === 'up' ? i - 1 : i + 1;
-
-    while (
-      nextIndex >= 0 &&
-      nextIndex < lines.length &&
-      isMetadataLine(nextIndex)
-    ) {
-      nextIndex = direction === 'up' ? nextIndex - 1 : nextIndex + 1;
-    }
 
     if (nextIndex >= 0 && nextIndex < lines.length) {
       activeIndex = nextIndex;
@@ -175,6 +214,19 @@
    * Coordinates keyboard shortcuts for line editing and navigation.
    */
   const handleKeyDown = async (e: KeyboardEvent, i: number) => {
+    // Detect Slash Command: "/something" + Enter
+    if (e.key === 'Enter' && lines[i].markdown.startsWith('/')) {
+      const command = lines[i].markdown.slice(1).trim();
+      if (command) {
+        e.preventDefault();
+        // Clear the current line before jumping/creating
+        lines[i].markdown = '';
+        await updateNoteLine(i, '');
+        await handleJump(command);
+        return;
+      }
+    }
+
     switch (e.key) {
       case 'Enter':
         e.preventDefault();
@@ -223,19 +275,18 @@
 <div class="note-container">
   <NoteHeader {noteContent} />
   {#each lines as line, i (i)}
-    {#if !isMetadataLine(i)}
-      <NoteLine
-        bind:markdown={line.markdown}
-        isActive={activeIndex === i}
-        onActivate={() => (activeIndex = i)}
-        onDeactivate={(e: FocusEvent) => {
-          const target = e.relatedTarget as HTMLElement;
-          if (!target?.closest('.note-container')) activeIndex = null;
-        }}
-        onChange={(markdown) => handleLineChange(i, markdown)}
-        onKeyDown={(e) => handleKeyDown(e, i)}
-      />
-    {/if}
+    <NoteLine
+      bind:markdown={line.markdown}
+      sectionShortcut={line.sectionShortcut}
+      isActive={activeIndex === i}
+      onActivate={() => (activeIndex = i)}
+      onDeactivate={(e: FocusEvent) => {
+        const target = e.relatedTarget as HTMLElement;
+        if (!target?.closest('.note-container')) activeIndex = null;
+      }}
+      onChange={(markdown) => handleLineChange(i, markdown)}
+      onKeyDown={(e) => handleKeyDown(e, i)}
+    />
   {/each}
 </div>
 

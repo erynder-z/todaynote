@@ -1,7 +1,22 @@
 //! Transient state for the active note being edited.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+/// Represents a named block or section within a note, typically defined by a [#] marker.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NoteSection {
+    /// The display name of the section (e.g., "Work").
+    pub name: String,
+    /// The absolute line index where the section header starts.
+    pub start_line: usize,
+    /// The absolute line index where the section ends (exclusive).
+    pub end_line: usize,
+    /// The header level (1 for [#], 2 for [##], etc.).
+    pub level: usize,
+}
 
 /// Represents an active note session, maintaining an in-memory
 /// representation of the file's lines for real-time editing.
@@ -12,6 +27,8 @@ pub struct NoteSession {
     pub lines: Vec<String>,
     /// The start and end indices (inclusive) of the YAML frontmatter block.
     pub frontmatter_range: Option<(usize, usize)>,
+    /// List of detected sections in the note.
+    pub sections: Vec<NoteSection>,
 }
 
 impl NoteSession {
@@ -21,6 +38,7 @@ impl NoteSession {
             path: None,
             lines: Vec::new(),
             frontmatter_range: None,
+            sections: Vec::new(),
         }
     }
 
@@ -29,11 +47,12 @@ impl NoteSession {
         self.path = Some(path);
         self.lines = content.split('\n').map(|s| s.to_string()).collect();
         self.detect_frontmatter();
+        self.detect_sections();
     }
 
     /// Detects YAML frontmatter (delimited by '---' on the first line and another '---').
     pub fn detect_frontmatter(&mut self) {
-        if self.lines.len() < 2 {
+        if self.lines.is_empty() {
             self.frontmatter_range = None;
             return;
         }
@@ -47,6 +66,39 @@ impl NoteSession {
             }
         }
         self.frontmatter_range = None;
+    }
+    /// Scans the lines to identify sections based on [#] markers.
+    /// Marker format: [#] Header Name
+    pub fn detect_sections(&mut self) {
+        self.sections.clear();
+        let content_start = self.get_content_start_index();
+
+        for i in content_start..self.lines.len() {
+            let line = &self.lines[i];
+            if line.starts_with("[#") {
+                if let Some(close_bracket) = line.find(']') {
+                    let level_str = &line[1..close_bracket];
+                    if level_str.chars().all(|c| c == '#') {
+                        let level = level_str.len();
+                        let name = line[close_bracket + 1..].trim().to_string();
+
+                        if !name.is_empty() {
+                            // Update previous section's end_line
+                            if let Some(prev) = self.sections.last_mut() {
+                                prev.end_line = i;
+                            }
+
+                            self.sections.push(NoteSection {
+                                name,
+                                start_line: i,
+                                end_line: self.lines.len(),
+                                level,
+                            });
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// Ensures that the frontmatter block exists.
@@ -90,6 +142,7 @@ impl NoteSession {
             if index == 0 || self.frontmatter_range.is_some() {
                 self.detect_frontmatter();
             }
+            self.detect_sections();
         }
     }
 
@@ -98,6 +151,7 @@ impl NoteSession {
         if index <= self.lines.len() {
             self.lines.insert(index, content);
             self.detect_frontmatter();
+            self.detect_sections();
         }
     }
 
@@ -106,7 +160,49 @@ impl NoteSession {
         if index < self.lines.len() && self.lines.len() > 1 {
             self.lines.remove(index);
             self.detect_frontmatter();
+            self.detect_sections();
         }
+    }
+
+    /// Returns the index where the actual content (after frontmatter) starts.
+    pub fn get_content_start_index(&self) -> usize {
+        match self.frontmatter_range {
+            Some((_, end)) => end + 1,
+            None => 0,
+        }
+    }
+
+    /// Maps a relative index (from the editor's perspective) to the absolute line index.
+    pub fn to_absolute_index(&self, relative_index: usize) -> usize {
+        self.get_content_start_index() + relative_index
+    }
+
+    /// Returns a slice of lines that represent the actual content (excluding frontmatter).
+    pub fn get_content_lines(&self) -> Vec<String> {
+        let start = self.get_content_start_index();
+        if start < self.lines.len() {
+            self.lines[start..].to_vec()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Replaces the content of a specific line in the session using a relative index.
+    pub fn update_content_line(&mut self, relative_index: usize, content: String) {
+        let abs_index = self.to_absolute_index(relative_index);
+        self.update_line(abs_index, content);
+    }
+
+    /// Inserts a new line at the specified relative index.
+    pub fn insert_content_line(&mut self, relative_index: usize, content: String) {
+        let abs_index = self.to_absolute_index(relative_index);
+        self.insert_line(abs_index, content);
+    }
+
+    /// Removes a specific line from the session using a relative index.
+    pub fn delete_content_line(&mut self, relative_index: usize) {
+        let abs_index = self.to_absolute_index(relative_index);
+        self.delete_line(abs_index);
     }
 
     /// Reconstructs the full note content by joining the lines with newlines.

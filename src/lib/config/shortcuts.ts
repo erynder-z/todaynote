@@ -30,6 +30,12 @@ export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 		primary: true,
 		description: "Focus last line",
 	},
+	jumpByNumber: {
+		key: "1,2,3,4,5,6,7,8,9",
+		primary: true,
+		secondary: true,
+		description: "Jump to section 1-9",
+	},
 };
 
 export const tagSuggestionShortcuts = {

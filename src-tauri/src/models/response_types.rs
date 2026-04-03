@@ -1,6 +1,6 @@
 //! Serializable data structures for frontend communication.
 
-use crate::models::note_session::NoteSession;
+use crate::models::note_session::{NoteSection, NoteSession};
 use crate::services::note_manager::NoteManager;
 use crate::services::tag_manager::TagManager;
 use serde::{Deserialize, Serialize};
@@ -88,7 +88,8 @@ pub struct NoteMetadata {
 pub struct NoteContentResponse {
     pub lines: Vec<String>,
     pub metadata: NoteMetadata,
-    pub metadata_range: Option<(usize, usize)>,
+    pub sections: Vec<NoteSection>,
+    pub target_index: Option<usize>,
 }
 
 impl NoteContentResponse {
@@ -97,6 +98,16 @@ impl NoteContentResponse {
         session: &NoteSession,
         note_manager: &NoteManager,
         tag_manager: &TagManager,
+    ) -> Self {
+        Self::from_session_with_target(session, note_manager, tag_manager, None)
+    }
+
+    /// Helper to create a NoteContentResponse with a specific focus target.
+    pub fn from_session_with_target(
+        session: &NoteSession,
+        note_manager: &NoteManager,
+        tag_manager: &TagManager,
+        target_abs_index: Option<usize>,
     ) -> Self {
         let filename = session
             .path
@@ -109,14 +120,45 @@ impl NoteContentResponse {
         let tags = tag_manager.get_tags_from_session(session);
         let raw_metadata = session.get_metadata();
 
+        let content_start = session.get_content_start_index();
+
+        // Map absolute section indices to relative content indices
+        let sections = session
+            .sections
+            .iter()
+            .map(|s| {
+                let mut s_rel = s.clone();
+                s_rel.start_line = if s.start_line >= content_start {
+                    s.start_line - content_start
+                } else {
+                    0
+                };
+                s_rel.end_line = if s.end_line >= content_start {
+                    s.end_line - content_start
+                } else {
+                    0
+                };
+                s_rel
+            })
+            .collect();
+
+        let target_index = target_abs_index.map(|abs| {
+            if abs >= content_start {
+                abs - content_start
+            } else {
+                0
+            }
+        });
+
         Self {
-            lines: session.lines.clone(),
+            lines: session.get_content_lines(),
             metadata: NoteMetadata {
                 formatted_date,
                 tags,
                 raw: raw_metadata,
             },
-            metadata_range: session.frontmatter_range,
+            sections,
+            target_index,
         }
     }
 }

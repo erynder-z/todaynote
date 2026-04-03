@@ -6,12 +6,14 @@ export type ShortcutAction =
 	| "toggleSettings"
 	| "manageTags"
 	| "closePopup"
-	| "focusLastLine";
+	| "focusLastLine"
+	| "jumpByNumber";
 
 export type ShortcutConfig = {
 	key: string;
 	primary?: boolean;
 	secondary?: boolean;
+	shift?: boolean;
 	description?: string;
 };
 

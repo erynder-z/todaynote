@@ -25,6 +25,8 @@ use services::tag_manager::TagManager;
 use std::sync::Mutex;
 use utils::window::show_window;
 
+use crate::commands::notes::jump_to_section;
+
 /// The main entry point of the application's core logic.
 ///
 /// This function:
@@ -71,6 +73,7 @@ pub fn run() {
             update_note_line,
             insert_note_line,
             delete_note_line,
+            jump_to_section,
             initialize_app,
             show_window,
             search_notes,

@@ -121,17 +121,27 @@ class InputManager {
 				shortcut.secondary === undefined ||
 				!!shortcut.secondary === this.secondaryPressed;
 
-			const matchesKey = e.key.toLowerCase() === shortcut.key.toLowerCase();
+			const matchesShift =
+				shortcut.shift === undefined || !!shortcut.shift === e.shiftKey;
 
-			const otherModifiers = e.shiftKey;
+			const keys = shortcut.key.split(",");
+			const matchesKey = keys.some((k) => {
+				const lowerK = k.trim().toLowerCase();
+				return (
+					e.key.toLowerCase() === lowerK ||
+					e.code.toLowerCase() === lowerK ||
+					e.code.toLowerCase() === `digit${lowerK}`
+				);
+			});
 
-			if (matchesKey && matchesPrimary && matchesSecondary && !otherModifiers) {
+			if (matchesKey && matchesPrimary && matchesSecondary && matchesShift) {
 				// If typing in an input, ONLY allow shortcuts that use a modifier
 				// or are specifically the Escape key.
 				if (isInput) {
 					if (
 						!this.primaryPressed &&
 						!this.secondaryPressed &&
+						!e.shiftKey &&
 						e.key !== "Escape"
 					)
 						continue;
