@@ -14,13 +14,10 @@ import { inputManager } from "./input.svelte";
  * Handles line management, auto-saving, and keyboard navigation.
  */
 export class EditorStore {
-	// --- State ---
 	lines = $state<NoteLineData[]>([]);
 	activeIndex = $state<number | null>(null);
 	noteContent = $state<NoteContentResponse | null>(null);
 	notePath = $state<string | null>(null);
-
-	private lastLoadedPath: string | null = null;
 	private changedLineIndex = $state<number | null>(null);
 	private autoSaveTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -31,15 +28,18 @@ export class EditorStore {
 	 * Handles loading new notes and resetting state.
 	 */
 	sync(noteContent: NoteContentResponse | null, notePath: string | null) {
+		const pathChanged = this.notePath !== notePath;
+		const contentChanged = this.noteContent !== noteContent;
+
 		this.noteContent = noteContent;
 		this.notePath = notePath;
 
-		if (this.notePath !== this.lastLoadedPath) {
+		if (pathChanged) {
 			this.loadLines();
 			this.focusLastLine();
-
-			this.lastLoadedPath = this.notePath;
 			this.changedLineIndex = null;
+		} else if (contentChanged) {
+			this.loadLines();
 		}
 	}
 
@@ -125,12 +125,8 @@ export class EditorStore {
 	 */
 	handleLineSwitch(newIndex: number | null) {
 		untrack(() => {
-			if (
-				this.changedLineIndex !== null &&
-				this.changedLineIndex !== newIndex
-			) {
+			if (this.changedLineIndex !== null && this.changedLineIndex !== newIndex)
 				this.flush(this.changedLineIndex);
-			}
 		});
 	}
 
@@ -172,9 +168,8 @@ export class EditorStore {
 
 	private navigate(i: number, direction: "up" | "down") {
 		const nextIndex = direction === "up" ? i - 1 : i + 1;
-		if (nextIndex >= 0 && nextIndex < this.lines.length) {
+		if (nextIndex >= 0 && nextIndex < this.lines.length)
 			this.activeIndex = nextIndex;
-		}
 	}
 
 	/**

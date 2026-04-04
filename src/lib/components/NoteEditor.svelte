@@ -22,7 +22,6 @@
    */
   const handleJumpResult = (updated: NoteContentResponse) => {
     noteContent = updated;
-    editor.loadLines();
 
     if (updated.targetIndex !== undefined) {
       setTimeout(() => (editor.activeIndex = updated.targetIndex ?? null), 10);
