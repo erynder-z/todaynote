@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { NoteContentResponse } from "$lib/types/notes";
+import type { NoteContentResponse, NoteLineData } from "$lib/types/notes";
 import { MarkdownRenderCache } from "./renderCache";
 
 const renderCache = new MarkdownRenderCache<string, string>(500);
@@ -160,4 +160,54 @@ export const getTagSuggestions = async (query: string) => {
 		console.error("Error getting tag suggestions:", error);
 		return [];
 	}
+};
+
+/**
+ * Executes a slash command (e.g., "/Something") by clearing the line at the index
+ * and jumping to the specified section. Returns the updated note content.
+ */
+export const executeSlashCommand = async (index: number, text: string) => {
+	if (!text.trim().startsWith("/")) return null;
+
+	const command = text.trim().slice(1).trim();
+	if (!command) return null;
+
+	try {
+		await updateNoteLine(index, "");
+
+		const updated = await jumpToSection(command);
+		return updated;
+	} catch (error) {
+		console.error(`Error executing slash command "${command}":`, error);
+		return null;
+	}
+};
+
+/**
+ * Transforms raw note content into the NoteLineData format for the editor.
+ * This includes mapping headers to their corresponding keyboard shortcuts.
+ */
+export const mapNoteToEditorLines = (
+	note: NoteContentResponse | null,
+	primary: string,
+	secondary: string,
+): NoteLineData[] => {
+	if (!note) return [];
+
+	return note.lines.map((lineContent, i) => {
+		const section = note.sections.find((s) => s.startLine === i);
+		let shortcut = "";
+		if (section) {
+			const sectionIdx = note.sections.indexOf(section);
+			if (sectionIdx !== undefined && sectionIdx < 9) {
+				shortcut = `${secondary}${primary}${sectionIdx + 1}`;
+			}
+		}
+
+		return {
+			markdown: lineContent,
+			html: "",
+			sectionShortcut: shortcut,
+		};
+	});
 };
