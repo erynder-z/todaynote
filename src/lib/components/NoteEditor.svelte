@@ -19,7 +19,7 @@
   let textarea: HTMLTextAreaElement | null = $state(null);
 
   /**
-   * Updates the UI state after a jump or slash command.
+   * Updates the UI state after a jump.
    */
   const handleJumpResult = (updated: NoteContentResponse) => {
     noteContent = updated;
@@ -51,9 +51,8 @@
    * Jumps to a section based on its index (0-8).
    */
   const jumpToSectionByIndex = async (idx: number) => {
-    if (noteContent?.sections?.[idx]?.name) {
-      await handleJump(noteContent.sections[idx].name);
-    }
+    const section = editor.sections[idx];
+    if (section?.name) await handleJump(section.name);
   };
 
   useShortcuts({
@@ -109,11 +108,6 @@
     oninput={(e) => {
       editor.updateContent(e.currentTarget.value);
       autoResize();
-    }}
-    onkeydown={async (e) => {
-      if (e.key === 'Enter') {
-        await editor.handleKeyDown(e);
-      }
     }}
     spellcheck="false"
     placeholder="Start writing..."

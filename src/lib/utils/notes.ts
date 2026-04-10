@@ -110,11 +110,13 @@ export const getTagSuggestions = async (query: string) => {
 
 /**
  * Asks the backend to find or create a section and returns the updated note.
+ * Pass the current content to ensure unsaved edits are not lost.
  */
-export const jumpToSection = async (name: string) => {
+export const jumpToSection = async (name: string, currentContent: string) => {
 	try {
 		const content = (await invoke("jump_to_section", {
 			name,
+			currentContent,
 		})) as NoteContentResponse;
 		return content;
 	} catch (error) {

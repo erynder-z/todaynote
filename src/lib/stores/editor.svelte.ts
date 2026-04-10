@@ -1,6 +1,10 @@
 import { untrack } from "svelte";
-import type { NoteContentResponse } from "$lib/types/notes";
-import { jumpToSection, saveNoteContent } from "$lib/utils/notes";
+import type { NoteContentResponse, NoteSection } from "$lib/types/notes";
+import {
+	detectSections,
+	jumpToSection,
+	saveNoteContent,
+} from "$lib/utils/notes";
 
 /**
  * Manages the state and logic for the Note Editor.
@@ -19,6 +23,11 @@ export class EditorStore {
 	// Callback for section jumps
 	onJump: (updated: NoteContentResponse) => void = () => {};
 
+	// Derived: sections detected from current content (always up-to-date)
+	get sections(): NoteSection[] {
+		return detectSections(this.content);
+	}
+
 	// --- Initialization ---
 
 	/**
@@ -26,15 +35,18 @@ export class EditorStore {
 	 */
 	sync(noteContent: NoteContentResponse | null, notePath: string | null) {
 		const pathChanged = untrack(() => this.notePath) !== notePath;
-		const contentChanged = untrack(() => this.noteContent) !== noteContent;
+		const currentContent = untrack(() => this.content);
 
 		this.notePath = notePath;
 		this.noteContent = noteContent;
 
-		if (pathChanged || contentChanged) {
+		if (pathChanged) {
 			this.content = noteContent?.content ?? "";
 			this.hasChanges = false;
-			this.cursorPosition = null;
+		} else if (noteContent?.content && currentContent !== noteContent.content) {
+			// External content change (e.g., tag update) - sync content
+			this.content = noteContent.content;
+			this.hasChanges = false;
 		}
 	}
 
@@ -53,19 +65,23 @@ export class EditorStore {
 	 * Jumps to a section by name via the backend and updates cursor position.
 	 */
 	async jumpToSection(name: string) {
-		const updated = await jumpToSection(name);
+		const updated = await jumpToSection(name, this.content);
 		if (updated) {
 			this.content = updated.content;
 
-			// Calculate cursor position: end of section content (content-relative line index)
+			// Calculate cursor position: end of last non-empty line in this section
 			const section = updated.sections.find((s) => s.name === name);
 			if (section) {
 				const lines = updated.content.split("\n");
-				const endLine = section.endLine;
-				// Calculate character position for cursor (start of endLine)
+				// Walk backwards from endLine-1 to find the last non-empty line
+				let targetLine = section.endLine - 1;
+				while (targetLine > 0 && !(lines[targetLine] ?? "").trim())
+					targetLine--;
+
+				// Sum lengths of all lines up to and including targetLine, plus newlines
 				let charPos = 0;
-				for (let i = 0; i < endLine && i < lines.length; i++)
-					charPos += lines[i].length + 1; // +1 for newline
+				for (let i = 0; i <= targetLine; i++)
+					charPos += (lines[i]?.length || 0) + 1;
 
 				this.cursorPosition = charPos;
 			}
@@ -92,30 +108,5 @@ export class EditorStore {
 		this.autoSaveTimeout = setTimeout(() => {
 			untrack(() => this.flush());
 		}, 500);
-	}
-
-	// --- Keyboard Handling ---
-
-	/**
-	 * Handles keyboard events for the editor.
-	 */
-	async handleKeyDown(e: KeyboardEvent): Promise<boolean> {
-		// Handle slash commands (e.g., "/SectionName")
-		if (e.key === "Enter" && this.content.endsWith("/")) {
-			const lines = this.content.split("\n");
-			const lastLine = lines[lines.length - 1]?.trim() || "";
-
-			if (lastLine.startsWith("/")) {
-				const command = lastLine.slice(1).trim();
-				if (command) {
-					lines.pop(); // Remove the slash command line
-					this.content = lines.join("\n");
-					await this.jumpToSection(command);
-					return true;
-				}
-			}
-		}
-
-		return false;
 	}
 }

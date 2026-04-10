@@ -9,13 +9,40 @@ use std::path::PathBuf;
 use tauri::State;
 
 /// Saves the complete content of a note to the specified path.
+///
+/// The `content` parameter is the content portion (after frontmatter).
+/// This function preserves frontmatter by reading it from disk and prepending it.
 #[tauri::command]
 pub async fn save_note_content(
     path: String,
     content: String,
     _state: State<'_, AppState>,
 ) -> Result<(), String> {
-    fs::write(PathBuf::from(path), content).map_err(|e| format!("Failed to save note: {}", e))
+    let path_buf = PathBuf::from(&path);
+
+    // Read existing file to extract frontmatter
+    let file_content = fs::read_to_string(&path_buf).unwrap_or_default();
+    let lines: Vec<&str> = file_content.split('\n').collect();
+
+    let mut content_start = 0;
+    if lines.first().map(|l| l.trim()) == Some("---") {
+        for (i, line) in lines.iter().enumerate().skip(1) {
+            if line.trim() == "---" {
+                content_start = i + 1;
+                break;
+            }
+        }
+    }
+
+    // Write frontmatter + new content
+    let full_content = if content_start > 0 {
+        let frontmatter = lines[..content_start].join("\n");
+        format!("{}\n{}", frontmatter, content)
+    } else {
+        content
+    };
+
+    fs::write(path_buf, full_content).map_err(|e| format!("Failed to save note: {}", e))
 }
 
 /// Updates the content of a specific line in the current note session.
@@ -162,13 +189,51 @@ pub async fn list_notes(state: State<'_, AppState>) -> Result<Vec<FormattedNote>
 ///
 /// Jumps to the end of the section (ready to type). If the section does not exist,
 /// it is appended to the end of the note.
+///
+/// The `current_content` parameter should be the content portion from the frontend
+/// (excluding frontmatter). The backend reconstructs the full note by reading the
+/// frontmatter from disk.
 #[tauri::command]
 pub async fn jump_to_section(
     name: String,
+    current_content: String,
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     let mut session = state.note_session.lock().unwrap();
-    let _content_start = session.get_content_start_index();
+
+    let path = session.path.clone();
+    if let Some(path) = &path {
+        // Read the file to get frontmatter
+        let file_content =
+            fs::read_to_string(path).map_err(|e| format!("Failed to read note: {}", e))?;
+
+        // Split into frontmatter and content
+        let lines: Vec<&str> = file_content.split('\n').collect();
+        let mut content_start = 0;
+
+        if lines.first().map(|l| l.trim()) == Some("---") {
+            for (i, line) in lines.iter().enumerate().skip(1) {
+                if line.trim() == "---" {
+                    content_start = i + 1;
+                    break;
+                }
+            }
+        }
+
+        // Reconstruct full content: frontmatter + new content from frontend
+        let frontmatter_lines: String = lines[..content_start].join("\n");
+        let full_content = if content_start > 0 {
+            // Frontmatter exists
+            format!("{}\n{}", frontmatter_lines, current_content)
+        } else {
+            // No frontmatter in file
+            current_content.clone()
+        };
+
+        session.load(path.clone(), full_content);
+    } else {
+        return Err("No note session loaded".to_string());
+    }
 
     let section_idx = session.sections.iter().position(|s| s.name == name);
     let target_abs_idx = match section_idx {
@@ -203,9 +268,6 @@ pub async fn jump_to_section(
         let full_content = session.get_full_content();
         fs::write(path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
     }
-
-    // Re-detect sections after modification
-    session.detect_sections();
 
     let note_manager = state.note_manager.lock().unwrap();
     let tag_manager = state.tag_manager.lock().unwrap();
