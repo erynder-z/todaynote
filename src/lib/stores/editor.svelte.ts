@@ -16,17 +16,11 @@ export class EditorStore {
 	notePath = $state<string | null>(null);
 	private hasChanges = $state<boolean>(false);
 	private autoSaveTimeout: ReturnType<typeof setTimeout> | null = null;
-
-	// Cursor positioning after section jump
 	cursorPosition = $state<number | null>(null);
+	sections = $state<NoteSection[]>([]);
 
 	// Callback for section jumps
 	onJump: (updated: NoteContentResponse) => void = () => {};
-
-	// Derived: sections detected from current content (always up-to-date)
-	get sections(): NoteSection[] {
-		return detectSections(this.content);
-	}
 
 	// --- Initialization ---
 
@@ -43,10 +37,12 @@ export class EditorStore {
 		if (pathChanged) {
 			this.content = noteContent?.content ?? "";
 			this.hasChanges = false;
+			this.refreshSections();
 		} else if (noteContent?.content && currentContent !== noteContent.content) {
 			// External content change (e.g., tag update) - sync content
 			this.content = noteContent.content;
 			this.hasChanges = false;
+			this.sections = noteContent.sections ?? [];
 		}
 	}
 
@@ -62,12 +58,28 @@ export class EditorStore {
 	}
 
 	/**
+	 * Triggers backend section detection. Call this when Enter is pressed
+	 * (since new sections require a new line).
+	 */
+	async onEnterPressed() {
+		this.refreshSections();
+	}
+
+	private refreshSections() {
+		const content = this.content;
+		detectSections(content).then((sections) => {
+			this.sections = sections;
+		});
+	}
+
+	/**
 	 * Jumps to a section by name via the backend and updates cursor position.
 	 */
 	async jumpToSection(name: string) {
 		const updated = await jumpToSection(name, this.content);
 		if (updated) {
 			this.content = updated.content;
+			this.sections = updated.sections;
 
 			// Calculate cursor position: end of last non-empty line in this section
 			const section = updated.sections.find((s) => s.name === name);

@@ -3,10 +3,69 @@
 //! This module provides functions for reading, writing, and manipulating note files, as well as managing the current note editing session.
 
 use crate::models::app_state::AppState;
+use crate::models::note_session::{NoteSection, NoteSession};
 use crate::models::response_types::{FormattedNote, NoteContentResponse, SearchResult};
 use std::fs;
 use std::path::PathBuf;
 use tauri::State;
+
+/// Extracts frontmatter from file content and returns (frontmatter_lines_count, frontmatter_string).
+/// If no frontmatter exists, returns (0, String::new()).
+fn extract_frontmatter(file_content: &str) -> (usize, String) {
+    let lines: Vec<&str> = file_content.split('\n').collect();
+
+    if lines.first().map(|l| l.trim()) != Some("---") {
+        return (0, String::new());
+    }
+
+    for (i, line) in lines.iter().enumerate().skip(1) {
+        if line.trim() == "---" {
+            let count = i + 1;
+            let frontmatter = lines[..count].join("\n");
+            return (count, frontmatter);
+        }
+    }
+
+    (0, String::new())
+}
+
+/// Reconstructs full note content by prepending frontmatter from disk to the given content.
+fn reconstruct_full_content(path: &PathBuf, content: &str) -> Result<String, String> {
+    let file_content = fs::read_to_string(path).unwrap_or_default();
+    let (content_start, frontmatter) = extract_frontmatter(&file_content);
+
+    if content_start > 0 {
+        Ok(format!("{}\n{}", frontmatter, content))
+    } else {
+        Ok(content.to_string())
+    }
+}
+
+/// Returns the target line index for jumping to the end of an existing section.
+fn target_line_for_section(session: &mut NoteSession, idx: usize) -> usize {
+    let end_line = session.sections[idx].end_line;
+
+    if end_line > 0 {
+        let last_content_line_idx = end_line - 1;
+        if !session.lines[last_content_line_idx].trim().is_empty() {
+            session.insert_line(end_line, "".to_string());
+            end_line
+        } else {
+            last_content_line_idx
+        }
+    } else {
+        end_line
+    }
+}
+
+/// Creates a new section heading at the end of the note and returns its line index.
+fn create_section(session: &mut NoteSession, name: &str) -> usize {
+    let last_idx = session.lines.len();
+    session.insert_line(last_idx, format!("# {}", name));
+    let new_line_idx = last_idx + 1;
+    session.insert_line(new_line_idx, "".to_string());
+    new_line_idx
+}
 
 /// Saves the complete content of a note to the specified path.
 ///
@@ -19,29 +78,7 @@ pub async fn save_note_content(
     _state: State<'_, AppState>,
 ) -> Result<(), String> {
     let path_buf = PathBuf::from(&path);
-
-    // Read existing file to extract frontmatter
-    let file_content = fs::read_to_string(&path_buf).unwrap_or_default();
-    let lines: Vec<&str> = file_content.split('\n').collect();
-
-    let mut content_start = 0;
-    if lines.first().map(|l| l.trim()) == Some("---") {
-        for (i, line) in lines.iter().enumerate().skip(1) {
-            if line.trim() == "---" {
-                content_start = i + 1;
-                break;
-            }
-        }
-    }
-
-    // Write frontmatter + new content
-    let full_content = if content_start > 0 {
-        let frontmatter = lines[..content_start].join("\n");
-        format!("{}\n{}", frontmatter, content)
-    } else {
-        content
-    };
-
+    let full_content = reconstruct_full_content(&path_buf, &content)?;
     fs::write(path_buf, full_content).map_err(|e| format!("Failed to save note: {}", e))
 }
 
@@ -200,68 +237,18 @@ pub async fn jump_to_section(
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     let mut session = state.note_session.lock().unwrap();
-
     let path = session.path.clone();
+
     if let Some(path) = &path {
-        // Read the file to get frontmatter
-        let file_content =
-            fs::read_to_string(path).map_err(|e| format!("Failed to read note: {}", e))?;
-
-        // Split into frontmatter and content
-        let lines: Vec<&str> = file_content.split('\n').collect();
-        let mut content_start = 0;
-
-        if lines.first().map(|l| l.trim()) == Some("---") {
-            for (i, line) in lines.iter().enumerate().skip(1) {
-                if line.trim() == "---" {
-                    content_start = i + 1;
-                    break;
-                }
-            }
-        }
-
-        // Reconstruct full content: frontmatter + new content from frontend
-        let frontmatter_lines: String = lines[..content_start].join("\n");
-        let full_content = if content_start > 0 {
-            // Frontmatter exists
-            format!("{}\n{}", frontmatter_lines, current_content)
-        } else {
-            // No frontmatter in file
-            current_content.clone()
-        };
-
+        let full_content = reconstruct_full_content(path, &current_content)?;
         session.load(path.clone(), full_content);
     } else {
         return Err("No note session loaded".to_string());
     }
 
-    let section_idx = session.sections.iter().position(|s| s.name == name);
-    let target_abs_idx = match section_idx {
-        Some(idx) => {
-            // Section exists, jump to the end of this section (before the next heading)
-            let end_line = session.sections[idx].end_line;
-
-            // If the line before end_line is not empty, insert a blank line for spacing
-            if end_line > 0 {
-                let last_content_line_idx = end_line - 1;
-                if !session.lines[last_content_line_idx].trim().is_empty() {
-                    session.insert_line(end_line, "".to_string());
-                    end_line
-                } else {
-                    last_content_line_idx
-                }
-            } else {
-                end_line
-            }
-        }
-        None => {
-            // Section doesn't exist, create it at the end with a # heading
-            let last_idx = session.lines.len();
-            session.insert_line(last_idx, format!("# {}", name));
-            let new_line_idx = last_idx + 1;
-            session.insert_line(new_line_idx, "".to_string());
-            new_line_idx
-        }
+    let target_abs_idx = match session.sections.iter().position(|s| s.name == name) {
+        Some(idx) => target_line_for_section(&mut session, idx),
+        None => create_section(&mut session, &name),
     };
 
     if let Some(path) = &session.path {
@@ -278,4 +265,32 @@ pub async fn jump_to_section(
         &tag_manager,
         Some(target_abs_idx),
     ))
+}
+
+/// Detects top-level headings (`# `) in markdown content and returns them as sections.
+#[tauri::command]
+pub async fn detect_sections(content: String) -> Result<Vec<NoteSection>, String> {
+    let lines: Vec<&str> = content.split('\n').collect();
+    let mut sections: Vec<NoteSection> = Vec::new();
+
+    for (i, line) in lines.iter().enumerate() {
+        if line.starts_with("# ") && !line.starts_with("## ") {
+            let name = line[2..].trim().to_string();
+            if !name.is_empty() {
+                // Update previous section's end_line
+                if let Some(prev) = sections.last_mut() {
+                    prev.end_line = i;
+                }
+
+                sections.push(NoteSection {
+                    name,
+                    level: 1,
+                    start_line: i,
+                    end_line: lines.len(),
+                });
+            }
+        }
+    }
+
+    Ok(sections)
 }

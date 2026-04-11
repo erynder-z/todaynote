@@ -126,42 +126,27 @@ export const jumpToSection = async (name: string, currentContent: string) => {
 };
 
 /**
- * Detects top-level headings in markdown content and returns them as sections.
- * Only matches `# ` (single #), not `##` or `###`.
+ * Asks the backend to detect sections in the given markdown content.
  */
-export const detectSections = (
+export const detectSections = async (
 	content: string,
-): Array<{
-	name: string;
-	level: number;
-	startLine: number;
-	endLine: number;
-}> => {
-	const lines = content.split("\n");
-	const sections: Array<{
+): Promise<
+	Array<{
 		name: string;
 		level: number;
 		startLine: number;
 		endLine: number;
-	}> = [];
-
-	for (let i = 0; i < lines.length; i++) {
-		// Only match top-level headings (# followed by space, not ##)
-		if (lines[i]?.startsWith("# ") && !lines[i].startsWith("##")) {
-			const name = lines[i].slice(2).trim();
-			if (name) {
-				// Update previous section's endLine
-				if (sections.length > 0) sections[sections.length - 1].endLine = i;
-
-				sections.push({
-					level: 1,
-					name,
-					startLine: i,
-					endLine: lines.length,
-				});
-			}
-		}
+	}>
+> => {
+	try {
+		return (await invoke("detect_sections", { content })) as Array<{
+			name: string;
+			level: number;
+			startLine: number;
+			endLine: number;
+		}>;
+	} catch (error) {
+		console.error("Error detecting sections:", error);
+		return [];
 	}
-
-	return sections;
 };

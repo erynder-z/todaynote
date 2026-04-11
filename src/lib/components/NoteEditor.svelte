@@ -109,6 +109,9 @@
       editor.updateContent(e.currentTarget.value);
       autoResize();
     }}
+    onkeydown={async (e) => {
+      if (e.key === 'Enter') editor.onEnterPressed();
+    }}
     spellcheck="false"
     placeholder="Start writing..."
   ></textarea>
