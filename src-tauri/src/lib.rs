@@ -7,9 +7,9 @@ use commands::folder::validate_folder;
 use commands::i18n::get_translations;
 use commands::markdown::render_markdown;
 use commands::notes::{
-    check_todays_note_exists, create_todays_note, delete_note_line, get_today_note_path,
-    insert_note_line, list_notes, read_note_content, save_note_content, search_notes,
-    update_note_line,
+    check_todays_note_exists, create_todays_note, delete_note_line, detect_sections,
+    get_today_note_path, insert_note_line, jump_to_section, list_notes, read_note_content,
+    save_note_content, search_notes, update_note_line,
 };
 use commands::settings::{
     get_config, set_locale, set_notes_folder, set_remember_window_size, switch_notes_folder,
@@ -24,8 +24,6 @@ use services::note_manager::NoteManager;
 use services::tag_manager::TagManager;
 use std::sync::Mutex;
 use utils::window::show_window;
-
-use crate::commands::notes::jump_to_section;
 
 /// The main entry point of the application's core logic.
 ///
@@ -66,6 +64,7 @@ pub fn run() {
             remove_note_tag,
             check_todays_note_exists,
             create_todays_note,
+            detect_sections,
             get_today_note_path,
             read_note_content,
             render_markdown,

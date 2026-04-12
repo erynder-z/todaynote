@@ -1,11 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { NoteContentResponse, NoteLineData } from "$lib/types/notes";
+import type { NoteContentResponse } from "$lib/types/notes";
 import { MarkdownRenderCache } from "./renderCache";
 
 const renderCache = new MarkdownRenderCache<string, string>(500);
 
 /**
- * Reads the full text content of a note file from the given path.
+ * Reads the full markdown content of a note file from the given path.
  */
 export const readNoteContent = async (path: string) => {
 	try {
@@ -42,7 +42,7 @@ export const renderMarkdown = async (markdown: string) => {
 };
 
 /**
- * Saves the entire content of a note to the specified path.
+ * Saves the entire markdown content of a note to the specified path.
  */
 export const saveNoteContent = async (path: string, content: string) => {
 	try {
@@ -50,45 +50,6 @@ export const saveNoteContent = async (path: string, content: string) => {
 		return true;
 	} catch (error) {
 		console.error(`Error saving note content to ${path}:`, error);
-		return false;
-	}
-};
-
-/**
- * Updates a specific line of the currently active note in the backend.
- */
-export const updateNoteLine = async (index: number, content: string) => {
-	try {
-		await invoke("update_note_line", { index, content });
-		return true;
-	} catch (error) {
-		console.error("Error updating note line:", error);
-		return false;
-	}
-};
-
-/**
- * Inserts a new line into the currently active note at the specified index.
- */
-export const insertNoteLine = async (index: number, content: string) => {
-	try {
-		await invoke("insert_note_line", { index, content });
-		return true;
-	} catch (error) {
-		console.error("Error inserting note line:", error);
-		return false;
-	}
-};
-
-/**
- * Removes a line from the currently active note at the specified index.
- */
-export const deleteNoteLine = async (index: number) => {
-	try {
-		await invoke("delete_note_line", { index });
-		return true;
-	} catch (error) {
-		console.error("Error deleting note line:", error);
 		return false;
 	}
 };
@@ -122,21 +83,6 @@ export const removeNoteTag = async (tag: string) => {
 };
 
 /**
- * Asks the backend to find or create a section and returns the updated note.
- */
-export const jumpToSection = async (name: string) => {
-	try {
-		const content = (await invoke("jump_to_section", {
-			name,
-		})) as NoteContentResponse;
-		return content;
-	} catch (error) {
-		console.error(`Error jumping to section ${name}:`, error);
-		return null;
-	}
-};
-
-/**
  * Retrieves all tags from all notes, sorted by frequency.
  */
 export const getAllTags = async () => {
@@ -163,51 +109,44 @@ export const getTagSuggestions = async (query: string) => {
 };
 
 /**
- * Executes a slash command (e.g., "/Something") by clearing the line at the index
- * and jumping to the specified section. Returns the updated note content.
+ * Asks the backend to find or create a section and returns the updated note.
+ * Pass the current content to ensure unsaved edits are not lost.
  */
-export const executeSlashCommand = async (index: number, text: string) => {
-	if (!text.trim().startsWith("/")) return null;
-
-	const command = text.trim().slice(1).trim();
-	if (!command) return null;
-
+export const jumpToSection = async (name: string, currentContent: string) => {
 	try {
-		await updateNoteLine(index, "");
-
-		const updated = await jumpToSection(command);
-		return updated;
+		const content = (await invoke("jump_to_section", {
+			name,
+			currentContent,
+		})) as NoteContentResponse;
+		return content;
 	} catch (error) {
-		console.error(`Error executing slash command "${command}":`, error);
+		console.error(`Error jumping to section ${name}:`, error);
 		return null;
 	}
 };
 
 /**
- * Transforms raw note content into the NoteLineData format for the editor.
- * This includes mapping headers to their corresponding keyboard shortcuts.
+ * Asks the backend to detect sections in the given markdown content.
  */
-export const mapNoteToEditorLines = (
-	note: NoteContentResponse | null,
-	primary: string,
-	secondary: string,
-): NoteLineData[] => {
-	if (!note) return [];
-
-	return note.lines.map((lineContent, i) => {
-		const section = note.sections.find((s) => s.startLine === i);
-		let shortcut = "";
-		if (section) {
-			const sectionIdx = note.sections.indexOf(section);
-			if (sectionIdx !== undefined && sectionIdx < 9) {
-				shortcut = `${secondary}${primary}${sectionIdx + 1}`;
-			}
-		}
-
-		return {
-			markdown: lineContent,
-			html: "",
-			sectionShortcut: shortcut,
-		};
-	});
+export const detectSections = async (
+	content: string,
+): Promise<
+	Array<{
+		name: string;
+		level: number;
+		startLine: number;
+		endLine: number;
+	}>
+> => {
+	try {
+		return (await invoke("detect_sections", { content })) as Array<{
+			name: string;
+			level: number;
+			startLine: number;
+			endLine: number;
+		}>;
+	} catch (error) {
+		console.error("Error detecting sections:", error);
+		return [];
+	}
 };

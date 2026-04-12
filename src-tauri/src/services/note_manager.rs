@@ -58,7 +58,7 @@ impl NoteManager {
 
         let current_date = utils::date::get_current_date();
         let note_content = format!(
-            "---\ncreated: {}\ntags: []\n---\n\n[#] {}\n",
+            "---\ncreated: {}\ntags: []\n---\n# {}\n",
             current_date, note_header
         );
 

@@ -86,10 +86,9 @@ pub struct NoteMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NoteContentResponse {
-    pub lines: Vec<String>,
+    pub content: String, // Full markdown content
     pub metadata: NoteMetadata,
     pub sections: Vec<NoteSection>,
-    pub target_index: Option<usize>,
 }
 
 impl NoteContentResponse {
@@ -107,7 +106,7 @@ impl NoteContentResponse {
         session: &NoteSession,
         note_manager: &NoteManager,
         tag_manager: &TagManager,
-        target_abs_index: Option<usize>,
+        _target_abs_index: Option<usize>,
     ) -> Self {
         let filename = session
             .path
@@ -126,39 +125,34 @@ impl NoteContentResponse {
         let sections = session
             .sections
             .iter()
-            .map(|s| {
-                let mut s_rel = s.clone();
-                s_rel.start_line = if s.start_line >= content_start {
+            .map(|s| NoteSection {
+                name: s.name.clone(),
+                level: s.level,
+                start_line: if s.start_line >= content_start {
                     s.start_line - content_start
                 } else {
                     0
-                };
-                s_rel.end_line = if s.end_line >= content_start {
+                },
+                end_line: if s.end_line >= content_start {
                     s.end_line - content_start
                 } else {
                     0
-                };
-                s_rel
+                },
             })
             .collect();
 
-        let target_index = target_abs_index.map(|abs| {
-            if abs >= content_start {
-                abs - content_start
-            } else {
-                0
-            }
-        });
+        // Get content lines and join them into a single string
+        let content_lines = session.get_content_lines();
+        let content = content_lines.join("\n");
 
         Self {
-            lines: session.get_content_lines(),
+            content,
             metadata: NoteMetadata {
                 formatted_date,
                 tags,
                 raw: raw_metadata,
             },
             sections,
-            target_index,
         }
     }
 }

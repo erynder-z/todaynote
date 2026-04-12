@@ -3,10 +3,9 @@
    * The main note display component. Displays a note's content in an editable form.
    */
   import { untrack } from 'svelte';
-  import { NoteLine, sessionState, useShortcuts } from '$lib';
+  import { sessionState, useShortcuts } from '$lib';
   import { EditorStore } from '$lib/stores/editor.svelte';
   import type { NoteContentResponse } from '$lib/types/notes';
-  import { jumpToSection } from '$lib/utils/notes';
   import NoteHeader from './NoteHeader.svelte';
 
   let { noteContent = $bindable(), notePath } = $props<{
@@ -17,20 +16,25 @@
   // Initialize the central logic store
   const editor = new EditorStore();
 
+  let textarea: HTMLTextAreaElement | null = $state(null);
+
   /**
-   * Updates the UI state after a jump or slash command.
+   * Updates the UI state after a jump.
    */
   const handleJumpResult = (updated: NoteContentResponse) => {
     noteContent = updated;
 
-    if (updated.targetIndex !== undefined) {
-      setTimeout(() => (editor.activeIndex = updated.targetIndex ?? null), 10);
-    } else {
-      setTimeout(() => {
-        editor.activeIndex = null;
-        editor.focusLastLine();
-      }, 10);
-    }
+    // Set cursor position after content update
+    setTimeout(() => {
+      if (textarea && editor.cursorPosition !== null) {
+        textarea.focus();
+        textarea.setSelectionRange(
+          editor.cursorPosition,
+          editor.cursorPosition,
+        );
+        editor.cursorPosition = null;
+      }
+    }, 10);
   };
 
   // Connect the store's jump event back to the component's bindable props
@@ -40,25 +44,25 @@
    * Triggers a jump to a named section and updates the editor state.
    */
   const handleJump = async (name: string) => {
-    const updated = await jumpToSection(name);
-    if (updated) handleJumpResult(updated);
+    await editor.jumpToSection(name);
   };
 
   /**
    * Jumps to a section based on its index (0-8).
    */
-  const jumpToSectionByIndex = (idx: number) => {
-    if (noteContent?.sections?.[idx]?.name)
-      handleJump(noteContent.sections[idx].name);
+  const jumpToSectionByIndex = async (idx: number) => {
+    const section = editor.sections[idx];
+    if (section?.name) await handleJump(section.name);
   };
 
   useShortcuts({
     focusLastLine: () => {
-      if (sessionState.activePopup === null) editor.focusLastLine();
+      if (sessionState.activePopup === null) {
+        textarea?.focus();
+      }
     },
     jumpByNumber: (e) => {
       if (sessionState.activePopup === null) {
-        // Use e.code (e.code.match(/Digit(\d)/)) for reliable number key detection
         const match = e.code.match(/Digit(\d)/);
         if (match) {
           const num = parseInt(match[1], 10);
@@ -74,40 +78,43 @@
   $effect.pre(() => editor.sync(noteContent, notePath));
 
   /**
-   * Handle flushing changes when switching lines
-   */
-  $effect(() => editor.handleLineSwitch(editor.activeIndex));
-
-  /**
    * Returns focus to the editor when a popup is closed.
    */
   $effect(() => {
     if (sessionState.activePopup === null && notePath)
-      untrack(() => editor.focusLastLine());
+      untrack(() => textarea?.focus());
+  });
+
+  /**
+   * Auto-resize textarea to fit content
+   */
+  const autoResize = () => {
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  $effect(() => {
+    autoResize();
   });
 </script>
 
 <div class="note-container">
   <NoteHeader {noteContent} />
-  {#each editor.lines as line, i (i)}
-    <NoteLine
-      bind:markdown={line.markdown}
-      sectionShortcut={line.sectionShortcut}
-      isActive={editor.activeIndex === i}
-      onActivate={() => (editor.activeIndex = i)}
-      onDeactivate={(e: FocusEvent) => {
-        const target = e.relatedTarget as HTMLElement;
-        if (!target?.closest('.note-container')) editor.activeIndex = null;
-      }}
-      onChange={(markdown) => editor.updateLine(i, markdown)}
-      onKeyDown={async (e) => {
-        if (editor.canHandleKey(e, i)) {
-          e.preventDefault();
-          await editor.handleKeyDown(e, i);
-        }
-      }}
-    />
-  {/each}
+  <textarea
+    bind:this={textarea}
+    value={editor.content}
+    oninput={(e) => {
+      editor.updateContent(e.currentTarget.value);
+      autoResize();
+    }}
+    onkeydown={async (e) => {
+      if (e.key === 'Enter') editor.onEnterPressed();
+    }}
+    spellcheck="false"
+    placeholder="Start writing..."
+  ></textarea>
 </div>
 
 <style>
@@ -123,81 +130,26 @@
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
   }
 
-  .note-container :global(.rendered-line) {
-    line-height: 1.6;
+  textarea {
+    width: 100%;
+    min-height: 60dvh;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
     font-size: 1rem;
-  }
-
-  .note-container :global(.rendered-line p) {
+    line-height: 1.6;
+    resize: none;
+    padding: 0;
     margin: 0;
+    outline: none;
+    overflow: hidden;
+    display: block;
   }
 
-  .note-container :global(.rendered-line h1) {
-    font-size: 1.5rem;
-  }
-
-  .note-container :global(.rendered-line h2) {
-    font-size: 1.3rem;
-  }
-
-  .note-container :global(.rendered-line h3) {
-    font-size: 1.2rem;
-  }
-
-  .note-container :global(.rendered-line h1),
-  .note-container :global(.rendered-line h2),
-  .note-container :global(.rendered-line h3) {
-    margin-top: 0.5rem;
-    margin-bottom: 0.2rem;
-    font-weight: 600;
-  }
-
-  .note-container :global(.rendered-line ul),
-  .note-container :global(.rendered-line ol) {
-    margin: 0;
-    padding-left: 1.5rem;
-  }
-
-  .note-container :global(.rendered-line code) {
-    background-color: var(--bg-base);
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.3rem;
-    font-family: monospace;
-  }
-
-  .note-container :global(.rendered-line pre) {
-    background-color: var(--bg-base);
-    padding: 1rem;
-    border-radius: 0.5rem;
-    overflow-x: auto;
-    white-space: pre-wrap;
-  }
-
-  .note-container :global(.rendered-line table) {
-    width: 100%;
-    overflow-x: auto;
-  }
-
-  .note-container :global(.rendered-line blockquote) {
-    border-left: 0.25rem solid var(--border);
-    margin: 0;
-    padding-left: 1rem;
+  textarea::placeholder {
     color: var(--text-muted);
-  }
-
-  .note-container :global(.rendered-line a) {
-    color: var(--accent);
-    text-decoration: none;
-  }
-  .note-container :global(.rendered-line table) {
-    border-collapse: collapse;
-    width: 100%;
-  }
-
-  .note-container :global(.rendered-line th),
-  .note-container :global(.rendered-line td) {
-    border: 0.0625rem solid var(--border);
-    padding: 0.5rem;
+    opacity: 0.5;
   }
 
   @media (max-width: 480px) {

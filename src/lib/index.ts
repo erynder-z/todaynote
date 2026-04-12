@@ -8,7 +8,6 @@ export { default as Navigation } from "./components/Navigation.svelte";
 export { default as NoteDate } from "./components/NoteDate.svelte";
 export { default as NoteDisplay } from "./components/NoteEditor.svelte";
 export { default as NoteHeader } from "./components/NoteHeader.svelte";
-export { default as NoteLine } from "./components/NoteLine.svelte";
 export { default as NotesList } from "./components/NotesList.svelte";
 export { default as NoteTags } from "./components/NoteTags.svelte";
 export { default as PopupManager } from "./components/PopupManager.svelte";

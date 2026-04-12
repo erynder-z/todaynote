@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-/// Represents a named block or section within a note, typically defined by a [#] marker.
+/// Represents a named block or section within a note, typically defined by a `#` heading.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NoteSection {
@@ -14,7 +14,7 @@ pub struct NoteSection {
     pub start_line: usize,
     /// The absolute line index where the section ends (exclusive).
     pub end_line: usize,
-    /// The header level (1 for [#], 2 for [##], etc.).
+    /// The heading level (1 for #, 2 for ##, etc.).
     pub level: usize,
 }
 
@@ -67,35 +67,30 @@ impl NoteSession {
         }
         self.frontmatter_range = None;
     }
-    /// Scans the lines to identify sections based on [#] markers.
-    /// Marker format: [#] Header Name
+    /// Scans the lines to identify sections based on `#` headings.
+    /// Only top-level headings (#) are considered sections.
     pub fn detect_sections(&mut self) {
         self.sections.clear();
         let content_start = self.get_content_start_index();
 
         for i in content_start..self.lines.len() {
             let line = &self.lines[i];
-            if line.starts_with("[#") {
-                if let Some(close_bracket) = line.find(']') {
-                    let level_str = &line[1..close_bracket];
-                    if level_str.chars().all(|c| c == '#') {
-                        let level = level_str.len();
-                        let name = line[close_bracket + 1..].trim().to_string();
+            // Only match top-level headings (# followed by space, not ##)
+            if line.starts_with("# ") {
+                let name = line[2..].trim().to_string();
 
-                        if !name.is_empty() {
-                            // Update previous section's end_line
-                            if let Some(prev) = self.sections.last_mut() {
-                                prev.end_line = i;
-                            }
-
-                            self.sections.push(NoteSection {
-                                name,
-                                start_line: i,
-                                end_line: self.lines.len(),
-                                level,
-                            });
-                        }
+                if !name.is_empty() {
+                    // Update previous section's end_line
+                    if let Some(prev) = self.sections.last_mut() {
+                        prev.end_line = i;
                     }
+
+                    self.sections.push(NoteSection {
+                        name,
+                        start_line: i,
+                        end_line: self.lines.len(),
+                        level: 1,
+                    });
                 }
             }
         }
