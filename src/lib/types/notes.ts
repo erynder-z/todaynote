@@ -30,4 +30,5 @@ export type NoteContentResponse = {
 	content: string; // Full markdown content
 	metadata: NoteMetadata;
 	sections: NoteSection[]; // Auto-detected headings
+	cursorPosition?: number | null;
 };

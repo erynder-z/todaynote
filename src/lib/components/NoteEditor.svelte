@@ -10,7 +10,7 @@
   } from '@milkdown/core';
   import { listener, listenerCtx } from '@milkdown/plugin-listener';
   import { commonmark } from '@milkdown/preset-commonmark';
-  import { TextSelection } from '@milkdown/prose/state';
+  import { Selection, TextSelection } from '@milkdown/prose/state';
   import { untrack } from 'svelte';
   import { sessionState, useShortcuts } from '$lib';
   import { EditorStore } from '$lib/stores/editor.svelte';
@@ -28,15 +28,14 @@
   let milkdownInstance: Editor | null = $state(null);
 
   /**
-   * Updates the UI state after a jump.
+   * Applies the cursor position from the store to the Milkdown editor.
    */
-  const handleJumpResult = (updated: NoteContentResponse) => {
-    noteContent = updated;
+  $effect(() => {
+    const pos = editor.cursorPosition;
+    const instance = milkdownInstance;
 
-    setTimeout(() => {
-      const pos = editor.cursorPosition;
-      const instance = milkdownInstance;
-      if (instance && pos !== null) {
+    if (instance && pos !== null) {
+      setTimeout(() => {
         instance.action((ctx) => {
           const view = ctx.get(editorViewCtx);
           view.focus();
@@ -48,23 +47,29 @@
 
             const safePosition = Math.min(
               pmPosition,
-              view.state.doc.content.size,
+              view.state.doc.content.size - 1,
             );
 
-            const selection = TextSelection.create(
-              view.state.doc,
-              safePosition,
-            );
+            const resolvedPos = view.state.doc.resolve(safePosition);
+
+            const selection = Selection.near(resolvedPos);
+
             view.dispatch(tr.setSelection(selection));
-
             view.dispatch(view.state.tr.scrollIntoView());
           } catch (e) {
             console.warn('Could not set cursor position', e);
           }
         });
         editor.cursorPosition = null;
-      }
-    }, 10);
+      }, 10);
+    }
+  });
+
+  /**
+   * Updates the UI state after a jump.
+   */
+  const handleJumpResult = (updated: NoteContentResponse) => {
+    noteContent = updated;
   };
 
   // Connect the store's jump event back to the component's bindable props

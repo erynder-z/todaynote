@@ -34,6 +34,9 @@ export class EditorStore {
 		this.notePath = notePath;
 		this.noteContent = noteContent;
 
+		if (noteContent?.cursorPosition !== undefined)
+			this.cursorPosition = noteContent.cursorPosition;
+
 		if (pathChanged) {
 			this.content = noteContent?.content ?? "";
 			this.hasChanges = false;
@@ -82,22 +85,8 @@ export class EditorStore {
 			this.content = updated.content;
 			this.sections = updated.sections;
 
-			// Calculate cursor position: end of last non-empty line in this section
-			const section = updated.sections.find((s) => s.name === name);
-			if (section) {
-				const lines = updated.content.split("\n");
-				// Walk backwards from endLine-1 to find the last non-empty line
-				let targetLine = section.endLine - 1;
-				while (targetLine > 0 && !(lines[targetLine] ?? "").trim())
-					targetLine--;
-
-				// Sum lengths of all lines up to and including targetLine, plus newlines
-				let charPos = 0;
-				for (let i = 0; i <= targetLine; i++)
-					charPos += (lines[i]?.length || 0) + 1;
-
-				this.cursorPosition = charPos;
-			}
+			if (updated.cursorPosition !== undefined)
+				this.cursorPosition = updated.cursorPosition;
 
 			this.onJump(updated);
 		}

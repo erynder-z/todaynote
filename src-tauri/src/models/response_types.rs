@@ -89,6 +89,7 @@ pub struct NoteContentResponse {
     pub content: String, // Full markdown content
     pub metadata: NoteMetadata,
     pub sections: Vec<NoteSection>,
+    pub cursor_position: Option<usize>,
 }
 
 impl NoteContentResponse {
@@ -98,15 +99,15 @@ impl NoteContentResponse {
         note_manager: &NoteManager,
         tag_manager: &TagManager,
     ) -> Self {
-        Self::from_session_with_target(session, note_manager, tag_manager, None)
+        let last_line = session.lines.len();
+        Self::from_session_with_target(session, note_manager, tag_manager, Some(last_line))
     }
 
-    /// Helper to create a NoteContentResponse with a specific focus target.
     pub fn from_session_with_target(
         session: &NoteSession,
         note_manager: &NoteManager,
         tag_manager: &TagManager,
-        _target_abs_index: Option<usize>,
+        target_abs_index: Option<usize>,
     ) -> Self {
         let filename = session
             .path
@@ -122,28 +123,53 @@ impl NoteContentResponse {
         let content_start = session.get_content_start_index();
 
         // Map absolute section indices to relative content indices
-        let sections = session
+        let sections: Vec<NoteSection> = session
             .sections
             .iter()
-            .map(|s| NoteSection {
-                name: s.name.clone(),
-                level: s.level,
-                start_line: if s.start_line >= content_start {
+            .map(|s| {
+                let rel_start = if s.start_line >= content_start {
                     s.start_line - content_start
                 } else {
                     0
-                },
-                end_line: if s.end_line >= content_start {
+                };
+                let rel_end = if s.end_line >= content_start {
                     s.end_line - content_start
                 } else {
                     0
-                },
+                };
+                NoteSection {
+                    name: s.name.clone(),
+                    level: s.level,
+                    start_line: rel_start,
+                    end_line: rel_end,
+                }
             })
             .collect();
 
         // Get content lines and join them into a single string
         let content_lines = session.get_content_lines();
         let content = content_lines.join("\n");
+
+        // Calculate cursor character position if a target line is provided
+        let cursor_position = target_abs_index.and_then(|target| {
+            if target >= content_start {
+                let rel_target = target - content_start;
+                let mut char_pos = 0;
+                let limit = rel_target.min(content_lines.len());
+
+                for i in 0..limit {
+                    if let Some(line) = content_lines.get(i) {
+                        char_pos += line.len();
+                        if i < content_lines.len() - 1 {
+                            char_pos += 1;
+                        }
+                    }
+                }
+                Some(char_pos)
+            } else {
+                None
+            }
+        });
 
         Self {
             content,
@@ -153,6 +179,7 @@ impl NoteContentResponse {
                 raw: raw_metadata,
             },
             sections,
+            cursor_position,
         }
     }
 }
