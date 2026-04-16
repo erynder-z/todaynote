@@ -55,6 +55,7 @@ export class EditorStore {
 		this.content = markdown;
 		this.hasChanges = true;
 		this.scheduleAutoSave();
+		this.refreshSections();
 	}
 
 	/**

@@ -2,6 +2,15 @@
   /**
    * The main note display component. Displays a note's content in an editable form.
    */
+  import {
+    defaultValueCtx,
+    Editor,
+    editorViewCtx,
+    rootCtx,
+  } from '@milkdown/core';
+  import { listener, listenerCtx } from '@milkdown/plugin-listener';
+  import { commonmark } from '@milkdown/preset-commonmark';
+  import { TextSelection } from '@milkdown/prose/state';
   import { untrack } from 'svelte';
   import { sessionState, useShortcuts } from '$lib';
   import { EditorStore } from '$lib/stores/editor.svelte';
@@ -15,8 +24,8 @@
 
   // Initialize the central logic store
   const editor = new EditorStore();
-
-  let textarea: HTMLTextAreaElement | null = $state(null);
+  let editorContainer: HTMLDivElement | null = $state(null);
+  let milkdownInstance: Editor | null = $state(null);
 
   /**
    * Updates the UI state after a jump.
@@ -24,14 +33,35 @@
   const handleJumpResult = (updated: NoteContentResponse) => {
     noteContent = updated;
 
-    // Set cursor position after content update
     setTimeout(() => {
-      if (textarea && editor.cursorPosition !== null) {
-        textarea.focus();
-        textarea.setSelectionRange(
-          editor.cursorPosition,
-          editor.cursorPosition,
-        );
+      const pos = editor.cursorPosition;
+      const instance = milkdownInstance;
+      if (instance && pos !== null) {
+        instance.action((ctx) => {
+          const view = ctx.get(editorViewCtx);
+          view.focus();
+
+          try {
+            const tr = view.state.tr;
+
+            const pmPosition = pos + 1;
+
+            const safePosition = Math.min(
+              pmPosition,
+              view.state.doc.content.size,
+            );
+
+            const selection = TextSelection.create(
+              view.state.doc,
+              safePosition,
+            );
+            view.dispatch(tr.setSelection(selection));
+
+            view.dispatch(view.state.tr.scrollIntoView());
+          } catch (e) {
+            console.warn('Could not set cursor position', e);
+          }
+        });
         editor.cursorPosition = null;
       }
     }, 10);
@@ -57,8 +87,11 @@
 
   useShortcuts({
     focusLastLine: () => {
-      if (sessionState.activePopup === null) {
-        textarea?.focus();
+      const instance = milkdownInstance;
+      if (sessionState.activePopup === null && instance) {
+        instance.action((ctx) => {
+          ctx.get(editorViewCtx).focus();
+        });
       }
     },
     jumpByNumber: (e) => {
@@ -81,40 +114,58 @@
    * Returns focus to the editor when a popup is closed.
    */
   $effect(() => {
-    if (sessionState.activePopup === null && notePath)
-      untrack(() => textarea?.focus());
+    const instance = milkdownInstance;
+    if (sessionState.activePopup === null && notePath && instance) {
+      untrack(() => {
+        instance.action((ctx) => ctx.get(editorViewCtx).focus());
+      });
+    }
   });
 
   /**
-   * Auto-resize textarea to fit content
+   * Mount and manage the Milkdown editor lifecycle
    */
-  const autoResize = () => {
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-  };
-
   $effect(() => {
-    autoResize();
+    if (!editorContainer) return;
+
+    let isDestroyed = false;
+
+    Editor.make()
+      .config((ctx) => {
+        ctx.set(rootCtx, editorContainer);
+
+        ctx.set(
+          defaultValueCtx,
+          untrack(() => editor.content),
+        );
+
+        ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
+          editor.updateContent(markdown);
+        });
+      })
+      .use(commonmark)
+      .use(listener)
+      .create()
+      .then((instance) => {
+        if (isDestroyed) {
+          instance.destroy();
+        } else {
+          milkdownInstance = instance;
+        }
+      });
+
+    return () => {
+      isDestroyed = true;
+      milkdownInstance?.destroy();
+      milkdownInstance = null;
+    };
   });
 </script>
 
 <div class="note-container">
   <NoteHeader {noteContent} />
-  <textarea
-    bind:this={textarea}
-    value={editor.content}
-    oninput={(e) => {
-      editor.updateContent(e.currentTarget.value);
-      autoResize();
-    }}
-    onkeydown={async (e) => {
-      if (e.key === 'Enter') editor.onEnterPressed();
-    }}
-    spellcheck="false"
-    placeholder="Start writing..."
-  ></textarea>
+
+  <div bind:this={editorContainer} class="milkdown-editor-wrapper"></div>
 </div>
 
 <style>
@@ -130,26 +181,36 @@
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
   }
 
-  textarea {
+  .milkdown-editor-wrapper :global(.milkdown) {
     width: 100%;
     min-height: 60dvh;
     background: transparent;
-    border: none;
     color: inherit;
     font-family: inherit;
     font-size: 1rem;
     line-height: 1.6;
-    resize: none;
-    padding: 0;
-    margin: 0;
-    outline: none;
-    overflow: hidden;
-    display: block;
   }
 
-  textarea::placeholder {
-    color: var(--text-muted);
-    opacity: 0.5;
+  .milkdown-editor-wrapper :global(.milkdown .editor) {
+    outline: none;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown ul),
+  .milkdown-editor-wrapper :global(.milkdown ol) {
+    padding-left: 3rem;
+    margin: 1rem 0;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown li) {
+    margin: 0.25rem 0;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown ul) {
+    list-style-type: disc;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown ol) {
+    list-style-type: decimal;
   }
 
   @media (max-width: 480px) {
