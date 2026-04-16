@@ -1,8 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { NoteContentResponse } from "$lib/types/notes";
-import { MarkdownRenderCache } from "./renderCache";
-
-const renderCache = new MarkdownRenderCache<string, string>(500);
 
 /**
  * Reads the full markdown content of a note file from the given path.
@@ -16,28 +13,6 @@ export const readNoteContent = async (path: string) => {
 	} catch (error) {
 		console.error(`Error reading note content from ${path}:`, error);
 		return null;
-	}
-};
-
-/**
- * Renders a markdown string to HTML, utilizing a client-side cache for performance.
- */
-export const renderMarkdown = async (markdown: string) => {
-	if (!markdown?.trim()) return "&nbsp;";
-
-	// Return from cache if string is in cache
-	const cached = renderCache.get(markdown);
-	if (cached !== undefined) return cached;
-
-	try {
-		const html = (await invoke("render_markdown", { markdown })) as string;
-
-		// Store the new result in cache
-		renderCache.set(markdown, html);
-		return html;
-	} catch (error) {
-		console.error("Error rendering markdown:", error);
-		return markdown;
 	}
 };
 

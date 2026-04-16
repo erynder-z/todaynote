@@ -5,7 +5,6 @@ mod utils;
 
 use commands::folder::validate_folder;
 use commands::i18n::get_translations;
-use commands::markdown::render_markdown;
 use commands::notes::{
     check_todays_note_exists, create_todays_note, delete_note_line, detect_sections,
     get_today_note_path, insert_note_line, jump_to_section, list_notes, read_note_content,
@@ -67,7 +66,6 @@ pub fn run() {
             detect_sections,
             get_today_note_path,
             read_note_content,
-            render_markdown,
             save_note_content,
             update_note_line,
             insert_note_line,
