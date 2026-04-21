@@ -2,7 +2,7 @@ import { untrack } from "svelte";
 import type { NoteContentResponse, NoteSection } from "$lib/types/notes";
 import {
 	detectSections,
-	jumpToSection,
+	ensureSection,
 	saveNoteContent,
 } from "$lib/utils/notes";
 
@@ -14,9 +14,9 @@ export class EditorStore {
 	content = $state<string>("");
 	noteContent = $state<NoteContentResponse | null>(null);
 	notePath = $state<string | null>(null);
-	private hasChanges = $state<boolean>(false);
+	hasChanges = $state<boolean>(false);
+	pendingExternalUpdate = $state<boolean>(false);
 	private autoSaveTimeout: ReturnType<typeof setTimeout> | null = null;
-	cursorPosition = $state<number | null>(null);
 	sections = $state<NoteSection[]>([]);
 
 	// Callback for section jumps
@@ -34,17 +34,19 @@ export class EditorStore {
 		this.notePath = notePath;
 		this.noteContent = noteContent;
 
-		if (noteContent?.cursorPosition !== undefined)
-			this.cursorPosition = noteContent.cursorPosition;
-
 		if (pathChanged) {
 			this.content = noteContent?.content ?? "";
 			this.hasChanges = false;
+			this.pendingExternalUpdate = true;
 			this.refreshSections();
-		} else if (noteContent?.content && currentContent !== noteContent.content) {
+		} else if (
+			noteContent?.content &&
+			currentContent !== noteContent.content &&
+			!this.hasChanges
+		) {
 			// External content change (e.g., tag update) - sync content
 			this.content = noteContent.content;
-			this.hasChanges = false;
+			this.pendingExternalUpdate = true;
 			this.sections = noteContent.sections ?? [];
 		}
 	}
@@ -61,14 +63,6 @@ export class EditorStore {
 		this.refreshSections();
 	}
 
-	/**
-	 * Triggers backend section detection. Call this when Enter is pressed
-	 * (since new sections require a new line).
-	 */
-	async onEnterPressed() {
-		this.refreshSections();
-	}
-
 	private refreshSections() {
 		const content = this.content;
 		detectSections(content).then((sections) => {
@@ -77,17 +71,16 @@ export class EditorStore {
 	}
 
 	/**
-	 * Jumps to a section by name via the backend and updates cursor position.
+	 * Creates a section via the backend and updates the store.
+	 * Navigation logic remains in the component.
 	 */
-	async jumpToSection(name: string) {
-		const updated = await jumpToSection(name, this.content);
+	async ensureSectionExists(name: string) {
+		const updated = await ensureSection(name, this.content);
 		if (updated) {
 			this.content = updated.content;
 			this.sections = updated.sections;
-
-			if (updated.cursorPosition !== undefined)
-				this.cursorPosition = updated.cursorPosition;
-
+			this.pendingExternalUpdate = true;
+			this.hasChanges = false;
 			this.onJump(updated);
 		}
 	}

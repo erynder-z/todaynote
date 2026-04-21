@@ -23,6 +23,7 @@ export * from "./stores/settings.svelte";
 export * from "./types/settings";
 export * from "./utils/appSetup";
 export * from "./utils/dailyNote";
+export * from "./utils/editor";
 export * from "./utils/folder";
 export * from "./utils/i18n";
 export * from "./utils/notes";

@@ -86,10 +86,9 @@ pub struct NoteMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NoteContentResponse {
-    pub content: String, // Full markdown content
+    pub content: String,
     pub metadata: NoteMetadata,
     pub sections: Vec<NoteSection>,
-    pub cursor_position: Option<usize>,
 }
 
 impl NoteContentResponse {
@@ -98,16 +97,6 @@ impl NoteContentResponse {
         session: &NoteSession,
         note_manager: &NoteManager,
         tag_manager: &TagManager,
-    ) -> Self {
-        let last_line = session.lines.len();
-        Self::from_session_with_target(session, note_manager, tag_manager, Some(last_line))
-    }
-
-    pub fn from_session_with_target(
-        session: &NoteSession,
-        note_manager: &NoteManager,
-        tag_manager: &TagManager,
-        target_abs_index: Option<usize>,
     ) -> Self {
         let filename = session
             .path
@@ -150,27 +139,6 @@ impl NoteContentResponse {
         let content_lines = session.get_content_lines();
         let content = content_lines.join("\n");
 
-        // Calculate cursor character position if a target line is provided
-        let cursor_position = target_abs_index.and_then(|target| {
-            if target >= content_start {
-                let rel_target = target - content_start;
-                let mut char_pos = 0;
-                let limit = rel_target.min(content_lines.len());
-
-                for i in 0..limit {
-                    if let Some(line) = content_lines.get(i) {
-                        char_pos += line.len();
-                        if i < content_lines.len() - 1 {
-                            char_pos += 1;
-                        }
-                    }
-                }
-                Some(char_pos)
-            } else {
-                None
-            }
-        });
-
         Self {
             content,
             metadata: NoteMetadata {
@@ -179,7 +147,6 @@ impl NoteContentResponse {
                 raw: raw_metadata,
             },
             sections,
-            cursor_position,
         }
     }
 }

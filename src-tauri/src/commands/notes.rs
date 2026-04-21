@@ -3,7 +3,7 @@
 //! This module provides functions for reading, writing, and manipulating note files, as well as managing the current note editing session.
 
 use crate::models::app_state::AppState;
-use crate::models::note_session::{NoteSection, NoteSession};
+use crate::models::note_session::NoteSection;
 use crate::models::response_types::{FormattedNote, NoteContentResponse, SearchResult};
 use std::fs;
 use std::path::PathBuf;
@@ -39,39 +39,6 @@ fn reconstruct_full_content(path: &PathBuf, content: &str) -> Result<String, Str
     } else {
         Ok(content.to_string())
     }
-}
-
-/// Returns the target line index for jumping to the end of an existing section.
-fn target_line_for_section(session: &mut NoteSession, idx: usize) -> usize {
-    let end_line = session.sections[idx].end_line;
-
-    if end_line > 0 {
-        let last_content_line_idx = end_line - 1;
-        if !session.lines[last_content_line_idx].trim().is_empty() {
-            session.insert_line(end_line, "".to_string());
-            session.insert_line(end_line + 1, "".to_string());
-            end_line + 1
-        } else {
-            if idx == session.sections.len() - 1
-                && session.lines.len() - 1 - last_content_line_idx < 1
-            {
-                session.insert_line(session.lines.len(), "".to_string());
-            }
-            last_content_line_idx
-        }
-    } else {
-        end_line
-    }
-}
-
-/// Creates a new section heading at the end of the note and returns its line index.
-fn create_section(session: &mut NoteSession, name: &str) -> usize {
-    let last_idx = session.lines.len();
-    session.insert_line(last_idx, format!("# {}", name));
-    let new_line_idx = last_idx + 1;
-    session.insert_line(new_line_idx, "".to_string());
-    session.insert_line(new_line_idx + 1, "".to_string());
-    new_line_idx + 1
 }
 
 /// Saves the complete content of a note to the specified path.
@@ -238,7 +205,7 @@ pub async fn list_notes(state: State<'_, AppState>) -> Result<Vec<FormattedNote>
 /// (excluding frontmatter). The backend reconstructs the full note by reading the
 /// frontmatter from disk.
 #[tauri::command]
-pub async fn jump_to_section(
+pub async fn ensure_section(
     name: String,
     current_content: String,
     state: State<'_, AppState>,
@@ -253,10 +220,12 @@ pub async fn jump_to_section(
         return Err("No note session loaded".to_string());
     }
 
-    let target_abs_idx = match session.sections.iter().position(|s| s.name == name) {
-        Some(idx) => target_line_for_section(&mut session, idx),
-        None => create_section(&mut session, &name),
-    };
+    if !session.sections.iter().any(|s| s.name == name) {
+        let last_idx = session.lines.len();
+        session.insert_line(last_idx, format!("# {}", name));
+        session.insert_line(last_idx + 1, "".to_string());
+        session.insert_line(last_idx + 2, "".to_string());
+    }
 
     if let Some(path) = &session.path {
         let full_content = session.get_full_content();
@@ -266,11 +235,10 @@ pub async fn jump_to_section(
     let note_manager = state.note_manager.lock().unwrap();
     let tag_manager = state.tag_manager.lock().unwrap();
 
-    Ok(NoteContentResponse::from_session_with_target(
+    Ok(NoteContentResponse::from_session(
         &session,
         &note_manager,
         &tag_manager,
-        Some(target_abs_idx),
     ))
 }
 

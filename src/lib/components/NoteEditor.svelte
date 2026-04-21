@@ -6,6 +6,7 @@
     defaultValueCtx,
     Editor,
     editorViewCtx,
+    parserCtx,
     rootCtx,
   } from '@milkdown/core';
   import { listener, listenerCtx } from '@milkdown/plugin-listener';
@@ -14,7 +15,7 @@
   import { Selection } from '@milkdown/prose/state';
   import { $prose as prosePlugin } from '@milkdown/utils';
   import { untrack } from 'svelte';
-  import { sessionState, useShortcuts } from '$lib';
+  import { jumpToSectionInEditor, sessionState, useShortcuts } from '$lib';
   import { EditorStore } from '$lib/stores/editor.svelte';
   import type { NoteContentResponse } from '$lib/types/notes';
   import NoteHeader from './NoteHeader.svelte';
@@ -30,70 +31,48 @@
   let milkdownInstance: Editor | null = $state(null);
 
   /**
-   * Applies the cursor position from the store to the Milkdown editor.
+   * Syncs store content to editor if it changed from outside (e.g. backend load)
    */
   $effect(() => {
-    const pos = editor.cursorPosition;
+    const content = editor.content;
     const instance = milkdownInstance;
 
-    if (instance && pos !== null) {
-      setTimeout(() => {
-        instance.action((ctx) => {
-          const view = ctx.get(editorViewCtx);
-          view.focus();
-
-          try {
-            let tr = view.state.tr;
-            const docSize = view.state.doc.content.size;
-
-            // If jumping to the end, ensure a trailing empty paragraph exists
-            // Since Milkdown often strips trailing newlines from markdown.
-            const isAtEnd = pos >= editor.content.length - 1;
-
-            if (isAtEnd) {
-              const lastNode = view.state.doc.lastChild;
-              const isLastNodeEmptyParagraph =
-                lastNode?.type.name === 'paragraph' &&
-                lastNode.content.size === 0;
-
-              if (!isLastNodeEmptyParagraph) {
-                const paragraph = view.state.schema.nodes.paragraph.create();
-                tr = tr.insert(docSize, paragraph);
-              }
-            }
-
-            const pmPosition = pos + 1;
-            const currentDocSize = tr.doc.content.size;
-            const safePosition = Math.min(pmPosition, currentDocSize - 1);
-            const resolvedPos = tr.doc.resolve(safePosition);
-            const selection = Selection.near(resolvedPos);
-
-            view.dispatch(tr.setSelection(selection));
-            view.dispatch(view.state.tr.scrollIntoView());
-          } catch (e) {
-            console.warn('Could not set cursor position', e);
-          }
-        });
-        editor.cursorPosition = null;
-      }, 10);
+    if (instance && editor.pendingExternalUpdate) {
+      instance.action((ctx) => {
+        const view = ctx.get(editorViewCtx);
+        const parser = ctx.get(parserCtx);
+        const doc = parser(content);
+        if (doc) {
+          const tr = view.state.tr.replaceWith(
+            0,
+            view.state.doc.content.size,
+            doc,
+          );
+          view.dispatch(tr);
+        }
+      });
+      editor.pendingExternalUpdate = false;
     }
   });
 
   /**
-   * Updates the UI state after a jump.
-   */
-  const handleJumpResult = (updated: NoteContentResponse) => {
-    noteContent = updated;
-  };
-
-  // Connect the store's jump event back to the component's bindable props
-  editor.onJump = handleJumpResult;
-
-  /**
-   * Triggers a jump to a named section and updates the editor state.
+   * Main entry point for jumping to a section.
    */
   const handleJump = async (name: string) => {
-    await editor.jumpToSection(name);
+    const instance = milkdownInstance;
+    if (!instance) return;
+
+    // Check if section already exists in our current list
+    const exists = editor.sections.some((s) => s.name === name);
+
+    if (exists) {
+      jumpToSectionInEditor(instance, name);
+    } else {
+      // Create it via backend, wait for sync, then jump
+      await editor.ensureSectionExists(name);
+      // Increased delay for reliability during document reconstruction
+      setTimeout(() => jumpToSectionInEditor(instance, name), 100);
+    }
   };
 
   /**
@@ -187,6 +166,11 @@
       milkdownInstance = null;
     };
   });
+
+  // Connect the store's sync back to the component's bindable props
+  editor.onJump = (updated) => {
+    noteContent = updated;
+  };
 </script>
 
 <div class="note-container">

@@ -7,7 +7,7 @@ use commands::folder::validate_folder;
 use commands::i18n::get_translations;
 use commands::notes::{
     check_todays_note_exists, create_todays_note, delete_note_line, detect_sections,
-    get_today_note_path, insert_note_line, jump_to_section, list_notes, read_note_content,
+    ensure_section, get_today_note_path, insert_note_line, list_notes, read_note_content,
     save_note_content, search_notes, update_note_line,
 };
 use commands::settings::{
@@ -70,7 +70,7 @@ pub fn run() {
             update_note_line,
             insert_note_line,
             delete_note_line,
-            jump_to_section,
+            ensure_section,
             initialize_app,
             show_window,
             search_notes,
