@@ -20,51 +20,116 @@
   import type { NoteContentResponse } from '$lib/types/notes';
   import NoteHeader from './NoteHeader.svelte';
 
+  // --- Props & State ---
+
   let { noteContent = $bindable(), notePath } = $props<{
     noteContent: NoteContentResponse | null;
     notePath: string | null;
   }>();
 
-  // Initialize the central logic store
   const editor = new EditorStore();
   let editorContainer: HTMLDivElement | null = $state(null);
   let milkdownInstance: Editor | null = $state(null);
 
+  // --- Lifecycle & Reactive Effects ---
+
   /**
-   * Syncs store content to editor if it changed from outside (e.g. backend load)
+   * 1. Sync props to the internal store before rendering
+   */
+  $effect.pre(() => editor.sync(noteContent, notePath));
+
+  /**
+   * 2. Initialize the Milkdown editor instance
    */
   $effect(() => {
-    const content = editor.content;
+    if (!editorContainer || !notePath) return;
+
+    let isDestroyed = false;
+    createEditor(editorContainer).then((instance) => {
+      if (isDestroyed) {
+        instance.destroy();
+      } else {
+        milkdownInstance = instance;
+      }
+    });
+
+    return () => {
+      isDestroyed = true;
+      milkdownInstance?.destroy();
+      milkdownInstance = null;
+    };
+  });
+
+  /**
+   * 3. Coordinate reactive updates (content sync and focus)
+   */
+  $effect(() => {
     const instance = milkdownInstance;
+    if (!instance) return;
 
-    if (instance && editor.pendingExternalUpdate) {
-      instance.action((ctx) => {
-        const view = ctx.get(editorViewCtx);
-        const parser = ctx.get(parserCtx);
-        const doc = parser(content);
-        if (doc) {
-          let tr = view.state.tr.replaceWith(
-            0,
-            view.state.doc.content.size,
-            doc,
-          );
-
-          // Ensure there's an empty paragraph at the end if the doc ends with a heading
-          if (doc.lastChild?.type.name === 'heading') {
-            const paragraph = view.state.schema.nodes.paragraph.create();
-            tr = tr.insert(tr.doc.content.size, paragraph);
-          }
-
-          // Move cursor to the end and focus
-          const selection = Selection.atEnd(tr.doc);
-          tr = tr.setSelection(selection).scrollIntoView();
-          view.dispatch(tr);
-          view.focus();
-        }
-      });
+    if (editor.pendingExternalUpdate) {
+      updateEditorContent(instance, editor.content);
       editor.pendingExternalUpdate = false;
     }
+
+    if (sessionState.activePopup === null && notePath)
+      untrack(() => focusEditor(instance));
   });
+
+  // --- Actions & Helpers ---
+
+  /**
+   * Creates the Milkdown editor instance with required plugins and config.
+   */
+  const createEditor = (container: HTMLDivElement) => {
+    return Editor.make()
+      .config((ctx) => {
+        ctx.set(rootCtx, container);
+        ctx.set(
+          defaultValueCtx,
+          untrack(() => editor.content),
+        );
+        ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
+          editor.updateContent(markdown);
+        });
+      })
+      .use(commonmark)
+      .use(listener)
+      .use(customKeymap)
+      .create();
+  };
+
+  /**
+   * Updates the editor's content from a Markdown string and positions the cursor.
+   */
+  const updateEditorContent = (instance: Editor, markdown: string) => {
+    instance.action((ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const parser = ctx.get(parserCtx);
+      const doc = parser(markdown);
+      if (!doc) return;
+
+      let tr = view.state.tr.replaceWith(0, view.state.doc.content.size, doc);
+
+      // Ensure trailing empty line for headings (Milkdown parser workaround)
+      if (doc.lastChild?.type.name === 'heading') {
+        const paragraph = view.state.schema.nodes.paragraph.create();
+        tr = tr.insert(tr.doc.content.size, paragraph);
+      }
+
+      // Position cursor at end and focus
+      const selection = Selection.atEnd(tr.doc);
+      view.dispatch(tr.setSelection(selection).scrollIntoView());
+      view.focus();
+    });
+  };
+
+  /**
+   * Focuses the editor instance.
+   */
+  const focusEditor = (instance: Editor) => {
+    instance.action((ctx) => ctx.get(editorViewCtx).focus());
+  };
 
   /**
    * Main entry point for jumping to a section.
@@ -73,15 +138,11 @@
     const instance = milkdownInstance;
     if (!instance) return;
 
-    // Check if section already exists in our current list
     const exists = editor.sections.some((s) => s.name === name);
-
     if (exists) {
       jumpToSectionInEditor(instance, name);
     } else {
-      // Create it via backend, wait for sync, then jump
       await editor.ensureSectionExists(name);
-      // Increased delay for reliability during document reconstruction
       setTimeout(() => jumpToSectionInEditor(instance, name), 100);
     }
   };
@@ -96,12 +157,8 @@
 
   useShortcuts({
     focusLastLine: () => {
-      const instance = milkdownInstance;
-      if (sessionState.activePopup === null && instance) {
-        instance.action((ctx) => {
-          ctx.get(editorViewCtx).focus();
-        });
-      }
+      if (sessionState.activePopup === null && milkdownInstance)
+        focusEditor(milkdownInstance);
     },
     jumpByNumber: (e) => {
       if (sessionState.activePopup === null) {
@@ -121,67 +178,8 @@
     }),
   );
 
-  /**
-   * Sync props to the store
-   */
-  $effect.pre(() => editor.sync(noteContent, notePath));
-
-  /**
-   * Returns focus to the editor when a popup is closed.
-   */
-  $effect(() => {
-    const instance = milkdownInstance;
-    if (sessionState.activePopup === null && notePath && instance) {
-      untrack(() => {
-        instance.action((ctx) => ctx.get(editorViewCtx).focus());
-      });
-    }
-  });
-
-  /**
-   * Mount and manage the Milkdown editor lifecycle
-   */
-  $effect(() => {
-    if (!editorContainer || !notePath) return;
-
-    let isDestroyed = false;
-
-    Editor.make()
-      .config((ctx) => {
-        ctx.set(rootCtx, editorContainer);
-
-        ctx.set(
-          defaultValueCtx,
-          untrack(() => editor.content),
-        );
-
-        ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
-          editor.updateContent(markdown);
-        });
-      })
-      .use(commonmark)
-      .use(listener)
-      .use(customKeymap)
-      .create()
-      .then((instance) => {
-        if (isDestroyed) {
-          instance.destroy();
-        } else {
-          milkdownInstance = instance;
-        }
-      });
-
-    return () => {
-      isDestroyed = true;
-      milkdownInstance?.destroy();
-      milkdownInstance = null;
-    };
-  });
-
   // Connect the store's sync back to the component's bindable props
-  editor.onJump = (updated) => {
-    noteContent = updated;
-  };
+  editor.onJump = (updated) => (noteContent = updated);
 </script>
 
 <div class="note-container">
