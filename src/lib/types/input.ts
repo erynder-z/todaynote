@@ -1,4 +1,6 @@
-export type ShortcutCallback = (e: KeyboardEvent) => void | Promise<void>;
+export type ShortcutCallback = (
+	e: KeyboardEvent,
+) => boolean | void | Promise<void>;
 
 export type ShortcutAction =
 	| "toggleSearch"

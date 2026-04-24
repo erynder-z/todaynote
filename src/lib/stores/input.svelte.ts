@@ -155,11 +155,13 @@ class InputManager {
 						continue;
 				}
 
-				e.preventDefault();
-				e.stopPropagation();
-				e.stopImmediatePropagation();
-				shortcut.callback(e);
-				break;
+				const result = shortcut.callback(e);
+				if (result !== false) {
+					e.preventDefault();
+					e.stopPropagation();
+					e.stopImmediatePropagation();
+					break;
+				}
 			}
 		}
 	}

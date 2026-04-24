@@ -87,6 +87,12 @@
     // Try handling list navigation first
     if (nav.handleKey(e)) return;
 
+    // Handle Enter specifically for adding the typed tag
+    if (e.key === 'Enter') {
+      handleToggleTag();
+      return;
+    }
+
     // Handle backspace specifically for tag removal
     if (e.key === 'Backspace') {
       removeLastActiveTag();

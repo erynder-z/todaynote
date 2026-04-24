@@ -157,16 +157,16 @@
 
   useShortcuts({
     focusLastLine: () => {
-      if (sessionState.activePopup === null && milkdownInstance)
-        focusEditor(milkdownInstance);
+      if (sessionState.activePopup !== null) return false;
+      if (milkdownInstance) focusEditor(milkdownInstance);
     },
     jumpByNumber: (e) => {
-      if (sessionState.activePopup === null) {
-        const match = e.code.match(/Digit(\d)/);
-        if (match) {
-          const num = parseInt(match[1], 10);
-          if (num > 0 && num <= 9) jumpToSectionByIndex(num - 1);
-        }
+      if (sessionState.activePopup !== null) return false;
+
+      const match = e.code.match(/Digit(\d)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > 0 && num <= 9) jumpToSectionByIndex(num - 1);
       }
     },
   });
