@@ -43,7 +43,7 @@
    * 1. Sync props to the internal store before rendering
    */
   $effect.pre(() => {
-    if (editor) editor.sync(noteContent, notePath);
+    editor.sync(noteContent, notePath);
   });
 
   /**
@@ -73,7 +73,7 @@
    */
   $effect(() => {
     const instance = milkdownInstance;
-    if (!instance || !editor) return;
+    if (!instance) return;
 
     if (editor.pendingExternalUpdate) {
       updateEditorContent(instance, editor.content);
@@ -144,7 +144,7 @@
    */
   const handleJump = async (name: string) => {
     const instance = milkdownInstance;
-    if (!instance || !editor) return;
+    if (!instance) return;
 
     const exists = editor.sections.some((s: NoteSection) => s.name === name);
     if (exists) {
@@ -159,7 +159,6 @@
    * Jumps to a section based on its index (0-8).
    */
   const jumpToSectionByIndex = async (idx: number) => {
-    if (!editor) return;
     const section = editor.sections[idx];
     if (section?.name) await handleJump(section.name);
   };
@@ -171,7 +170,6 @@
     },
     jumpByNumber: (e) => {
       if (sessionState.activePopup !== null) return false;
-      if (!editor) return false;
 
       const idx = tagSuggestionShortcuts.codes.indexOf(e.code);
       if (idx !== -1 && idx < editor.sections.length) {
@@ -189,8 +187,15 @@
 
   // Connect the store's sync back to the component's bindable props
   $effect(() => {
-    if (editor)
-      editor.onJump = (updated: NoteContentResponse) => (noteContent = updated);
+    editor.onJump = (updated: NoteContentResponse) => (noteContent = updated);
+  });
+
+  // Expose jump functionality to parent components
+  $effect(() => {
+    editor.jumpToSection = (name: string) => {
+      const instance = milkdownInstance;
+      if (instance) jumpToSectionInEditor(instance, name);
+    };
   });
 </script>
 

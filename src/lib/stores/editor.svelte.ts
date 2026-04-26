@@ -22,6 +22,9 @@ export class EditorStore {
 	// Callback for section jumps
 	onJump: (updated: NoteContentResponse) => void = () => {};
 
+	// Function to jump to a section (set by NoteEditor component)
+	jumpToSection: (name: string) => void = () => {};
+
 	// --- Initialization ---
 
 	/**

@@ -28,6 +28,9 @@
       const updatedContent = await editor.ensureSectionExists(name);
       noteContent = updatedContent;
     }
+
+    if (editor.jumpToSection) editor.jumpToSection(name);
+
     // Close sidebar in vertical layout after jumping
     sessionState.sidebarOpen = false;
   };
