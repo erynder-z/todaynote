@@ -31,7 +31,8 @@
   /** Removes the currently selected tag from the note. */
   const handleRemoveTag = async () => {
     if (!selectedTag) return;
-    const updatedContent = await removeNoteTag(selectedTag);
+    const content = noteContent?.content || '';
+    const updatedContent = await removeNoteTag(selectedTag, content);
     if (updatedContent) sessionState.todayNoteContent = updatedContent;
     selectedTag = null;
   };

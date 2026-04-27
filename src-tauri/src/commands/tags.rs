@@ -1,5 +1,6 @@
 //! Tauri commands for tag-related operations.
 
+use crate::commands::notes::reconstruct_full_content;
 use crate::models::app_state::AppState;
 use crate::models::response_types::NoteContentResponse;
 use std::fs;
@@ -9,18 +10,25 @@ use tauri::State;
 #[tauri::command]
 pub async fn add_note_tag(
     tag: String,
+    current_content: String,
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     let mut session = state.note_session.lock().unwrap();
-    let mut tag_manager = state.tag_manager.lock().unwrap();
-
-    tag_manager.add_tag_to_session(&mut session, tag);
-    tag_manager.invalidate_cache();
 
     let path = session
         .path
         .clone()
         .ok_or_else(|| "No active note session".to_string())?;
+
+    // Sync session with frontend content first
+    let full_content = reconstruct_full_content(&path, &current_content)?;
+    session.load(path.clone(), full_content);
+
+    let mut tag_manager = state.tag_manager.lock().unwrap();
+
+    tag_manager.add_tag_to_session(&mut session, tag);
+    tag_manager.invalidate_cache();
+
     let full_content = session.get_full_content();
     fs::write(&path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
 
@@ -36,9 +44,18 @@ pub async fn add_note_tag(
 #[tauri::command]
 pub async fn remove_note_tag(
     tag: String,
+    current_content: String,
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     let mut session = state.note_session.lock().unwrap();
+
+    // Sync session with frontend content first
+    let path = session.path.clone();
+    if let Some(path) = path {
+        let full_content = reconstruct_full_content(&path, &current_content)?;
+        session.load(path, full_content);
+    }
+
     let mut tag_manager = state.tag_manager.lock().unwrap();
 
     tag_manager.remove_tag_from_session(&mut session, tag);

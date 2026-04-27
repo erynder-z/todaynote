@@ -43,14 +43,14 @@ export class EditorStore {
 			this.pendingExternalUpdate = true;
 			this.refreshSections();
 		} else if (
-			noteContent?.content &&
-			currentContent !== noteContent.content &&
-			!this.hasChanges
+			noteContent?.content !== undefined &&
+			currentContent !== noteContent.content
 		) {
 			// External content change (e.g., tag update) - sync content
 			this.content = noteContent.content;
 			this.pendingExternalUpdate = true;
 			this.sections = noteContent.sections ?? [];
+			this.hasChanges = false;
 		}
 	}
 
@@ -61,6 +61,9 @@ export class EditorStore {
 	 */
 	updateContent(markdown: string) {
 		this.content = markdown;
+
+		if (this.noteContent) this.noteContent.content = markdown;
+
 		this.hasChanges = true;
 		this.scheduleAutoSave();
 		this.refreshSections();

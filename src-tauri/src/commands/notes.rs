@@ -30,7 +30,7 @@ fn extract_frontmatter(file_content: &str) -> (usize, String) {
 }
 
 /// Reconstructs full note content by prepending frontmatter from disk to the given content.
-fn reconstruct_full_content(path: &PathBuf, content: &str) -> Result<String, String> {
+pub fn reconstruct_full_content(path: &PathBuf, content: &str) -> Result<String, String> {
     let file_content = fs::read_to_string(path).unwrap_or_default();
     let (content_start, frontmatter) = extract_frontmatter(&file_content);
 
@@ -49,10 +49,15 @@ fn reconstruct_full_content(path: &PathBuf, content: &str) -> Result<String, Str
 pub async fn save_note_content(
     path: String,
     content: String,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<(), String> {
     let path_buf = PathBuf::from(&path);
     let full_content = reconstruct_full_content(&path_buf, &content)?;
+
+    // Update the active session so other commands (like tags) have the latest content
+    let mut session = state.note_session.lock().unwrap();
+    session.load(path_buf.clone(), full_content.clone());
+
     fs::write(path_buf, full_content).map_err(|e| format!("Failed to save note: {}", e))
 }
 

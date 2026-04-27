@@ -36,10 +36,12 @@
     const tag = (tagToToggle || newTag).trim();
     if (!tag) return;
 
+    const content = sessionState.todayNoteContent?.content || '';
     const isRemoving = currentTags.includes(tag);
+
     const updatedContent = isRemoving
-      ? await removeNoteTag(tag)
-      : await addNoteTag(tag);
+      ? await removeNoteTag(tag, content)
+      : await addNoteTag(tag, content);
 
     if (updatedContent) {
       sessionState.todayNoteContent = updatedContent;

@@ -32,10 +32,11 @@ export const saveNoteContent = async (path: string, content: string) => {
 /**
  * Adds a tag to the current note and returns the updated note content.
  */
-export const addNoteTag = async (tag: string) => {
+export const addNoteTag = async (tag: string, currentContent: string) => {
 	try {
 		const content = (await invoke("add_note_tag", {
 			tag,
+			currentContent,
 		})) as NoteContentResponse;
 		return content;
 	} catch (error) {
@@ -46,10 +47,11 @@ export const addNoteTag = async (tag: string) => {
 /**
  * Removes a tag from the current note and returns the updated note content.
  */
-export const removeNoteTag = async (tag: string) => {
+export const removeNoteTag = async (tag: string, currentContent: string) => {
 	try {
 		const content = (await invoke("remove_note_tag", {
 			tag,
+			currentContent,
 		})) as NoteContentResponse;
 		return content;
 	} catch (error) {
