@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * The main note display component. Displays a note's content in an editable form.
+   * The main note editor component. Displays a note's content in an editable form.
    */
   import {
     defaultValueCtx,

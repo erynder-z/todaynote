@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * Layout component that combines the note editor with the note sidebar.
+   * View component that combines the note editor with the note sidebar.
    */
   import type { NoteContentResponse } from '$lib/types/notes';
   import { EditorStore } from '../stores/editor.svelte';

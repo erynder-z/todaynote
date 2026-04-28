@@ -1,5 +1,6 @@
 export { focusTrap } from "./actions/focusTrap";
 export { lang } from "./actions/lang";
+export { default as EditorView } from "./components/EditorView.svelte";
 export { default as FolderSelector } from "./components/FolderSelector.svelte";
 export { default as LanguageSelector } from "./components/LanguageSelector.svelte";
 export { default as MainView } from "./components/MainView.svelte";
@@ -7,8 +8,7 @@ export { default as Modal } from "./components/Modal.svelte";
 export { default as Navigation } from "./components/Navigation.svelte";
 export { default as NoteControlCenter } from "./components/NoteControlCenter.svelte";
 export { default as NoteDate } from "./components/NoteDate.svelte";
-export { default as NoteDisplay } from "./components/NoteEditor.svelte";
-export { default as NoteEditorLayout } from "./components/NoteEditorLayout.svelte";
+export { default as NoteEditor } from "./components/NoteEditor.svelte";
 export { default as NoteSectionShortcuts } from "./components/NoteSectionShortcuts.svelte";
 export { default as NotesList } from "./components/NotesList.svelte";
 export { default as NoteTags } from "./components/NoteTags.svelte";
