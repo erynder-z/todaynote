@@ -11,6 +11,7 @@
   } from '@milkdown/core';
   import { listener, listenerCtx } from '@milkdown/plugin-listener';
   import { commonmark } from '@milkdown/preset-commonmark';
+  import { gfm } from '@milkdown/preset-gfm';
   import { keymap } from '@milkdown/prose/keymap';
   import { Selection } from '@milkdown/prose/state';
   import { $prose as prosePlugin } from '@milkdown/utils';
@@ -102,6 +103,7 @@
         });
       })
       .use(commonmark)
+      .use(gfm)
       .use(listener)
       .use(customKeymap)
       .create();
@@ -234,6 +236,44 @@
     list-style-type: decimal;
   }
 
-  @media (max-width: 480px) {
+  .milkdown-editor-wrapper :global(.milkdown pre) {
+    background: var(--code-bg, #f5f5f5);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-family: var(
+      --font-mono,
+      'SFMono-Regular',
+      Consolas,
+      'Liberation Mono',
+      Menlo,
+      monospace
+    );
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown blockquote) {
+    border-left: 3px solid var(--quote-border, #e2e8f0);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: var(--quote-color, inherit);
+    font-style: italic;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown code) {
+    background: var(--code-bg, #f5f5f5);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-family: var(
+      --font-mono,
+      'SFMono-Regular',
+      Consolas,
+      'Liberation Mono',
+      Menlo,
+      monospace
+    );
+    font-size: 0.875rem;
   }
 </style>
