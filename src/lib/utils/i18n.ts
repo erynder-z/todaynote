@@ -20,7 +20,7 @@ export const availableLocales = writable<LocaleInfo[]>([]);
 /**
  * Fetches new translation data from the backend and updates the stores.
  */
-export async function updateTranslations(newLocale: string) {
+export const updateTranslations = async (newLocale: string) => {
 	try {
 		const newTranslations: Record<string, string> = await invoke(
 			"get_translations",
@@ -33,7 +33,7 @@ export async function updateTranslations(newLocale: string) {
 	} catch (error) {
 		console.error("Failed to fetch translations:", error);
 	}
-}
+};
 
 /**
  * A derived store providing a translation function 't' that supports variable interpolation.

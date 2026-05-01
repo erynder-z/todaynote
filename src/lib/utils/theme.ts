@@ -15,7 +15,7 @@ export const currentTheme = writable<string>("blind-spot");
 /**
  * Fetches the specific color configuration for a theme and applies it to the UI.
  */
-export async function updateTheme(themeId: string) {
+export const updateTheme = async (themeId: string) => {
 	try {
 		const colors: Record<string, string> = await invoke("get_theme_colors", {
 			theme: themeId,
@@ -25,7 +25,7 @@ export async function updateTheme(themeId: string) {
 	} catch (error) {
 		console.error("Failed to fetch theme colors:", error);
 	}
-}
+};
 
 /**
  * Dynamically applies theme colors by setting CSS variables on the document root.

@@ -10,7 +10,7 @@ export const focusTrap = (node: HTMLElement) => {
 	/**
 	 * Handles the keydown event for the focus trap.
 	 */
-	function handleKeydown(event: KeyboardEvent) {
+	const handleKeydown = (event: KeyboardEvent) => {
 		if (event.key !== "Tab") return;
 
 		const focusableElements = node.querySelectorAll<HTMLElement>(selector);
@@ -34,7 +34,7 @@ export const focusTrap = (node: HTMLElement) => {
 				event.preventDefault();
 			}
 		}
-	}
+	};
 
 	document.addEventListener("keydown", handleKeydown);
 

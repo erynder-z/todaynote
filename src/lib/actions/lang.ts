@@ -2,7 +2,7 @@
  * Svelte action that synchronizes an HTML element's `lang` attribute
  * with the provided locale.
  */
-export function lang(node: HTMLElement, locale: string) {
+export const lang = (node: HTMLElement, locale: string) => {
 	node.lang = locale;
 
 	return {
@@ -13,4 +13,4 @@ export function lang(node: HTMLElement, locale: string) {
 			node.lang = newLocale;
 		},
 	};
-}
+};
