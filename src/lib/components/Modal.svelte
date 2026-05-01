@@ -119,9 +119,9 @@
   .popup {
     background-color: var(--bg-base);
     padding: 2rem;
-    max-width: 90vw;
-    max-height: 85vh;
-    width: 31.25rem;
+    max-width: 90dvw;
+    max-height: 85dvh;
+    width: 37.5rem;
     color: var(--text-main);
     outline: none;
   }

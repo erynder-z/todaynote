@@ -173,15 +173,15 @@
 
   .folder-status {
     width: 100%;
-    max-width: 65ch;
+    max-width: 50ch;
   }
 
   .folder-path {
     text-align: center;
-    padding: 1.25rem;
+    padding: 1rem;
     background-color: var(--bg-surface);
     border-radius: 0.5rem;
-    border: 1px dashed var(--border);
+    border: 0.1rem dashed var(--border);
     color: var(--text-main);
     margin: 1rem;
     display: flex;

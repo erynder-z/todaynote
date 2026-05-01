@@ -233,13 +233,20 @@
   .milkdown-editor-wrapper :global(.milkdown h1) {
     color: var(--md-h1);
     font-size: 1.875rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 0.2rem solid
+      color-mix(in srgb, var(--md-h1), transparent 60%);
     padding-bottom: 0.5rem;
   }
+
+  .milkdown-editor-wrapper :global(.milkdown h1):first-child {
+    margin-top: 0;
+  }
+
   .milkdown-editor-wrapper :global(.milkdown h2) {
     color: var(--md-h2);
     font-size: 1.5rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 0.085rem solid
+      color-mix(in srgb, var(--md-h2), transparent 80%);
     padding-bottom: 0.3rem;
   }
   .milkdown-editor-wrapper :global(.milkdown h3) {
