@@ -83,8 +83,12 @@
   }
 
   .section-pill:hover .shortcut-hint {
-    color: var(--accent-text);
-    border-color: var(--accent-text);
+    color: var(--text-main);
+    /*     background-color: color-mix(in srgb, var(--bg-base), transparent 20%); */
+    opacity: 1;
+  }
+
+  .section-pill:hover .mod {
     opacity: 1;
   }
 

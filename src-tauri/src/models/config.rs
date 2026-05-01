@@ -27,7 +27,7 @@ impl Default for AppConfig {
         Self {
             notes_folder,
             locale: "en".to_string(),
-            theme: "light".to_string(),
+            theme: "blind-spot".to_string(),
             remember_window_size: true,
         }
     }

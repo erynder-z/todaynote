@@ -279,6 +279,12 @@
     opacity: 0.6;
   }
 
+  .suggestion-item.selected .hashtag,
+  .suggestion-item.is-added.selected .hashtag {
+    color: var(--accent-text);
+    opacity: 0.9;
+  }
+
   .shortcut-hint {
     font-family: var(--font-mono, monospace);
     font-size: 0.75rem;
@@ -292,9 +298,21 @@
     opacity: 0.6;
   }
 
+  .suggestion-item.selected .shortcut-hint,
+  .suggestion-item.is-added.selected .shortcut-hint {
+    color: var(--accent-text);
+    opacity: 0.9;
+    border-color: color-mix(in srgb, var(--accent-text), transparent 30%);
+  }
+
   .mod {
     font-size: 0.65rem;
     opacity: 0.7;
+  }
+
+  .suggestion-item.selected .shortcut-hint .mod,
+  .suggestion-item.is-added.selected .shortcut-hint .mod {
+    opacity: 0.9;
   }
 
   .key {

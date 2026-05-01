@@ -38,8 +38,9 @@
 
   :global(:root) {
     box-sizing: border-box;
-    font-family: 'SUSE Mono', monospace;
-    font-weight: 600;
+    --font-mono: 'SUSE Mono', monospace;
+    font-family: var(--font-mono);
+    font-weight: 400;
     background-color: var(--bg-base);
     color: var(--text-main);
     line-height: 1.6;

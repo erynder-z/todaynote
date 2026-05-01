@@ -50,7 +50,7 @@
   .sidebar-title {
     font-size: 0.7rem;
     font-weight: 700;
-    color: var(--text-muted);
+    color: var(--text-ui-muted);
     margin-bottom: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.15em;

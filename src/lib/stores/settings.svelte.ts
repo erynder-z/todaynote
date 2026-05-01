@@ -14,7 +14,7 @@ import { sessionState } from "./sessionState.svelte";
 export class SettingsStore {
 	notesFolder = $state("");
 	locale = $state("en");
-	theme = $state("light");
+	theme = $state("blind-spot");
 	rememberWindowSize = $state(true);
 
 	/**
@@ -36,7 +36,7 @@ export class SettingsStore {
 			return {
 				notesFolder: "",
 				locale: "en",
-				theme: "light",
+				theme: "blind-spot",
 				rememberWindowSize: true,
 			};
 		}

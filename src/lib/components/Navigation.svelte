@@ -105,7 +105,7 @@
     height: 2.5rem;
     border-radius: 0.375rem;
     background: transparent;
-    color: var(--text-muted);
+    color: var(--text-ui-muted);
     border: none;
     display: flex;
     justify-content: center;

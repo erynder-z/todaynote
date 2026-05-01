@@ -22,7 +22,7 @@ pub fn get_theme_colors(theme: String) -> HashMap<String, String> {
         .and_then(|contents| serde_json::from_str(contents).ok())
         .unwrap_or_else(|| {
             THEMES_DIR
-                .get_file("light.json")
+                .get_file("blind-spot.json")
                 .and_then(|file| file.contents_utf8())
                 .and_then(|contents| serde_json::from_str(contents).ok())
                 .unwrap_or_default()

@@ -8,9 +8,9 @@ import type { ThemeInfo } from "../types/settings";
 export const availableThemes = writable<ThemeInfo[]>([]);
 
 /**
- * The currently active theme ID (e.g., 'light', 'catppuccin-mocha').
+ * The currently active theme ID (e.g., 'blind-spot', 'catppuccin-mocha').
  */
-export const currentTheme = writable<string>("light");
+export const currentTheme = writable<string>("blind-spot");
 
 /**
  * Fetches the specific color configuration for a theme and applies it to the UI.
