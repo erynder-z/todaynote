@@ -4,7 +4,7 @@
 
 use crate::models::app_state::AppState;
 use crate::models::note_session::NoteSection;
-use crate::models::response_types::{FormattedNote, NoteContentResponse, SearchResult};
+use crate::models::response_types::{FormattedNote, NoteContentResponse};
 use std::fs;
 use std::path::PathBuf;
 use tauri::State;
@@ -55,7 +55,7 @@ pub async fn save_note_content(
     let full_content = reconstruct_full_content(&path_buf, &content)?;
 
     // Update the active session so other commands (like tags) have the latest content
-    let mut session = state.note_session.lock().unwrap();
+    let mut session = state.note_session()?;
     session.load(path_buf.clone(), full_content.clone());
 
     fs::write(path_buf, full_content).map_err(|e| format!("Failed to save note: {}", e))
@@ -70,7 +70,7 @@ pub async fn update_note_line(
     content: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut session = state.note_session.lock().unwrap();
+    let mut session = state.note_session()?;
     session.update_content_line(index, content);
     if let Some(path) = &session.path {
         let full_content = session.get_full_content();
@@ -88,7 +88,7 @@ pub async fn insert_note_line(
     content: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut session = state.note_session.lock().unwrap();
+    let mut session = state.note_session()?;
     session.insert_content_line(index, content);
 
     if let Some(path) = &session.path {
@@ -103,7 +103,7 @@ pub async fn insert_note_line(
 /// This operation also writes the entire note to disk.
 #[tauri::command]
 pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Result<(), String> {
-    let mut session = state.note_session.lock().unwrap();
+    let mut session = state.note_session()?;
     session.delete_content_line(index);
 
     if let Some(path) = &session.path {
@@ -113,17 +113,10 @@ pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Resul
     Ok(())
 }
 
-/// Performs a full-text search across all notes. (Currently not implemented)
-#[tauri::command]
-pub async fn search_notes(_query: String) -> Result<Vec<SearchResult>, String> {
-    // TODO: Implement note search
-    Ok(vec![])
-}
-
 /// Returns the absolute path to today's daily note.
 #[tauri::command]
 pub async fn get_today_note_path(state: State<'_, AppState>) -> Result<String, String> {
-    let note_manager = state.note_manager.lock().unwrap();
+    let note_manager = state.note_manager()?;
     note_manager.ensure_notes_folder_exists()?;
     let file_path = note_manager.get_today_note_path();
     Ok(file_path.to_string_lossy().into_owned())
@@ -132,7 +125,7 @@ pub async fn get_today_note_path(state: State<'_, AppState>) -> Result<String, S
 /// Checks if today's daily note file already exists.
 #[tauri::command]
 pub async fn check_todays_note_exists(state: State<'_, AppState>) -> Result<bool, String> {
-    let note_manager = state.note_manager.lock().unwrap();
+    let note_manager = state.note_manager()?;
     let file_path = note_manager.get_today_note_path();
     Ok(file_path.exists())
 }
@@ -148,7 +141,7 @@ pub async fn create_todays_note(path: String, state: State<'_, AppState>) -> Res
         return Ok(());
     }
 
-    let note_manager = state.note_manager.lock().unwrap();
+    let note_manager = state.note_manager()?;
     let translations = crate::commands::i18n::get_translations(note_manager.locale.clone());
     let note_header = translations
         .get("note.header")
@@ -159,7 +152,7 @@ pub async fn create_todays_note(path: String, state: State<'_, AppState>) -> Res
 
     // Load into session so auto-save works immediately
     if let Ok(content) = note_manager.read_note_content(&created_path) {
-        let mut session = state.note_session.lock().unwrap();
+        let mut session = state.note_session()?;
         session.load(created_path, content);
     }
 
@@ -179,13 +172,13 @@ pub async fn read_note_content(
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     let path_buf = PathBuf::from(&path);
-    let note_manager = state.note_manager.lock().unwrap();
+    let note_manager = state.note_manager()?;
     let content = note_manager.read_note_content(&path_buf)?;
 
-    let mut session = state.note_session.lock().unwrap();
+    let mut session = state.note_session()?;
     session.load(path_buf.clone(), content);
 
-    let tag_manager = state.tag_manager.lock().unwrap();
+    let tag_manager = state.tag_manager()?;
 
     Ok(NoteContentResponse::from_session(
         &session,
@@ -197,7 +190,7 @@ pub async fn read_note_content(
 /// Returns a list of all notes available in the current notes folder.
 #[tauri::command]
 pub async fn list_notes(state: State<'_, AppState>) -> Result<Vec<FormattedNote>, String> {
-    let note_manager = state.note_manager.lock().unwrap();
+    let note_manager = state.note_manager()?;
     note_manager.list_notes()
 }
 
@@ -215,7 +208,7 @@ pub async fn ensure_section(
     current_content: String,
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
-    let mut session = state.note_session.lock().unwrap();
+    let mut session = state.note_session()?;
     let path = session.path.clone();
 
     if let Some(path) = &path {
@@ -237,8 +230,8 @@ pub async fn ensure_section(
         fs::write(path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
     }
 
-    let note_manager = state.note_manager.lock().unwrap();
-    let tag_manager = state.tag_manager.lock().unwrap();
+    let note_manager = state.note_manager()?;
+    let tag_manager = state.tag_manager()?;
 
     Ok(NoteContentResponse::from_session(
         &session,

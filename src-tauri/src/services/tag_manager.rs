@@ -102,9 +102,14 @@ impl TagManager {
                 tags.push(tag);
                 session.lines[absolute_idx] = format!("tags: [{}]", tags.join(", "));
             }
-        } else {
-            let (_, end) = session.frontmatter_range.expect("Frontmatter should exist");
+        } else if let Some((_, end)) = session.frontmatter_range {
             session.lines.insert(end, format!("tags: [{}]", tag));
+            session.detect_frontmatter();
+        } else {
+            // Fallback: should not happen after ensure_frontmatter
+            session.lines.insert(0, "---".to_string());
+            session.lines.insert(1, format!("tags: [{}]", tag));
+            session.lines.insert(2, "---".to_string());
             session.detect_frontmatter();
         }
     }

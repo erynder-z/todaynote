@@ -4,7 +4,12 @@
 	"navigation.home": "Startseite",
 	"navigation.search": "Notizen suchen",
 	"navigation.settings": "Einstellungen",
-	"search.title": "Suchen",
+	"search.title": "Suche",
+	"search.fuzzy": "Fuzzy-Suche",
+	"search.searching": "Suche...",
+	"search.no_results": "Keine Treffer gefunden",
+	"search.start_typing": "Notizen durchsuchen...",
+
 	"settings.title": "Einstellungen",
 	"settings.folder.title": "Notizen Ordner",
 	"settings.folder.select": "Ordner auswahlen",

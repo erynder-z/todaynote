@@ -36,7 +36,7 @@ pub async fn set_theme(theme: String, state: State<'_, AppState>) -> Result<(), 
     config.theme = theme.clone();
     config.save();
 
-    let mut note_manager = state.note_manager.lock().unwrap();
+    let mut note_manager = state.note_manager()?;
     note_manager.update_config(config.notes_folder, config.locale);
 
     Ok(())

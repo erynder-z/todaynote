@@ -1,5 +1,24 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { NoteContentResponse } from "$lib/types/notes";
+import type { NoteContentResponse, SearchResult } from "$lib/types/notes";
+
+/**
+ * Performs a full-text search across all notes.
+ */
+export const searchNotes = async (
+	query: string,
+	isFuzzy: boolean,
+): Promise<SearchResult[]> => {
+	try {
+		const results = (await invoke("search_notes", {
+			query,
+			isFuzzy,
+		})) as SearchResult[];
+		return results;
+	} catch (error) {
+		console.error("Error searching notes:", error);
+		return [];
+	}
+};
 
 /**
  * Reads the full markdown content of a note file from the given path.

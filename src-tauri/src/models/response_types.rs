@@ -26,9 +26,13 @@ pub struct FormattedNote {
 
 /// A search match from the note archive.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SearchResult {
     pub filename: String,
+    pub formatted_name: String,
     pub excerpt: String,
+    pub line_number: usize,
+    pub score: i64,
 }
 
 /// The complete state payload sent to the frontend during initialization.

@@ -31,3 +31,14 @@ export type NoteContentResponse = {
 	metadata: NoteMetadata;
 	sections: NoteSection[]; // Auto-detected headings
 };
+
+/**
+ * A search match from the note archive.
+ */
+export type SearchResult = {
+	filename: string;
+	formattedName: string;
+	excerpt: string;
+	lineNumber: number;
+	score: number;
+};

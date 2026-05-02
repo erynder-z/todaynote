@@ -12,11 +12,14 @@ use tauri::State;
 #[tauri::command]
 pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, String> {
     let config = AppConfig::load();
-    Ok(get_initial_state(config, state))
+    get_initial_state(config, state)
 }
 
 /// Helper function to construct the full initial application state.
-pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> AppPayload {
+pub fn get_initial_state(
+    config: AppConfig,
+    state: State<'_, AppState>,
+) -> Result<AppPayload, String> {
     let notes_folder = resolve_notes_folder(&config);
     let (available_themes, available_locales, translations, theme_colors) =
         get_ui_metadata(&config);
@@ -36,12 +39,12 @@ pub fn get_initial_state(config: AppConfig, state: State<'_, AppState>) -> AppPa
     };
 
     if response.notes_folder.is_some() {
-        let (path, content) = load_today_note(&state, &response.translations);
+        let (path, content) = load_today_note(&state, &response.translations)?;
         response.today_note_path = path;
         response.today_note_content = content;
     }
 
-    response
+    Ok(response)
 }
 
 /// Ensures the notes folder exists and returns its path.
@@ -87,8 +90,8 @@ fn get_ui_metadata(
 fn load_today_note(
     state: &State<'_, AppState>,
     translations: &HashMap<String, String>,
-) -> (Option<String>, Option<NoteContentResponse>) {
-    let note_manager = state.note_manager.lock().unwrap();
+) -> Result<(Option<String>, Option<NoteContentResponse>), String> {
+    let note_manager = state.note_manager()?;
     let file_path = note_manager.get_today_note_path();
     let path_str = file_path.to_string_lossy().into_owned();
 
@@ -99,21 +102,21 @@ fn load_today_note(
 
     if let Ok(created_path) = note_manager.create_todays_note(note_header) {
         if let Ok(content) = note_manager.read_note_content(&created_path) {
-            let mut session = state.note_session.lock().unwrap();
+            let mut session = state.note_session()?;
             session.load(created_path.clone(), content);
 
-            let tag_manager = state.tag_manager.lock().unwrap();
+            let tag_manager = state.tag_manager()?;
 
-            return (
+            return Ok((
                 Some(path_str),
                 Some(NoteContentResponse::from_session(
                     &session,
                     &note_manager,
                     &tag_manager,
                 )),
-            );
+            ));
         }
     }
 
-    (Some(path_str), None)
+    Ok((Some(path_str), None))
 }
