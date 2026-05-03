@@ -199,17 +199,16 @@
       <div class="status-view empty">
         <div class="empty-icon">
           <svg
-            viewBox="0 0 24 24"
-            width="48"
-            height="48"
-            stroke="currentColor"
-            stroke-width="1"
-            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            height="10rem"
+            viewBox="0 -960 960 960"
+            width="10rem"
+            fill="currentColor"
+            ><path
+              d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"
+            /></svg
           >
-            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
         </div>
-        <p class="muted">{$t('search.start_typing')}</p>
       </div>
     {/if}
   </main>
@@ -235,10 +234,8 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100%;
-    max-height: 500px;
+    height: 60dvh;
     background-color: var(--bg-main);
-    border-radius: 0.75rem;
     overflow: hidden;
     box-shadow:
       0 10px 25px -5px rgba(0, 0, 0, 0.3),
