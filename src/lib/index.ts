@@ -5,6 +5,7 @@ export { default as FolderSelector } from "./components/FolderSelector.svelte";
 export { default as LanguageSelector } from "./components/LanguageSelector.svelte";
 export { default as MainView } from "./components/MainView.svelte";
 export { default as Modal } from "./components/Modal.svelte";
+export { default as ModalFooter } from "./components/ModalFooter.svelte";
 export { default as Navigation } from "./components/Navigation.svelte";
 export { default as NoteControlCenter } from "./components/NoteControlCenter.svelte";
 export { default as NoteDate } from "./components/NoteDate.svelte";

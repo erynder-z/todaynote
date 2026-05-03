@@ -3,7 +3,7 @@
    * Enhanced note search component with command-palette aesthetics
    * and full keyboard navigation.
    */
-  import { ListNavigator, sessionState, settings, t } from '$lib';
+  import { ListNavigator, ModalFooter, sessionState, settings, t } from '$lib';
   import { inputManager } from '$lib/stores/input.svelte';
   import type { SearchResult } from '$lib/types/notes';
   import { readNoteContent, searchNotes } from '$lib/utils/notes';
@@ -213,30 +213,19 @@
     {/if}
   </main>
 
-  <footer class="search-footer">
-    <div class="shortcuts">
-      <div class="shortcut-item">
-        <span>{$t('search.footer.navigate')}</span> <span class="key">↑↓</span>
-      </div>
-      <div class="shortcut-item">
-        <span>{$t('search.footer.open')}</span> <span class="key">Enter</span>
-      </div>
-      <div class="shortcut-item">
-        <span>{$t('search.footer.fuzzy')}</span>
-      </div>
-      <div class="shortcut-item">
-        <span class="key"
-          >{inputManager.primaryLabel}+{inputManager.secondaryLabel}+F</span
-        >
-      </div>
-      <div class="shortcut-item">
-        <span>{$t('search.footer.close')}</span> <span class="key">Esc</span>
-      </div>
-    </div>
-    <div class="count">
-      {$t('search.results_count', { count: results.length })}
-    </div>
-  </footer>
+  <ModalFooter
+    shortcuts={[
+      { label: $t('search.footer.navigate'), key: '↑↓' },
+      { label: $t('search.footer.open'), key: 'Enter' },
+      {
+        label: $t('search.footer.fuzzy'),
+        key: `${inputManager.primaryLabel}+${inputManager.secondaryLabel}+F`,
+      },
+      { label: $t('search.footer.close'), key: 'Esc' },
+    ]}
+    count={results.length}
+    countLabel={$t('search.results_count', { count: results.length })}
+  />
 </div>
 
 <style>
@@ -244,7 +233,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 60dvh;
+    height: 100%;
     background-color: var(--bg-main);
     overflow: hidden;
     box-shadow:
@@ -424,33 +413,6 @@
     to {
       transform: rotate(360deg);
     }
-  }
-
-  .search-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: var(--bg-surface);
-    border-top: 1px solid var(--border);
-    font-size: 0.75rem;
-    color: var(--text-main);
-  }
-
-  .shortcuts {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-  }
-
-  .key {
-    background-color: var(--bg-main);
-    border: 1px solid var(--border);
-    padding: 0.1rem 0.3rem;
-    border-radius: 3px;
-    color: var(--text-main);
-    font-family: var(--font-mono);
-    color: var(--text-muted);
   }
 
   .muted {

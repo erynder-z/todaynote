@@ -120,10 +120,13 @@
     background-color: var(--bg-base);
     padding: 2rem;
     max-width: 90dvw;
-    max-height: 85dvh;
+    height: 85dvh;
     width: 37.5rem;
     color: var(--text-main);
     outline: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
   .popup-header {
@@ -153,7 +156,7 @@
   }
 
   .popup-content {
-    max-height: calc(85vh - 6rem);
+    height: 100%;
     overflow-y: auto;
   }
 </style>

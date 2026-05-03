@@ -2,7 +2,7 @@
   /**
    * Displays list of all notes found in the user's notes folder.
    */
-  import { ListNavigator, sessionState, settings, t } from '$lib';
+  import { ListNavigator, ModalFooter, sessionState, settings, t } from '$lib';
   import type { FormattedNote } from '$lib/types/notes';
   import { listNotes } from '$lib/utils/folder';
   import { readNoteContent } from '$lib/utils/notes';
@@ -80,22 +80,15 @@
     {/if}
   </main>
 
-  <footer class="list-footer">
-    <div class="shortcuts">
-      <div class="shortcut-item">
-        <span>{$t('search.footer.navigate')}</span> <span class="key">↑↓</span>
-      </div>
-      <div class="shortcut-item">
-        <span>{$t('search.footer.open')}</span> <span class="key">Enter</span>
-      </div>
-      <div class="shortcut-item">
-        <span>{$t('search.footer.close')}</span> <span class="key">Esc</span>
-      </div>
-    </div>
-    <div class="count">
-      {$t('notes.list.length', { count: notes.length })}
-    </div>
-  </footer>
+  <ModalFooter
+    shortcuts={[
+      { label: $t('search.footer.navigate'), key: '↑↓' },
+      { label: $t('search.footer.open'), key: 'Enter' },
+      { label: $t('search.footer.close'), key: 'Esc' },
+    ]}
+    count={notes.length}
+    countLabel={$t('notes.list.length', { count: notes.length })}
+  />
 </div>
 
 <style>
@@ -103,7 +96,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 60dvh;
+    height: 100%;
     background-color: var(--bg-main);
     overflow: hidden;
     border: 1px solid var(--border);
@@ -186,39 +179,6 @@
     to {
       transform: rotate(360deg);
     }
-  }
-
-  .list-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: var(--bg-surface);
-    border-top: 1px solid var(--border);
-    font-size: 0.75rem;
-    color: var(--text-main);
-  }
-
-  .shortcuts {
-    display: flex;
-
-    gap: 2rem;
-    align-items: flex-start;
-  }
-
-  .shortcut-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .key {
-    background-color: var(--bg-main);
-    border: 1px solid var(--border);
-    padding: 0.1rem 0.3rem;
-    border-radius: 3px;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
   }
 
   .muted {
