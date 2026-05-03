@@ -5,3 +5,8 @@ export type PopupType =
 	| "tagManager"
 	| "shortcuts"
 	| null;
+
+export type ShortcutHint = {
+	label: string;
+	key?: string;
+};

@@ -14,6 +14,7 @@
     t,
   } from '$lib';
   import { tagSuggestionShortcuts } from '$lib/config/shortcuts';
+  import KeyboardShortcut from './KeyboardShortcut.svelte';
 
   let newTag = $state('');
   let suggestedTags = $state<string[]>([]);
@@ -123,9 +124,7 @@
 
     {#if shortcutLabel}
       <span class="shortcut-hint">
-        <span class="mod">{inputManager.primaryLabel}</span>
-        <span class="mod">{inputManager.secondaryLabel}</span>
-        <span class="key">{shortcutLabel}</span>
+        <KeyboardShortcut primary secondary key={shortcutLabel} />
       </span>
     {/if}
 

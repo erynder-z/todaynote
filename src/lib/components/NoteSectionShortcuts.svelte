@@ -5,7 +5,7 @@
 
   import type { NoteSection } from '$lib/types/notes';
   import { tagSuggestionShortcuts } from '../config/shortcuts';
-  import { inputManager } from '../stores/input.svelte';
+  import KeyboardShortcut from './KeyboardShortcut.svelte';
 
   let { sections, onSelect } = $props<{
     sections: NoteSection[];
@@ -22,9 +22,11 @@
       <button class="section-pill" onclick={() => onSelect(section.name)}>
         <span class="section-name">{section.name}</span>
         <span class="shortcut-hint">
-          <span class="mod">{inputManager.primaryLabel}</span>
-          <span class="mod">{inputManager.secondaryLabel}</span>
-          <span class="key">{tagSuggestionShortcuts.labels[i]}</span>
+          <KeyboardShortcut
+            primary
+            secondary
+            key={tagSuggestionShortcuts.labels[i]}
+          />
         </span>
       </button>
     {/each}
@@ -84,20 +86,6 @@
 
   .section-pill:hover .shortcut-hint {
     color: var(--text-main);
-    /*     background-color: color-mix(in srgb, var(--bg-base), transparent 20%); */
     opacity: 1;
-  }
-
-  .section-pill:hover .mod {
-    opacity: 1;
-  }
-
-  .mod {
-    font-size: 0.6rem;
-    opacity: 0.7;
-  }
-
-  .key {
-    font-weight: 600;
   }
 </style>

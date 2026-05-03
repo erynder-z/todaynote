@@ -1,19 +1,18 @@
 <script lang="ts">
+  import type { ShortcutHint } from '$lib/types/ui';
   /**
    * Reusable footer component for modal dialogs.
    * Displays keyboard shortcuts and optional item count.
    */
-  interface Shortcut {
-    label: string;
-    key?: string;
-  }
+
+  import KeyboardShortcut from './KeyboardShortcut.svelte';
 
   let {
     shortcuts,
     count = null,
     countLabel = '',
   }: {
-    shortcuts: Shortcut[];
+    shortcuts: ShortcutHint[];
     count?: number | null;
     countLabel?: string;
   } = $props();
@@ -25,7 +24,7 @@
       <div class="shortcut-item">
         <span>{shortcut.label}</span>
         {#if shortcut.key}
-          <span class="key">{shortcut.key}</span>
+          <KeyboardShortcut key={shortcut.key} />
         {/if}
       </div>
     {/each}
@@ -60,15 +59,6 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-  }
-
-  .key {
-    background-color: var(--bg-main);
-    border: 1px solid var(--border);
-    padding: 0.1rem 0.3rem;
-    border-radius: 3px;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
   }
 
   .count {
