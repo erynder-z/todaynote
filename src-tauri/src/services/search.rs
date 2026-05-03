@@ -37,41 +37,65 @@ impl<'a> SearchService<'a> {
         (0, String::new())
     }
 
-    /// Generates an excerpt from a matching line, centered around the query.
-    fn generate_excerpt(line: &str, query: &str, max_length: usize) -> String {
-        let trimmed_line = line.trim();
-        let query_normalized = query.to_lowercase();
-
-        if trimmed_line.len() <= max_length {
-            return trimmed_line.to_string();
+    /// Generates an excerpt from a matching line, centered around the matching indices.
+    /// Returns (excerpt_string, adjusted_indices).
+    fn generate_excerpt(line: &str, indices: &[u32], max_length: usize) -> (String, Vec<u32>) {
+        let chars: Vec<char> = line.chars().collect();
+        if chars.len() <= max_length {
+            return (line.to_string(), indices.to_vec());
         }
 
-        if let Some(pos) = trimmed_line.to_lowercase().find(&query_normalized) {
-            let start = pos.saturating_sub(40);
-            let end = (pos + query_normalized.len() + 40).min(trimmed_line.len());
-            format!(
-                "{}{}{}",
-                if start > 0 { "..." } else { "" },
-                &trimmed_line[start..end],
-                if end < trimmed_line.len() { "..." } else { "" }
-            )
+        let first = *indices.first().unwrap_or(&0) as usize;
+        let last = *indices.last().unwrap_or(&(chars.len() as u32 - 1)) as usize;
+        let match_len = last - first + 1;
+
+        let start = if match_len >= max_length {
+            first
         } else {
-            format!("{}...", &trimmed_line[..max_length.min(trimmed_line.len())])
+            let surplus = max_length - match_len;
+            first.saturating_sub(surplus / 2)
+        };
+        let end = (start + max_length).min(chars.len());
+        let start = end.saturating_sub(max_length);
+
+        let excerpt: String = chars[start..end].iter().collect();
+        let mut adjusted_indices = Vec::new();
+        for &idx in indices {
+            let idx_usize = idx as usize;
+            if idx_usize >= start && idx_usize < end {
+                adjusted_indices.push((idx_usize - start) as u32);
+            }
         }
+
+        let mut final_excerpt = String::new();
+        if start > 0 {
+            final_excerpt.push_str("...");
+        }
+        final_excerpt.push_str(&excerpt);
+        if end < chars.len() {
+            final_excerpt.push_str("...");
+        }
+
+        // Adjust indices for the "..." prefix
+        let prefix_offset = if start > 0 { 3 } else { 0 };
+        let final_indices = adjusted_indices
+            .into_iter()
+            .map(|i| i + prefix_offset)
+            .collect();
+
+        (final_excerpt, final_indices)
     }
 
     /// Performs a fuzzy match using nucleo-matcher.
-    /// Returns Some(score) if matched, None otherwise.
-    /// Wrapped in panic catch for nucleo-matcher stability.
+    /// Returns Some((score, indices)) if matched, None otherwise.
     fn fuzzy_match(
         matcher: &mut Matcher,
         line: &str,
         query: &Utf32Str,
         query_str: &str,
-    ) -> Option<i64> {
+    ) -> Option<(i64, Vec<u32>)> {
         let trimmed_line = line.trim();
 
-        // Guard against nucleo-matcher panic: don't match if query is longer than line
         if query_str.len() > trimmed_line.len() {
             return None;
         }
@@ -79,16 +103,18 @@ impl<'a> SearchService<'a> {
         let mut line_buf = Vec::new();
         let line_utf32 = Utf32Str::new(trimmed_line, &mut line_buf);
 
-        // CRITICAL SAFETY: nucleo-matcher has known internal panics.
-        // We wrap the call in catch_unwind to ensure a library bug doesn't kill our app.
+        let mut indices = Vec::new();
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            matcher.fuzzy_match(line_utf32, *query)
+            matcher.fuzzy_indices(line_utf32, *query, &mut indices)
         }));
 
         match result {
-            Ok(Some(score)) => Some(score as i64),
+            Ok(Some(score)) => {
+                indices.sort_unstable();
+                Some((score as i64, indices))
+            }
             Ok(None) => None,
-            Err(_) => None, // If it panics, we just skip this line
+            Err(_) => None,
         }
     }
 
@@ -134,29 +160,39 @@ impl<'a> SearchService<'a> {
             let filename = entry.file_name().into_string().unwrap_or_default();
             let formatted_name = self.note_manager.format_note_name(&filename);
 
-            // Iterate lines directly to avoid large Vec allocation
             for (i, line) in content.lines().enumerate().skip(frontmatter_len) {
                 let trimmed_line = line.trim();
                 if trimmed_line.is_empty() {
                     continue;
                 }
 
-                let (matched, score) = if is_fuzzy {
-                    match Self::fuzzy_match(
-                        &mut matcher,
-                        trimmed_line,
-                        &query_utf32,
-                        &query_normalized,
-                    ) {
-                        Some(s) => (true, s),
-                        None => (false, 0),
+                let match_data = if is_fuzzy {
+                    Self::fuzzy_match(&mut matcher, trimmed_line, &query_utf32, &query_normalized)
+                } else if let Some(pos) = trimmed_line.to_lowercase().find(&query_normalized) {
+                    // For exact match, we need to convert byte position to codepoint indices
+                    let chars: Vec<char> = trimmed_line.chars().collect();
+                    let mut current_byte = 0;
+                    let mut start_idx = 0;
+                    for (idx, c) in chars.iter().enumerate() {
+                        if current_byte == pos {
+                            start_idx = idx;
+                            break;
+                        }
+                        current_byte += c.len_utf8();
                     }
+
+                    let query_chars_len = query_normalized.chars().count();
+                    let indices: Vec<u32> = (start_idx..start_idx + query_chars_len)
+                        .map(|idx| idx as u32)
+                        .collect();
+                    Some((0, indices))
                 } else {
-                    (trimmed_line.to_lowercase().contains(&query_normalized), 0)
+                    None
                 };
 
-                if matched {
-                    let excerpt = Self::generate_excerpt(trimmed_line, &query_normalized, 100);
+                if let Some((score, indices)) = match_data {
+                    let (excerpt, adjusted_indices) =
+                        Self::generate_excerpt(trimmed_line, &indices, 100);
 
                     results.push(SearchResult {
                         filename: filename.clone(),
@@ -164,6 +200,7 @@ impl<'a> SearchService<'a> {
                         excerpt,
                         line_number: i,
                         score,
+                        indices: adjusted_indices,
                     });
                 }
             }

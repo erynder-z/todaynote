@@ -4,6 +4,7 @@
    * and full keyboard navigation.
    */
   import { ListNavigator, sessionState, settings, t } from '$lib';
+  import { inputManager } from '$lib/stores/input.svelte';
   import type { SearchResult } from '$lib/types/notes';
   import { readNoteContent, searchNotes } from '$lib/utils/notes';
 
@@ -17,6 +18,12 @@
     () => results.length,
     (i) => selectResult(results[i]),
   );
+
+  $effect(() => {
+    return inputManager.registerAction('toggleFuzzy', () => {
+      isFuzzy = !isFuzzy;
+    });
+  });
 
   const performSearch = async () => {
     if (query.trim().length === 0) {
@@ -34,7 +41,7 @@
 
   const onInput = () => {
     if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(performSearch, 200); // Faster debounce for snappier feel
+    debounceTimer = setTimeout(performSearch, 200);
   };
 
   const selectResult = async (result: SearchResult) => {
@@ -48,27 +55,69 @@
     }
   };
 
-  const highlight = (text: string, query: string) => {
-    if (!query || isFuzzy) return text;
+  const highlight = (text: string, indices: number[], query: string) => {
+    if (!indices || indices.length === 0) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
 
-    // Escape HTML
-    const escaped = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    const chars = Array.from(text);
+    const queryChars = Array.from(query.trim());
+    const exactIndices = new Set<number>();
 
-    const regex = new RegExp(
-      `(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
-      'gi',
-    );
-    return escaped.replace(regex, '<mark>$1</mark>');
+    if (queryChars.length > 0) {
+      const textLower = chars.map((c) => c.toLowerCase());
+      const queryLower = queryChars.map((c) => c.toLowerCase());
+
+      for (let i = 0; i <= textLower.length - queryLower.length; i++) {
+        let match = true;
+        for (let j = 0; j < queryLower.length; j++) {
+          if (textLower[i + j] !== queryLower[j]) {
+            match = false;
+            break;
+          }
+        }
+        if (match)
+          for (let j = 0; j < queryLower.length; j++) {
+            exactIndices.add(i + j);
+          }
+      }
+    }
+
+    const indexSet = new Set(indices);
+    let result = '';
+    let currentMark: 'exact' | 'fuzzy' | null = null;
+
+    for (let i = 0; i < chars.length; i++) {
+      const char = chars[i]
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      let neededMark: 'exact' | 'fuzzy' | null = null;
+      if (indexSet.has(i)) {
+        neededMark = exactIndices.has(i) ? 'exact' : 'fuzzy';
+      }
+
+      if (neededMark !== currentMark) {
+        if (currentMark) result += '</mark>';
+        if (neededMark) result += `<mark class="${neededMark}">`;
+        currentMark = neededMark;
+      }
+      result += char;
+    }
+    if (currentMark) result += '</mark>';
+
+    return result;
   };
 
-  function handleKeydown(e: KeyboardEvent) {
+  const handleKeydown = (e: KeyboardEvent) => {
     if (results.length > 0) {
       nav.handleKey(e);
     }
-  }
+  };
 
   $effect(() => {
     // Re-run search if fuzzy mode changes
@@ -76,6 +125,7 @@
   });
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="search-container" onkeydown={handleKeydown}>
   <header class="search-header">
     <div class="input-wrapper">
@@ -134,7 +184,9 @@
               <span class="ln">L{result.lineNumber + 1}</span>
             </div>
             <div class="result-content">
-              <p class="excerpt">{@html highlight(result.excerpt, query)}</p>
+              <p class="excerpt">
+                {@html highlight(result.excerpt, result.indices, query)}
+              </p>
             </div>
           </button>
         {/each}
@@ -166,6 +218,10 @@
     <div class="shortcuts">
       <span class="key">↑↓</span> <span>Navigate</span>
       <span class="key">Enter</span> <span>Open</span>
+      <span class="key"
+        >{inputManager.primaryLabel}+{inputManager.secondaryLabel}+F</span
+      >
+      <span>Fuzzy</span>
       <span class="key">Esc</span> <span>Close</span>
     </div>
     <div class="count">
@@ -317,11 +373,20 @@
     line-height: 1.4;
   }
 
-  :global(.excerpt mark) {
+  :global(.excerpt mark.exact) {
     background-color: var(--accent);
     color: var(--accent-text);
     padding: 0 2px;
     border-radius: 2px;
+    font-weight: 600;
+  }
+
+  :global(.excerpt mark.fuzzy) {
+    background-color: color-mix(in srgb, var(--accent), transparent 70%);
+    color: var(--text-main);
+    padding: 0 2px;
+    border-radius: 2px;
+    border-bottom: 2px solid var(--accent);
   }
 
   .status-view {

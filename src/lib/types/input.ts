@@ -9,7 +9,8 @@ export type ShortcutAction =
 	| "manageTags"
 	| "closePopup"
 	| "focusLastLine"
-	| "jumpByNumber";
+	| "jumpByNumber"
+	| "toggleFuzzy";
 
 export type ShortcutConfig = {
 	key: string;

@@ -9,7 +9,6 @@
 	"search.searching": "Suche...",
 	"search.no_results": "Keine Treffer gefunden",
 	"search.start_typing": "Notizen durchsuchen...",
-
 	"settings.title": "Einstellungen",
 	"settings.folder.title": "Notizen Ordner",
 	"settings.folder.select": "Ordner auswahlen",
@@ -39,6 +38,8 @@
 	"shortcuts.title": "Tastaturkürzel",
 	"shortcuts.tags.description": "Bei geöffnetem Tag-Manager:",
 	"shortcuts.tags.toggle": "Tag an-/abwählen",
+	"shortcuts.search.description": "Bei geöffnetem Suchfenster:",
+	"shortcuts.search.toggle_fuzzy": "Fuzzy Search ein-/ausschalten",
 	"shortcuts.action.toggle_search": "Suche einblenden",
 	"shortcuts.action.toggle_notes_list": "Notizliste einblenden",
 	"shortcuts.action.toggle_settings": "Einstellungen einblenden",

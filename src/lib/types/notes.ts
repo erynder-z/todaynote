@@ -41,4 +41,5 @@ export type SearchResult = {
 	excerpt: string;
 	lineNumber: number;
 	score: number;
+	indices: number[];
 };

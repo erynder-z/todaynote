@@ -5,40 +5,55 @@
   import { inputManager, t } from '$lib';
   import { defaultShortcuts } from '$lib/config/shortcuts';
 
-  const shortcuts = Object.values(defaultShortcuts);
+  // Global shortcuts (exclude context-specific ones)
+  const globalActions = [
+    'toggleSearch',
+    'toggleNotesList',
+    'toggleSettings',
+    'manageTags',
+    'closePopup',
+    'focusLastLine',
+    'jumpByNumber',
+  ];
+  const shortcuts = globalActions.map(
+    (action) => defaultShortcuts[action as keyof typeof defaultShortcuts],
+  );
+  const fuzzyShortcut = defaultShortcuts.toggleFuzzy;
 </script>
 
 <div class="shortcut-list">
   <div class="shortcut-grid">
     {#each shortcuts as shortcut}
-      <div class="shortcut-item">
-        <span class="shortcut-description">
-          {#if shortcut.description}
-            {$t(
-              `shortcuts.action.${shortcut.description.toLowerCase().replace(/\s+/g, '_')}`,
-            )}
-          {:else}
-            {shortcut.key}
-          {/if}
-        </span>
-        <div class="shortcut-keys">
-          {#if shortcut.primary}
-            <kbd>{inputManager.primaryLabel}</kbd>
-            <span class="plus">+</span>
-          {/if}
-          {#if shortcut.secondary}
-            <kbd>{inputManager.secondaryLabel}</kbd>
-            <span class="plus">+</span>
-          {/if}
-          <kbd
-            >{shortcut.key === ' '
-              ? 'Space'
-              : shortcut.key.length > 1 && shortcut.key.includes(',')
-                ? '1-9, A-K'
-                : shortcut.key}</kbd
-          >
+      {#if shortcut}
+        <div class="shortcut-item">
+          <span class="shortcut-description">
+            {#if shortcut.description}
+              {$t(
+                `shortcuts.action.${shortcut.description.toLowerCase().replace(/\s+/g, '_')}`,
+              )}
+            {:else}
+              {shortcut.key}
+            {/if}
+          </span>
+          <div class="shortcut-keys">
+            {#if shortcut.primary}
+              <kbd>{inputManager.primaryLabel}</kbd>
+              <span class="plus">+</span>
+            {/if}
+            {#if shortcut.secondary}
+              <kbd>{inputManager.secondaryLabel}</kbd>
+              <span class="plus">+</span>
+            {/if}
+            <kbd
+              >{shortcut.key === ' '
+                ? 'Space'
+                : shortcut.key.length > 1 && shortcut.key.includes(',')
+                  ? '1-9, A-K'
+                  : shortcut.key}</kbd
+            >
+          </div>
         </div>
-      </div>
+      {/if}
     {/each}
   </div>
 
@@ -55,6 +70,28 @@
       </div>
     </div>
   </div>
+
+  {#if fuzzyShortcut}
+    <div class="search-shortcuts">
+      <h3>{$t('shortcuts.search.description')}</h3>
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.search.toggle_fuzzy')}</span
+        >
+        <div class="shortcut-keys">
+          {#if fuzzyShortcut.primary}
+            <kbd>{inputManager.primaryLabel}</kbd>
+            <span class="plus">+</span>
+          {/if}
+          {#if fuzzyShortcut.secondary}
+            <kbd>{inputManager.secondaryLabel}</kbd>
+            <span class="plus">+</span>
+          {/if}
+          <kbd>{fuzzyShortcut.key.toUpperCase()}</kbd>
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -112,7 +149,8 @@
     color: var(--text-muted);
   }
 
-  .tag-shortcuts h3 {
+  .tag-shortcuts h3,
+  .search-shortcuts h3 {
     margin: 0 0 0.5rem 0;
     font-size: 1.1rem;
     color: var(--accent);

@@ -36,6 +36,12 @@ export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 		secondary: true,
 		description: "Jump to section",
 	},
+	toggleFuzzy: {
+		key: "f",
+		primary: true,
+		secondary: true,
+		description: "Toggle fuzzy search",
+	},
 };
 
 export const tagSuggestionShortcuts = {

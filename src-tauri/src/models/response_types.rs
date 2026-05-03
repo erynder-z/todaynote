@@ -33,6 +33,7 @@ pub struct SearchResult {
     pub excerpt: String,
     pub line_number: usize,
     pub score: i64,
+    pub indices: Vec<u32>,
 }
 
 /// The complete state payload sent to the frontend during initialization.

@@ -38,11 +38,14 @@
 	"shortcuts.title": "Keyboard Shortcuts",
 	"shortcuts.tags.description": "While Tag Manager is open:",
 	"shortcuts.tags.toggle": "Add/Remove Tag",
+	"shortcuts.search.description": "While Search is open:",
+	"shortcuts.search.toggle_fuzzy": "Toggle Fuzzy Search",
 	"shortcuts.action.toggle_search": "Toggle Search",
 	"shortcuts.action.toggle_notes_list": "Toggle Notes List",
 	"shortcuts.action.toggle_settings": "Toggle Settings",
 	"shortcuts.action.manage_tags": "Manage Tags",
 	"shortcuts.action.close_popup": "Close Popup",
 	"shortcuts.action.focus_last_line": "Focus Last Note-Line",
-	"shortcuts.action.jump_to_section": "Jump to Note Section"
+	"shortcuts.action.jump_to_section": "Jump to Note Section",
+	"shortcuts.action.toggle_fuzzy_search": "Toggle Fuzzy Search"
 }

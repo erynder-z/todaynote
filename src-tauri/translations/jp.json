@@ -38,6 +38,8 @@
 	"shortcuts.title": "キーボードショートカット",
 	"shortcuts.tags.description": "タグマネージャーが開いているとき:",
 	"shortcuts.tags.toggle": "タグを切り替える",
+	"shortcuts.search.description": "検索が開いているとき:",
+	"shortcuts.search.toggle_fuzzy": "曖昧検索を切り替える",
 	"shortcuts.action.toggle_search": "検索を切り替える",
 	"shortcuts.action.toggle_notes_list": "ノートリストを切り替える",
 	"shortcuts.action.toggle_settings": "設定を切り替える",
