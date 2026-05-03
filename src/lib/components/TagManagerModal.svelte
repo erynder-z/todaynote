@@ -134,9 +134,25 @@
   </button>
 {/snippet}
 
-<div class="tag-manager">
-  <div class="search-section">
-    <div class="input-container">
+<div class="tag-manager-container">
+  <header class="tag-header">
+    <div class="input-wrapper">
+      <div class="tag-icon">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          stroke="currentColor"
+          stroke-width="2"
+          fill="none"
+        >
+          <path
+            d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+          ></path>
+          <line x1="7" y1="7" x2="7.01" y2="7"></line>
+        </svg>
+      </div>
+
       <!-- svelte-ignore a11y_autofocus -->
       <input
         type="text"
@@ -148,98 +164,134 @@
         autofocus
       />
     </div>
+  </header>
 
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="suggestions-container" onmouseleave={() => (nav.index = -1)}>
-      {#if currentTags.length > 0}
-        <div class="section">
-          <div class="section-label">{$t('tag.tags')}</div>
-          <div class="items">
+  <main class="results-area" onmouseleave={() => (nav.index = -1)}>
+    {#if currentTags.length === 0 && suggestedTags.length === 0 && !newTag}
+      <div class="status-view empty">
+        <p class="muted">{$t('tag.suggestions')}</p>
+      </div>
+    {:else}
+      <div class="results-list">
+        {#if currentTags.length > 0}
+          <div class="section">
+            <div class="section-label">{$t('tag.tags')}</div>
             {#each currentTags as tag}
               {@render tagItem(tag)}
             {/each}
           </div>
-        </div>
-      {/if}
+        {/if}
 
-      {#if suggestedTags.length > 0}
-        <div class="section">
-          <div class="section-label">{$t('tag.suggestions')}</div>
-          <div class="items">
+        {#if suggestedTags.length > 0}
+          <div class="section">
+            <div class="section-label">{$t('tag.suggestions')}</div>
             {#each suggestedTags as tag}
               {@render tagItem(tag)}
             {/each}
           </div>
-        </div>
-      {:else if newTag}
-        <div class="no-results">
-          <p>Press Enter to create new tag <strong>#{newTag}</strong></p>
-        </div>
-      {/if}
+        {:else if newTag}
+          <div class="status-view">
+            <p>Press <kbd>Enter</kbd> to create <strong>#{newTag}</strong></p>
+          </div>
+        {/if}
+      </div>
+    {/if}
+  </main>
+
+  <footer class="tag-footer">
+    <div class="shortcuts">
+      <div class="shortcut-item">
+        <span>{$t('search.footer.navigate')}</span> <span class="key">↑↓</span>
+      </div>
+      <div class="shortcut-item">
+        <span>{$t('shortcuts.tags.toggle')}</span>
+        <span class="key">Enter</span>
+      </div>
+      <div class="shortcut-item">
+        <span>{$t('search.footer.close')}</span> <span class="key">Esc</span>
+      </div>
     </div>
-  </div>
+  </footer>
 </div>
 
 <style>
-  .tag-manager {
+  .tag-manager-container {
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: 60dvh;
+    background-color: var(--bg-main);
+    overflow: hidden;
+    border: 1px solid var(--border);
   }
 
-  .search-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  .tag-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-surface);
   }
 
-  .input-container {
+  .input-wrapper {
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0 0.75rem;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
+
+  .input-wrapper:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent), transparent 80%);
+  }
+
+  .tag-icon {
+    color: var(--text-muted);
     display: flex;
     align-items: center;
   }
 
   input {
-    width: 100%;
-    background: color-mix(in srgb, var(--accent), transparent 80%);
+    flex: 1;
+    background: none;
     border: none;
     color: var(--text-main);
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 0;
     font-size: 1rem;
     outline: none;
-    transition: all 0.15s ease;
-    border-radius: 0.5rem;
   }
 
-  input:focus {
-    border-color: var(--accent);
+  .results-area {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 300px;
+    position: relative;
   }
 
-  .suggestions-container {
+  .results-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
   }
 
   .section {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
   }
 
   .section-label {
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: 0.7rem;
+    font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05rem;
-    padding: 0 0.5rem;
-  }
-
-  .items {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
+    padding: 0.75rem 1rem 0.25rem 1rem;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
   }
 
   .suggestion-item {
@@ -247,107 +299,122 @@
     align-items: center;
     gap: 0.5rem;
     width: 100%;
-    padding: 0.5rem 0.75rem;
+    padding: 0.75rem 1rem;
     text-align: left;
     background: none;
     border: none;
+    border-bottom: 1px solid var(--border);
     color: var(--text-main);
     cursor: pointer;
     font-size: 0.95rem;
-    transition: all 0.15s ease;
-    border-radius: 4px;
+    transition: background-color 0.1s;
+  }
+
+  .suggestion-item:last-child {
+    border-bottom: none;
   }
 
   .suggestion-item.selected {
-    background-color: var(--accent);
-    color: var(--accent-text);
+    background-color: color-mix(in srgb, var(--accent), transparent 85%);
   }
 
   .suggestion-item.is-added.selected {
-    background-color: var(--remove);
-    color: var(--accent-text);
+    background-color: color-mix(in srgb, var(--remove), transparent 85%);
   }
 
   .tag-label {
     flex: 1;
-    font-weight: 400;
+    font-weight: 500;
   }
 
   .hashtag {
-    color: var(--text-muted);
-    font-weight: 400;
-    opacity: 0.6;
+    color: var(--accent);
+    font-weight: 600;
   }
 
-  .suggestion-item.selected .hashtag,
-  .suggestion-item.is-added.selected .hashtag {
-    color: var(--accent-text);
-    opacity: 0.9;
+  .suggestion-item.selected .tag-label {
+    color: var(--accent);
   }
 
   .shortcut-hint {
-    font-family: var(--font-mono, monospace);
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.2rem;
-    opacity: 0.6;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
   }
 
-  .suggestion-item.selected .shortcut-hint,
-  .suggestion-item.is-added.selected .shortcut-hint {
-    color: var(--accent-text);
-    opacity: 0.9;
-    border-color: color-mix(in srgb, var(--accent-text), transparent 30%);
-  }
-
-  .mod {
-    font-size: 0.65rem;
-    opacity: 0.7;
-  }
-
-  .suggestion-item.selected .shortcut-hint .mod,
-  .suggestion-item.is-added.selected .shortcut-hint .mod {
-    opacity: 0.9;
-  }
-
-  .key {
-    font-weight: 600;
-    text-transform: uppercase;
+  .suggestion-item.selected .shortcut-hint {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
   .status-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--remove);
+    opacity: 0.8;
+  }
+
+  .status-view {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1rem;
+    color: var(--text-muted);
+  }
+
+  .status-view kbd {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+  }
+
+  .tag-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--text-main);
+  }
+
+  .shortcuts {
+    display: flex;
+    width: 100%;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  .shortcut-item {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    font-size: 0.7rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    padding: 0.125rem 0.5rem;
-    border-radius: 0.5rem;
+    gap: 0.75rem;
+  }
+
+  .key {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
     color: var(--text-muted);
+    font-family: var(--font-mono);
   }
 
-  .suggestion-item.is-added:hover .status-badge,
-  .suggestion-item.is-added.selected .status-badge {
-    color: var(--accent-text);
-  }
-
-  .no-results {
-    padding: 1.5rem;
-    text-align: center;
-    color: var(--text-muted);
-    background-color: var(--bg-surface);
-    border-radius: 0.5rem;
-    border: 1px dashed var(--border);
-    font-size: 0.9rem;
-  }
-
-  .no-results strong {
-    color: var(--accent);
+  .muted {
+    font-style: italic;
   }
 </style>

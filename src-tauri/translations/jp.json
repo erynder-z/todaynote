@@ -33,6 +33,7 @@
 	"notes.loading": "ノートを読み込み中...",
 	"notes.error.load": "ノートの読み込みに失敗しました",
 	"notes.list.empty": "ノートが見つかりません",
+	"notes.list.length": "{{count}} 件",
 	"note.header": "メモ",
 	"tag.manager.title": "タグマネジャー ",
 	"tag.placeholder": "タグ...",

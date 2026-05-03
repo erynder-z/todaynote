@@ -33,6 +33,7 @@
 	"notes.loading": "Notizen werden geladen...",
 	"notes.error.load": "Notizen konnten nicht geladen werden",
 	"notes.list.empty": "Keine Notizen gefunden",
+	"notes.list.length": "{{count}} Notizen",
 	"note.header": "Notizen",
 	"tag.manager.title": "Tags verwalten",
 	"tag.placeholder": "Tag...",

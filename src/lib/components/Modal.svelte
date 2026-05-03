@@ -136,6 +136,7 @@
   h2 {
     margin: 0;
     font-size: 1.4rem;
+    text-align: center;
   }
 
   .close-button {

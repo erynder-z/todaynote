@@ -215,13 +215,23 @@
 
   <footer class="search-footer">
     <div class="shortcuts">
-      <span>{$t('search.footer.navigate')}</span> <span class="key">↑↓</span>
-      <span>{$t('search.footer.open')}</span> <span class="key">Enter</span>
-      <span>{$t('search.footer.fuzzy')}</span>
-      <span class="key"
-        >{inputManager.primaryLabel}+{inputManager.secondaryLabel}+F</span
-      >
-      <span>{$t('search.footer.close')}</span> <span class="key">Esc</span>
+      <div class="shortcut-item">
+        <span>{$t('search.footer.navigate')}</span> <span class="key">↑↓</span>
+      </div>
+      <div class="shortcut-item">
+        <span>{$t('search.footer.open')}</span> <span class="key">Enter</span>
+      </div>
+      <div class="shortcut-item">
+        <span>{$t('search.footer.fuzzy')}</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="key"
+          >{inputManager.primaryLabel}+{inputManager.secondaryLabel}+F</span
+        >
+      </div>
+      <div class="shortcut-item">
+        <span>{$t('search.footer.close')}</span> <span class="key">Esc</span>
+      </div>
     </div>
     <div class="count">
       {$t('search.results_count', { count: results.length })}

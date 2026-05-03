@@ -33,6 +33,7 @@
 	"notes.loading": "Loading notes...",
 	"notes.error.load": "Failed to load notes",
 	"notes.list.empty": "No notes found",
+	"notes.list.length": "{{count}} notes",
 	"note.header": "Notes",
 	"tag.manager.title": "Tag manager ",
 	"tag.placeholder": "tag...",
