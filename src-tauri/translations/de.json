@@ -40,6 +40,7 @@
 	"tag.remove": "Entfernen...",
 	"tag.tags": "Tags",
 	"tag.suggestions": "Vorschläge",
+	"tag.create_new": "<kbd>Enter</kbd> drücken, um <strong>#{{tag}}</strong> zu erstellen",
 	"settings.shortcuts.button": "Tastaturkürzel",
 	"shortcuts.title": "Tastaturkürzel",
 	"shortcuts.tags.description": "Bei geöffnetem Tag-Manager:",

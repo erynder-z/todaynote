@@ -40,6 +40,7 @@
 	"tag.remove": "remove",
 	"tag.tags": "tags",
 	"tag.suggestions": "suggestions",
+	"tag.create_new": "Press <kbd>Enter</kbd> to create <strong>#{{tag}}</strong>",
 	"settings.shortcuts.button": "Keyboard Shortcuts",
 	"shortcuts.title": "Keyboard Shortcuts",
 	"shortcuts.tags.description": "While Tag Manager is open:",

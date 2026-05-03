@@ -40,6 +40,7 @@
 	"tag.remove": "削除...",
 	"tag.tags": "タグ",
 	"tag.suggestions": "提案",
+	"tag.create_new": "<kbd>Enter</kbd>を押して <strong>#{{tag}}</strong> を作成",
 	"settings.shortcuts.button": "キーボードショートカット",
 	"shortcuts.title": "キーボードショートカット",
 	"shortcuts.tags.description": "タグマネージャーが開いているとき:",

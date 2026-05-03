@@ -191,7 +191,7 @@
           </div>
         {:else if newTag}
           <div class="status-view">
-            <p>Press <kbd>Enter</kbd> to create <strong>#{newTag}</strong></p>
+            <p>{@html $t('tag.create_new', { tag: newTag })}</p>
           </div>
         {/if}
       </div>
@@ -373,12 +373,16 @@
     color: var(--text-muted);
   }
 
-  .status-view kbd {
+  :global(.status-view kbd) {
     background-color: var(--bg-surface);
     border: 1px solid var(--border);
     padding: 0.1rem 0.3rem;
     border-radius: 3px;
     font-family: var(--font-mono);
+  }
+
+  :global(.status-view strong) {
+    color: var(--accent);
   }
 
   .tag-footer {
