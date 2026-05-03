@@ -9,6 +9,11 @@
 	"search.searching": "Suche...",
 	"search.no_results": "Keine Treffer gefunden",
 	"search.start_typing": "Notizen durchsuchen...",
+	"search.results_count": "{{count}} Ergebnisse",
+	"search.footer.navigate": "Navigieren",
+	"search.footer.open": "Öffnen",
+	"search.footer.fuzzy": "Fuzzy",
+	"search.footer.close": "Schließen",
 	"settings.title": "Einstellungen",
 	"settings.folder.title": "Notizen Ordner",
 	"settings.folder.select": "Ordner auswahlen",
@@ -46,5 +51,6 @@
 	"shortcuts.action.manage_tags": "Tags verwalten",
 	"shortcuts.action.close_popup": "Popup schließen",
 	"shortcuts.action.focus_last_line": "Letzte Notizzeile fokussieren",
-	"shortcuts.action.jump_to_section": "Zu Notizsektion springen"
+	"shortcuts.action.jump_to_section": "Zu Notizsektion springen",
+	"shortcuts.action.toggle_fuzzy_search": "Fuzzy-Suche umschalten"
 }

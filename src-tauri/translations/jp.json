@@ -9,6 +9,11 @@
 	"search.searching": "検索中...",
 	"search.no_results": "何も見つかりませんでした",
 	"search.start_typing": "ノートを検索...",
+	"search.results_count": "{{count}} 件の結果",
+	"search.footer.navigate": "移動",
+	"search.footer.open": "開く",
+	"search.footer.fuzzy": "曖昧",
+	"search.footer.close": "閉じる",
 	"settings.title": "設定",
 	"settings.folder.title": "ノートのフォルダ",
 	"settings.folder.select": "フォルダを選択",
@@ -46,5 +51,6 @@
 	"shortcuts.action.manage_tags": "タグを管理する",
 	"shortcuts.action.close_popup": "ポップアップを閉じる",
 	"shortcuts.action.focus_last_line": "最後の行にフォーカスする",
-	"shortcuts.action.jump_to_section": "ノートセクションへ移動"
+	"shortcuts.action.jump_to_section": "ノートセクションへ移動",
+	"shortcuts.action.toggle_fuzzy_search": "曖昧検索を切り替える"
 }

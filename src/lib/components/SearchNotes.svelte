@@ -215,16 +215,16 @@
 
   <footer class="search-footer">
     <div class="shortcuts">
-      <span class="key">↑↓</span> <span>Navigate</span>
-      <span class="key">Enter</span> <span>Open</span>
+      <span>{$t('search.footer.navigate')}</span> <span class="key">↑↓</span>
+      <span>{$t('search.footer.open')}</span> <span class="key">Enter</span>
+      <span>{$t('search.footer.fuzzy')}</span>
       <span class="key"
         >{inputManager.primaryLabel}+{inputManager.secondaryLabel}+F</span
       >
-      <span>Fuzzy</span>
-      <span class="key">Esc</span> <span>Close</span>
+      <span>{$t('search.footer.close')}</span> <span class="key">Esc</span>
     </div>
     <div class="count">
-      {results.length} results
+      {$t('search.results_count', { count: results.length })}
     </div>
   </footer>
 </div>
@@ -424,7 +424,7 @@
     background-color: var(--bg-surface);
     border-top: 1px solid var(--border);
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: var(--text-main);
   }
 
   .shortcuts {
@@ -440,6 +440,7 @@
     border-radius: 3px;
     color: var(--text-main);
     font-family: var(--font-mono);
+    color: var(--text-muted);
   }
 
   .muted {
