@@ -37,6 +37,53 @@ impl<'a> SearchService<'a> {
         (0, String::new())
     }
 
+    /// Strips common markdown characters from a line for cleaner search and display.
+    fn strip_markdown(line: &str) -> String {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            return String::new();
+        }
+
+        // 1. Strip leading markers
+        let mut s = trimmed;
+
+        // Headings (e.g., ### Title)
+        if s.starts_with('#') {
+            s = s.trim_start_matches('#').trim_start();
+        }
+
+        // Blockquotes (e.g., > Quote)
+        if s.starts_with("> ") {
+            s = &s[2..];
+        }
+
+        // Tasks and Lists (e.g., - [ ] Task, * Item)
+        if s.starts_with("- [ ] ") || s.starts_with("- [x] ") {
+            s = &s[6..];
+        } else if s.starts_with("- ") || s.starts_with("* ") || s.starts_with("+ ") {
+            s = &s[2..];
+        }
+
+        // 2. Strip inline markers (basic)
+        // We remove longer markers first to avoid leaving orphans
+        let mut result = s
+            .replace("***", "")
+            .replace("___", "")
+            .replace("**", "")
+            .replace("__", "")
+            .replace("~~", "")
+            .replace("`", "")
+            .replace("*", "")
+            .replace("_", "");
+
+        // 3. Strip trailing line-break backslashes
+        if result.ends_with('\\') {
+            result.pop();
+        }
+
+        result.trim().to_string()
+    }
+
     /// Generates an excerpt from a matching line, centered around the matching indices.
     /// Returns (excerpt_string, adjusted_indices).
     fn generate_excerpt(line: &str, indices: &[u32], max_length: usize) -> (String, Vec<u32>) {
@@ -161,16 +208,21 @@ impl<'a> SearchService<'a> {
             let formatted_name = self.note_manager.format_note_name(&filename);
 
             for (i, line) in content.lines().enumerate().skip(frontmatter_len) {
-                let trimmed_line = line.trim();
-                if trimmed_line.is_empty() {
+                let stripped_line = Self::strip_markdown(line);
+                if stripped_line.is_empty() {
                     continue;
                 }
 
                 let match_data = if is_fuzzy {
-                    Self::fuzzy_match(&mut matcher, trimmed_line, &query_utf32, &query_normalized)
-                } else if let Some(pos) = trimmed_line.to_lowercase().find(&query_normalized) {
+                    Self::fuzzy_match(
+                        &mut matcher,
+                        &stripped_line,
+                        &query_utf32,
+                        &query_normalized,
+                    )
+                } else if let Some(pos) = stripped_line.to_lowercase().find(&query_normalized) {
                     // For exact match, we need to convert byte position to codepoint indices
-                    let chars: Vec<char> = trimmed_line.chars().collect();
+                    let chars: Vec<char> = stripped_line.chars().collect();
                     let mut current_byte = 0;
                     let mut start_idx = 0;
                     for (idx, c) in chars.iter().enumerate() {
@@ -192,7 +244,7 @@ impl<'a> SearchService<'a> {
 
                 if let Some((score, indices)) = match_data {
                     let (excerpt, adjusted_indices) =
-                        Self::generate_excerpt(trimmed_line, &indices, 100);
+                        Self::generate_excerpt(&stripped_line, &indices, 100);
 
                     results.push(SearchResult {
                         filename: filename.clone(),
