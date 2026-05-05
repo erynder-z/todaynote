@@ -122,6 +122,39 @@ pub async fn get_today_note_path(state: State<'_, AppState>) -> Result<String, S
     Ok(file_path.to_string_lossy().into_owned())
 }
 
+/// Returns the absolute path to the most recent note that is not today's note.
+#[tauri::command]
+pub async fn get_last_available_note_path(state: State<'_, AppState>) -> Result<Option<String>, String> {
+    let note_manager = state.note_manager()?;
+    let notes = note_manager.list_notes()?;
+    let today_filename = format!("{}.md", crate::utils::date::get_current_date());
+
+    for note in notes {
+        if note.filename != today_filename {
+            let file_path = note_manager.notes_folder.join(note.filename);
+            return Ok(Some(file_path.to_string_lossy().into_owned()));
+        }
+    }
+
+    Ok(None)
+}
+
+/// Returns the absolute path to a note file offset from today.
+///
+/// - offset = 0: today
+/// - offset = -1: yesterday
+/// - offset = -7: one week ago
+#[tauri::command]
+pub async fn get_note_path_by_offset(
+    offset: i32,
+    state: State<'_, AppState>,
+) -> Result<String, String> {
+    let note_manager = state.note_manager()?;
+    note_manager.ensure_notes_folder_exists()?;
+    let file_path = crate::utils::date::get_note_path_by_offset(&note_manager.notes_folder, offset);
+    Ok(file_path.to_string_lossy().into_owned())
+}
+
 /// Checks if today's daily note file already exists.
 #[tauri::command]
 pub async fn check_todays_note_exists(state: State<'_, AppState>) -> Result<bool, String> {

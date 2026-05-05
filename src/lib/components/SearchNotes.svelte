@@ -3,7 +3,14 @@
    * Enhanced note search component with command-palette aesthetics
    * and full keyboard navigation.
    */
-  import { ListNavigator, ModalFooter, sessionState, settings, t } from '$lib';
+  import {
+    ListNavigator,
+    ModalFooter,
+    sessionState,
+    settings,
+    t,
+    toast,
+  } from '$lib';
   import { inputManager } from '$lib/stores/input.svelte';
   import type { SearchResult } from '$lib/types/notes';
   import { readNoteContent, searchNotes } from '$lib/utils/notes';
@@ -52,6 +59,8 @@
       sessionState.todayNotePath = path;
       sessionState.todayNoteContent = content;
       sessionState.activePopup = null;
+    } else {
+      toast.error($t('notes.error.load'));
     }
   };
 

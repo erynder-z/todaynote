@@ -20,6 +20,10 @@
   import { tagSuggestionShortcuts } from '../config/shortcuts';
   import { EditorStore } from '../stores/editor.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
+  import {
+    navigateToLastAvailable,
+    navigateToOffset,
+  } from '../utils/dailyNote';
   import { jumpToSectionInEditor } from '../utils/editor';
   import { useShortcuts } from '../utils/shortcuts';
 
@@ -174,9 +178,28 @@
       if (sessionState.activePopup !== null) return false;
 
       const idx = tagSuggestionShortcuts.codes.indexOf(e.code);
-      if (idx !== -1 && idx < editor.sections.length) {
-        jumpToSectionByIndex(idx);
+      if (idx !== -1 && idx < editor.sections.length) jumpToSectionByIndex(idx);
+    },
+    navigateYesterday: async (e) => {
+      if (sessionState.activePopup !== null) {
+        e.preventDefault();
+        return;
       }
+      await navigateToOffset(-1);
+    },
+    navigateLastAvailable: async (e) => {
+      if (sessionState.activePopup !== null) {
+        e.preventDefault();
+        return;
+      }
+      await navigateToLastAvailable();
+    },
+    navigateToday: async (e) => {
+      if (sessionState.activePopup !== null) {
+        e.preventDefault();
+        return;
+      }
+      await navigateToOffset(0);
     },
   });
 

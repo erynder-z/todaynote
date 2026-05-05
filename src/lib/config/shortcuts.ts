@@ -42,6 +42,24 @@ export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 		secondary: true,
 		description: "Toggle fuzzy search",
 	},
+	navigateYesterday: {
+		key: "e",
+		primary: true,
+		secondary: true,
+		description: "Go to yesterday's note",
+	},
+	navigateLastAvailable: {
+		key: "a",
+		primary: true,
+		secondary: true,
+		description: "Go to last available note",
+	},
+	navigateToday: {
+		key: "o",
+		primary: true,
+		secondary: true,
+		description: "Go to today's note",
+	},
 };
 
 export const tagSuggestionShortcuts = {

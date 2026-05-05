@@ -55,5 +55,8 @@
 	"shortcuts.action.close_popup": "Popup schließen",
 	"shortcuts.action.focus_last_line": "Letzte Notizzeile fokussieren",
 	"shortcuts.action.jump_to_section": "Zu Notizsektion springen",
+	"shortcuts.action.go_to_yesterday's_note": "Gehe zu gestriger Notiz",
+	"shortcuts.action.go_to_last_available_note": "Gehe zu letzter verfügbarer Notiz",
+	"shortcuts.action.go_to_today's_note": "Gehe zu heutiger Notiz",
 	"shortcuts.action.toggle_fuzzy_search": "Fuzzy-Suche umschalten"
 }

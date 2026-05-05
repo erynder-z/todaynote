@@ -14,6 +14,9 @@
     'closePopup',
     'focusLastLine',
     'jumpByNumber',
+    'navigateYesterday',
+    'navigateLastAvailable',
+    'navigateToday',
   ];
   const shortcuts = globalActions.map(
     (action) => defaultShortcuts[action as keyof typeof defaultShortcuts],

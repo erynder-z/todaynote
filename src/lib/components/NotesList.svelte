@@ -2,7 +2,14 @@
   /**
    * Displays list of all notes found in the user's notes folder.
    */
-  import { ListNavigator, ModalFooter, sessionState, settings, t } from '$lib';
+  import {
+    ListNavigator,
+    ModalFooter,
+    sessionState,
+    settings,
+    t,
+    toast,
+  } from '$lib';
   import type { FormattedNote } from '$lib/types/notes';
   import { listNotes } from '$lib/utils/folder';
   import { readNoteContent } from '$lib/utils/notes';
@@ -31,6 +38,8 @@
       sessionState.todayNotePath = path;
       sessionState.todayNoteContent = content;
       sessionState.activePopup = null;
+    } else {
+      toast.error($t('notes.error.load'));
     }
   };
 

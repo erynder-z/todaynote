@@ -10,7 +10,10 @@ export type ShortcutAction =
 	| "closePopup"
 	| "focusLastLine"
 	| "jumpByNumber"
-	| "toggleFuzzy";
+	| "toggleFuzzy"
+	| "navigateYesterday"
+	| "navigateLastAvailable"
+	| "navigateToday";
 
 export type ShortcutConfig = {
 	key: string;
