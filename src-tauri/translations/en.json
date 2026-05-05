@@ -32,6 +32,7 @@
 	"notes.list.title": "Your Notes",
 	"notes.loading": "Loading notes...",
 	"notes.error.load": "Failed to load notes",
+	"notes.error.not_found": "Note not found",
 	"notes.list.empty": "No notes found",
 	"notes.list.length": "{{count}} notes",
 	"note.header": "Notes",

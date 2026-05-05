@@ -32,6 +32,7 @@
 	"notes.list.title": "Deine Notizen",
 	"notes.loading": "Notizen werden geladen...",
 	"notes.error.load": "Notizen konnten nicht geladen werden",
+	"notes.error.not_found": "Notiz nicht gefunden",
 	"notes.list.empty": "Keine Notizen gefunden",
 	"notes.list.length": "{{count}} Notizen",
 	"note.header": "Notizen",
