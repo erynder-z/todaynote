@@ -87,24 +87,11 @@ export const getNotePathByOffset = async (offset: number) => {
 };
 
 /**
- * Checks if the current daily note file already exists in the configured folder.
+ * Creates a new daily note file for today if it doesn't already exist.
  */
-export const checkTodaysNoteExists = async () => {
+export const createTodaysNote = async () => {
 	try {
-		const exists = (await invoke("check_todays_note_exists")) as boolean;
-		return exists;
-	} catch (error) {
-		console.error("Error checking today's note:", error);
-		return false;
-	}
-};
-
-/**
- * Creates a new daily note file at the specified path if it doesn't already exist.
- */
-export const createTodaysNote = async (path: string) => {
-	try {
-		await invoke("create_todays_note", { path });
+		await invoke("create_todays_note");
 	} catch (error) {
 		console.error("Error creating today's note:", error);
 	}

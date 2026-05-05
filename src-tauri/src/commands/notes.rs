@@ -124,7 +124,9 @@ pub async fn get_today_note_path(state: State<'_, AppState>) -> Result<String, S
 
 /// Returns the absolute path to the most recent note that is not today's note.
 #[tauri::command]
-pub async fn get_last_available_note_path(state: State<'_, AppState>) -> Result<Option<String>, String> {
+pub async fn get_last_available_note_path(
+    state: State<'_, AppState>,
+) -> Result<Option<String>, String> {
     let note_manager = state.note_manager()?;
     let notes = note_manager.list_notes()?;
     let today_filename = format!("{}.md", crate::utils::date::get_current_date());
@@ -159,22 +161,20 @@ pub async fn get_note_path_by_offset(
 #[tauri::command]
 pub async fn check_todays_note_exists(state: State<'_, AppState>) -> Result<bool, String> {
     let note_manager = state.note_manager()?;
-    let file_path = note_manager.get_today_note_path();
-    Ok(file_path.exists())
+    Ok(note_manager.todays_note_exists())
 }
 
 /// Creates a new daily note for today if it doesn't already exist.
 ///
 /// Automatically initializes the note with a localized header.
 #[tauri::command]
-pub async fn create_todays_note(path: String, state: State<'_, AppState>) -> Result<(), String> {
-    let file_path = PathBuf::from(path);
+pub async fn create_todays_note(state: State<'_, AppState>) -> Result<(), String> {
+    let note_manager = state.note_manager()?;
 
-    if file_path.exists() {
+    if note_manager.todays_note_exists() {
         return Ok(());
     }
 
-    let note_manager = state.note_manager()?;
     let translations = crate::commands::i18n::get_translations(note_manager.locale.clone());
     let note_header = translations
         .get("note.header")

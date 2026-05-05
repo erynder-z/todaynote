@@ -45,6 +45,11 @@ impl NoteManager {
         self.notes_folder.join(&file_name)
     }
 
+    /// Checks if today's daily note file already exists.
+    pub fn todays_note_exists(&self) -> bool {
+        self.get_today_note_path().exists()
+    }
+
     /// Creates today's daily note if it doesn't already exist.
     ///
     /// The note is initialized with YAML metadata and a default section header.
@@ -52,7 +57,7 @@ impl NoteManager {
         self.ensure_notes_folder_exists()?;
         let file_path = self.get_today_note_path();
 
-        if file_path.exists() {
+        if self.todays_note_exists() {
             return Ok(file_path);
         }
 
