@@ -92,36 +92,43 @@ impl TagManager {
         }
     }
 
-    /// Adds a tag to the session frontmatter.
-    pub fn add_tag_to_session(&self, session: &mut NoteSession, tag: String) {
+    /// Internal helper to update the tags line in session frontmatter.
+    fn set_tags_in_session(&self, session: &mut NoteSession, tags: Vec<String>) {
+        if tags.is_empty() {
+            if let Some(idx) = session.find_metadata_line("tags") {
+                session.lines.remove(idx);
+                session.detect_frontmatter();
+            }
+            return;
+        }
+
         session.ensure_frontmatter();
 
+        let tag_line = format!("tags: [{}]", tags.join(", "));
+
         if let Some(absolute_idx) = session.find_metadata_line("tags") {
-            let mut tags = self.get_tags_from_session(session);
-            if !tags.contains(&tag) {
-                tags.push(tag);
-                session.lines[absolute_idx] = format!("tags: [{}]", tags.join(", "));
-            }
+            session.lines[absolute_idx] = tag_line;
         } else if let Some((_, end)) = session.frontmatter_range {
-            session.lines.insert(end, format!("tags: [{}]", tag));
+            session.lines.insert(end, tag_line);
             session.detect_frontmatter();
-        } else {
-            // Fallback: should not happen after ensure_frontmatter
-            session.lines.insert(0, "---".to_string());
-            session.lines.insert(1, format!("tags: [{}]", tag));
-            session.lines.insert(2, "---".to_string());
-            session.detect_frontmatter();
+        }
+    }
+
+    /// Adds a tag to the session frontmatter.
+    pub fn add_tag_to_session(&self, session: &mut NoteSession, tag: String) {
+        let mut tags = self.get_tags_from_session(session);
+        if !tags.contains(&tag) {
+            tags.push(tag);
+            self.set_tags_in_session(session, tags);
         }
     }
 
     /// Removes a tag from the session frontmatter.
     pub fn remove_tag_from_session(&self, session: &mut NoteSession, tag: String) {
-        if let Some(absolute_idx) = session.find_metadata_line("tags") {
-            let mut tags = self.get_tags_from_session(session);
-            if let Some(pos) = tags.iter().position(|t| t == &tag) {
-                tags.remove(pos);
-                session.lines[absolute_idx] = format!("tags: [{}]", tags.join(", "));
-            }
+        let mut tags = self.get_tags_from_session(session);
+        if let Some(pos) = tags.iter().position(|t| t == &tag) {
+            tags.remove(pos);
+            self.set_tags_in_session(session, tags);
         }
     }
 }

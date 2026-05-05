@@ -2,17 +2,21 @@
 
 use crate::commands::notes::reconstruct_full_content;
 use crate::models::app_state::AppState;
+use crate::models::note_session::NoteSession;
 use crate::models::response_types::NoteContentResponse;
+use crate::services::tag_manager::TagManager;
 use std::fs;
 use tauri::State;
 
-/// Adds a tag to the current note session and writes it to disk.
-#[tauri::command]
-pub async fn add_note_tag(
-    tag: String,
+/// Helper to sync frontend content, perform a tag operation, and save the result.
+async fn perform_tag_operation<F>(
     current_content: String,
     state: State<'_, AppState>,
-) -> Result<NoteContentResponse, String> {
+    operation: F,
+) -> Result<NoteContentResponse, String>
+where
+    F: FnOnce(&TagManager, &mut NoteSession),
+{
     let mut session = state.note_session()?;
 
     let path = session
@@ -25,8 +29,7 @@ pub async fn add_note_tag(
     session.load(path.clone(), full_content);
 
     let mut tag_manager = state.tag_manager()?;
-
-    tag_manager.add_tag_to_session(&mut session, tag);
+    operation(&tag_manager, &mut session);
     tag_manager.invalidate_cache();
 
     let full_content = session.get_full_content();
@@ -40,6 +43,19 @@ pub async fn add_note_tag(
     ))
 }
 
+/// Adds a tag to the current note session and writes it to disk.
+#[tauri::command]
+pub async fn add_note_tag(
+    tag: String,
+    current_content: String,
+    state: State<'_, AppState>,
+) -> Result<NoteContentResponse, String> {
+    perform_tag_operation(current_content, state, |tm, session| {
+        tm.add_tag_to_session(session, tag);
+    })
+    .await
+}
+
 /// Removes a tag from the current note session and writes it to disk.
 #[tauri::command]
 pub async fn remove_note_tag(
@@ -47,33 +63,10 @@ pub async fn remove_note_tag(
     current_content: String,
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
-    let mut session = state.note_session()?;
-
-    // Sync session with frontend content first
-    let path = session.path.clone();
-    if let Some(path) = path {
-        let full_content = reconstruct_full_content(&path, &current_content)?;
-        session.load(path, full_content);
-    }
-
-    let mut tag_manager = state.tag_manager()?;
-
-    tag_manager.remove_tag_from_session(&mut session, tag);
-    tag_manager.invalidate_cache();
-
-    let path = session
-        .path
-        .clone()
-        .ok_or_else(|| "No active note session".to_string())?;
-    let full_content = session.get_full_content();
-    fs::write(&path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
-
-    let note_manager = state.note_manager()?;
-    Ok(NoteContentResponse::from_session(
-        &session,
-        &note_manager,
-        &tag_manager,
-    ))
+    perform_tag_operation(current_content, state, |tm, session| {
+        tm.remove_tag_from_session(session, tag);
+    })
+    .await
 }
 
 /// Returns all unique tags from all notes, sorted by usage frequency.

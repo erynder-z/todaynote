@@ -79,19 +79,6 @@ export const removeNoteTag = async (tag: string, currentContent: string) => {
 };
 
 /**
- * Retrieves all tags from all notes, sorted by frequency.
- */
-export const getAllTags = async () => {
-	try {
-		const tags = (await invoke("get_all_tags")) as string[];
-		return tags;
-	} catch (error) {
-		console.error("Error getting all tags:", error);
-		return [];
-	}
-};
-
-/**
  * Retrieves tag suggestions based on a search query.
  */
 export const getTagSuggestions = async (query: string) => {
