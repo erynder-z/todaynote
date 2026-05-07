@@ -3,6 +3,7 @@ export type AppSettings = {
 	locale: string;
 	theme: string;
 	rememberWindowSize: boolean;
+	notesListLayout: "list" | "masonry";
 };
 
 export type ThemeInfo = {

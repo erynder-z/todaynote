@@ -16,6 +16,7 @@ export class SettingsStore {
 	locale = $state("en");
 	theme = $state("blind-spot");
 	rememberWindowSize = $state(true);
+	notesListLayout = $state<"list" | "masonry">("list");
 
 	/**
 	 * Loads initial configuration from the backend and initializes UI stores.
@@ -27,6 +28,7 @@ export class SettingsStore {
 			this.locale = config.locale;
 			this.theme = config.theme;
 			this.rememberWindowSize = config.rememberWindowSize;
+			this.notesListLayout = config.notesListLayout;
 
 			await updateTranslations(this.locale);
 			await updateTheme(this.theme);
@@ -73,6 +75,12 @@ export class SettingsStore {
 					remember: newSettings.rememberWindowSize,
 				});
 				this.rememberWindowSize = newSettings.rememberWindowSize;
+			}
+			if (newSettings.notesListLayout) {
+				await invoke("set_notes_list_layout", {
+					layout: newSettings.notesListLayout,
+				});
+				this.notesListLayout = newSettings.notesListLayout;
 			}
 			return true;
 		} catch (error) {

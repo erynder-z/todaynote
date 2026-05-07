@@ -14,6 +14,7 @@ pub struct ConfigResponse {
     pub locale: String,
     pub theme: String,
     pub remember_window_size: bool,
+    pub notes_list_layout: String,
 }
 
 /// Metadata for a single note file in the list.
@@ -22,6 +23,8 @@ pub struct ConfigResponse {
 pub struct FormattedNote {
     pub filename: String,
     pub formatted_name: String,
+    pub preview: String,
+    pub tags: Vec<String>,
 }
 
 /// A search match from the note archive.
@@ -44,6 +47,7 @@ pub struct AppPayload {
     pub locale: String,
     pub theme: String,
     pub remember_window_size: bool,
+    pub notes_list_layout: String,
     pub available_locales: Vec<LocaleInfo>,
     pub available_themes: Vec<ThemeInfo>,
     pub translations: HashMap<String, String>,

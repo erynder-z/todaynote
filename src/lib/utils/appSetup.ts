@@ -62,6 +62,7 @@ export const syncSettingsState = (state: AppPayload) => {
 	settings.locale = state.locale;
 	settings.theme = state.theme;
 	settings.rememberWindowSize = state.rememberWindowSize;
+	settings.notesListLayout = state.notesListLayout;
 };
 
 /**

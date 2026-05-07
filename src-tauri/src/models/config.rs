@@ -18,6 +18,8 @@ pub struct AppConfig {
     pub theme: String,
     /// Whether to restore window dimensions across sessions.
     pub remember_window_size: bool,
+    /// Layout style for the notes list ("list" or "masonry").
+    pub notes_list_layout: String,
 }
 
 impl Default for AppConfig {
@@ -29,6 +31,7 @@ impl Default for AppConfig {
             locale: "en".to_string(),
             theme: "blind-spot".to_string(),
             remember_window_size: true,
+            notes_list_layout: "list".to_string(),
         }
     }
 }

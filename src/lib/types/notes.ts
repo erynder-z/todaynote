@@ -4,6 +4,8 @@
 export type FormattedNote = {
 	filename: string;
 	formattedName: string;
+	preview: string;
+	tags: string[];
 };
 
 export type NoteMetadata = {

@@ -6,7 +6,15 @@
   import { tick } from 'svelte';
   import { focusTrap, sessionState, useShortcuts } from '$lib';
 
-  let { title, children } = $props();
+  let {
+    title,
+    children,
+    wide = false,
+  } = $props<{
+    title?: string;
+    children: any;
+    wide?: boolean;
+  }>();
 
   /**
    * Clears the active popup state to hide the modal.
@@ -75,6 +83,7 @@
 <div class="overlay" onclick={close}>
   <div
     class="popup"
+    class:wide
     use:setupModal
     use:focusTrap
     tabindex="-1"
@@ -127,6 +136,12 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    transition: width 0.3s ease;
+  }
+
+  .popup.wide {
+    width: 80rem;
+    max-width: 95dvw;
   }
 
   .popup-header {

@@ -88,9 +88,16 @@ impl NoteManager {
                 let entry = entry.ok()?;
                 let file_name = entry.file_name().into_string().ok()?;
                 if file_name.ends_with(".md") && !file_name.starts_with(".") {
+                    let path = entry.path();
+                    let content = fs::read_to_string(&path).unwrap_or_default();
+                    let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
+                    let preview = self.extract_preview(&content);
+
                     Some(FormattedNote {
                         filename: file_name.clone(),
                         formatted_name: self.format_note_name(&file_name),
+                        preview,
+                        tags,
                     })
                 } else {
                     None
@@ -102,6 +109,39 @@ impl NoteManager {
         notes.reverse();
 
         Ok(notes)
+    }
+
+    /// Extracts a short preview from the note content, skipping frontmatter and headings.
+    fn extract_preview(&self, content: &str) -> String {
+        let lines: Vec<&str> = content.lines().collect();
+        let mut start_idx = 0;
+
+        // Skip frontmatter
+        if lines.first().map(|l| l.trim()) == Some("---") {
+            for (i, line) in lines.iter().enumerate().skip(1) {
+                if line.trim() == "---" {
+                    start_idx = i + 1;
+                    break;
+                }
+            }
+        }
+
+        let mut preview_text = Vec::new();
+        for line in lines.iter().skip(start_idx) {
+            let stripped = crate::utils::markdown::strip_markdown(line);
+            // Skip headings (already handled by strip_markdown but we also skip empty results)
+            if stripped.is_empty() {
+                continue;
+            }
+            preview_text.push(stripped);
+            if preview_text.len() > 3 {
+                break;
+            }
+        }
+
+        let joined = preview_text.join(" ");
+        let (preview, _) = crate::utils::markdown::generate_excerpt(&joined, &[], 150);
+        preview
     }
 
     /// Formats a note's filename into a human-readable, localized string.

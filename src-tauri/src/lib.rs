@@ -12,7 +12,8 @@ use commands::notes::{
 };
 use commands::search::search_notes;
 use commands::settings::{
-    get_config, set_locale, set_notes_folder, set_remember_window_size, switch_notes_folder,
+    get_config, set_locale, set_notes_folder, set_notes_list_layout, set_remember_window_size,
+    switch_notes_folder,
 };
 use commands::setup::initialize_app;
 use commands::tags::{add_note_tag, get_all_tags, get_tag_suggestions, remove_note_tag};
@@ -85,6 +86,7 @@ pub fn run() {
             list_notes,
             set_locale,
             set_notes_folder,
+            set_notes_list_layout,
             set_remember_window_size,
             set_theme,
             switch_notes_folder,

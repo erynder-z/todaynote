@@ -16,6 +16,7 @@ export type AppPayload = {
 	locale: string;
 	theme: string;
 	rememberWindowSize: boolean;
+	notesListLayout: "list" | "masonry";
 	availableLocales: LocaleInfo[];
 	availableThemes: ThemeInfo[];
 	translations: Record<string, string>;

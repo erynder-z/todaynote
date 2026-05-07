@@ -29,6 +29,7 @@ pub fn get_initial_state(
         locale: config.locale.clone(),
         theme: config.theme.clone(),
         remember_window_size: config.remember_window_size,
+        notes_list_layout: config.notes_list_layout.clone(),
         available_locales,
         available_themes,
         translations,

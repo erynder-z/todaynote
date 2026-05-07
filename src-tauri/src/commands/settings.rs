@@ -16,7 +16,17 @@ pub async fn get_config() -> Result<ConfigResponse, String> {
         locale: config.locale,
         theme: config.theme,
         remember_window_size: config.remember_window_size,
+        notes_list_layout: config.notes_list_layout,
     })
+}
+
+/// Sets the layout style for the notes list.
+#[tauri::command]
+pub async fn set_notes_list_layout(layout: String) -> Result<(), String> {
+    let mut config = AppConfig::load();
+    config.notes_list_layout = layout;
+    config.save();
+    Ok(())
 }
 
 /// Sets whether the application should remember the window size.

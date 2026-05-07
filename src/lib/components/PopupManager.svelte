@@ -12,6 +12,7 @@
     SettingsView,
     ShortcutListModal,
     sessionState,
+    settings,
     TagManagerModal,
     t,
   } from '$lib';
@@ -24,7 +25,10 @@
     <SettingsView />
   </Modal>
 {:else if sessionState.activePopup === 'notesList'}
-  <Modal title={$t('notes.list.title')}>
+  <Modal
+    title={$t('notes.list.title')}
+    wide={settings.notesListLayout === 'masonry'}
+  >
     <NotesList />
   </Modal>
 {:else if sessionState.activePopup === 'search'}
