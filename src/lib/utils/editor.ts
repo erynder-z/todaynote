@@ -1,4 +1,4 @@
-import { type Editor, editorViewCtx } from "@milkdown/core";
+import { type Editor, editorViewCtx, parserCtx } from "@milkdown/core";
 import { Selection } from "@milkdown/prose/state";
 
 /**
@@ -33,4 +33,36 @@ export const jumpToSectionInEditor = (instance: Editor, name: string) => {
 		const selection = Selection.near(resolvedPos, -1);
 		view.dispatch(view.state.tr.setSelection(selection).scrollIntoView());
 	});
+};
+
+/**
+ * Updates the editor's content from a Markdown string and positions the cursor at the end.
+ */
+export const updateEditorContent = (instance: Editor, markdown: string) => {
+	instance.action((ctx) => {
+		const view = ctx.get(editorViewCtx);
+		const parser = ctx.get(parserCtx);
+		const doc = parser(markdown);
+		if (!doc) return;
+
+		let tr = view.state.tr.replaceWith(0, view.state.doc.content.size, doc);
+
+		// Ensure trailing empty line for headings (Milkdown parser workaround)
+		if (doc.lastChild?.type.name === "heading") {
+			const paragraph = view.state.schema.nodes.paragraph.create();
+			tr = tr.insert(tr.doc.content.size, paragraph);
+		}
+
+		// Position cursor at end and focus
+		const selection = Selection.atEnd(tr.doc);
+		view.dispatch(tr.setSelection(selection).scrollIntoView());
+		view.focus();
+	});
+};
+
+/**
+ * Focuses the editor instance.
+ */
+export const focusEditor = (instance: Editor) => {
+	instance.action((ctx) => ctx.get(editorViewCtx).focus());
 };

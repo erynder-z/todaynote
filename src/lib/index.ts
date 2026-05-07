@@ -4,6 +4,7 @@ export { default as EditorView } from "./components/EditorView.svelte";
 export { default as FolderSelector } from "./components/FolderSelector.svelte";
 export { default as LanguageSelector } from "./components/LanguageSelector.svelte";
 export { default as MainView } from "./components/MainView.svelte";
+export { default as MilkdownEditor } from "./components/MilkdownEditor.svelte";
 export { default as Modal } from "./components/Modal.svelte";
 export { default as ModalFooter } from "./components/ModalFooter.svelte";
 export { default as Navigation } from "./components/Navigation.svelte";
