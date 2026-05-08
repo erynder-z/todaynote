@@ -35,6 +35,7 @@
 	"notes.error.not_found": "ノートが見つかりません",
 	"notes.list.empty": "ノートが見つかりません",
 	"notes.list.length": "{{count}} 件",
+	"notes.list.wordCount": "{{count}} 単語",
 	"note.header": "メモ",
 	"tag.manager.title": "タグマネジャー ",
 	"tag.placeholder": "タグ...",

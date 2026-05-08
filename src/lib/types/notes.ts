@@ -6,6 +6,8 @@ export type FormattedNote = {
 	formattedName: string;
 	preview: string;
 	tags: string[];
+	sections: string[];
+	wordCount: number;
 };
 
 export type NoteMetadata = {
@@ -29,9 +31,9 @@ export type NoteSection = {
  * The complete note content response from the backend.
  */
 export type NoteContentResponse = {
-	content: string; // Full markdown content
+	content: string;
 	metadata: NoteMetadata;
-	sections: NoteSection[]; // Auto-detected headings
+	sections: NoteSection[];
 };
 
 /**

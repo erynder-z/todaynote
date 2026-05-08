@@ -25,6 +25,8 @@ pub struct FormattedNote {
     pub formatted_name: String,
     pub preview: String,
     pub tags: Vec<String>,
+    pub sections: Vec<String>,
+    pub word_count: usize,
 }
 
 /// A search match from the note archive.

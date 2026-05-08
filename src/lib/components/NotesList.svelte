@@ -151,9 +151,45 @@
                 </div>
               {/if}
 
-              {#if note.preview}
-                <p class="note-preview">{note.preview}</p>
+              {#if note.sections && note.sections.length > 0}
+                <div class="note-sections">
+                  {#each note.sections as section}
+                    <div class="section-item">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        height="14px"
+                        viewBox="0 -960 960 960"
+                        width="14px"
+                        fill="currentColor"
+                        ><path
+                          d="m382-354 182-182-182-182 56-56 238 238-238 238-56-56Z"
+                        /></svg
+                      >
+                      <span>{section}</span>
+                    </div>
+                  {/each}
+                </div>
               {/if}
+
+              <div class="note-footer">
+                <div class="note-stats">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    height="14px"
+                    viewBox="0 -960 960 960"
+                    width="14px"
+                    fill="currentColor"
+                    ><path
+                      d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0-33-23.5-56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h400v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Z"
+                    /></svg
+                  >
+                  <span
+                    >{$t('notes.list.wordCount', {
+                      count: note.wordCount,
+                    })}</span
+                  >
+                </div>
+              </div>
             {:else}
               <div class="result-content">
                 <span class="note-name">{note.formattedName}</span>
@@ -365,15 +401,44 @@
     font-weight: 500;
   }
 
-  .note-preview {
-    font-size: 0.875rem;
+  .note-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
-    line-height: 1.5;
-    margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  }
+
+  .section-item svg {
+    color: var(--accent);
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  .note-footer {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid color-mix(in srgb, var(--border), transparent 50%);
+  }
+
+  .note-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .note-stats svg {
+    opacity: 0.6;
   }
 
   .status-view {

@@ -92,12 +92,16 @@ impl NoteManager {
                     let content = fs::read_to_string(&path).unwrap_or_default();
                     let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
                     let preview = self.extract_preview(&content);
+                    let sections = self.extract_sections(&content, 5);
+                    let word_count = crate::utils::markdown::count_words(&content);
 
                     Some(FormattedNote {
                         filename: file_name.clone(),
                         formatted_name: self.format_note_name(&file_name),
                         preview,
                         tags,
+                        sections,
+                        word_count,
                     })
                 } else {
                     None
@@ -109,6 +113,17 @@ impl NoteManager {
         notes.reverse();
 
         Ok(notes)
+    }
+
+    /// Extracts the first N section names (headings) from the content.
+    fn extract_sections(&self, content: &str, limit: usize) -> Vec<String> {
+        content
+            .lines()
+            .filter(|l| l.starts_with("# "))
+            .take(limit)
+            .map(|l| l[2..].trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect()
     }
 
     /// Extracts a short preview from the note content, skipping frontmatter and headings.

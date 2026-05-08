@@ -35,6 +35,7 @@
 	"notes.error.not_found": "Notiz nicht gefunden",
 	"notes.list.empty": "Keine Notizen gefunden",
 	"notes.list.length": "{{count}} Notizen",
+	"notes.list.wordCount": "{{count}} Wörter",
 	"note.header": "Notizen",
 	"tag.manager.title": "Tags verwalten",
 	"tag.placeholder": "Tag...",

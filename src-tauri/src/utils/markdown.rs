@@ -95,3 +95,8 @@ pub fn generate_excerpt(line: &str, indices: &[u32], max_length: usize) -> (Stri
 
     (final_excerpt, final_indices)
 }
+
+/// Simple word count for markdown content.
+pub fn count_words(content: &str) -> usize {
+    content.split_whitespace().filter(|w| !w.is_empty()).count()
+}

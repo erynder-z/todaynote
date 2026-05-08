@@ -35,6 +35,7 @@
 	"notes.error.not_found": "Note not found",
 	"notes.list.empty": "No notes found",
 	"notes.list.length": "{{count}} notes",
+	"notes.list.wordCount": "{{count}} words",
 	"note.header": "Notes",
 	"tag.manager.title": "Tag manager ",
 	"tag.placeholder": "tag...",
