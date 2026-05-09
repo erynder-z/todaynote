@@ -6,10 +6,10 @@ export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 		primary: true,
 		description: "Toggle search",
 	},
-	toggleNotesList: {
+	toggleNoteBrowser: {
 		key: "l",
 		primary: true,
-		description: "Toggle notes list",
+		description: "Toggle note browser",
 	},
 	toggleSettings: {
 		key: ",",

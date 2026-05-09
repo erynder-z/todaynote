@@ -4,7 +4,7 @@ export type ShortcutCallback = (
 
 export type ShortcutAction =
 	| "toggleSearch"
-	| "toggleNotesList"
+	| "toggleNoteBrowser"
 	| "toggleSettings"
 	| "manageTags"
 	| "closePopup"

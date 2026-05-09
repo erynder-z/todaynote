@@ -7,7 +7,7 @@
   import { flip } from 'svelte/animate';
   import {
     Modal,
-    NotesList,
+    NoteBrowser,
     SearchNotes,
     SettingsView,
     ShortcutListModal,
@@ -24,12 +24,12 @@
   <Modal title={$t('settings.title')}>
     <SettingsView />
   </Modal>
-{:else if sessionState.activePopup === 'notesList'}
+{:else if sessionState.activePopup === 'noteBrowser'}
   <Modal
     title={$t('notes.list.title')}
     wide={settings.notesListLayout === 'masonry'}
   >
-    <NotesList />
+    <NoteBrowser />
   </Modal>
 {:else if sessionState.activePopup === 'search'}
   <Modal title={$t('search.title')}>

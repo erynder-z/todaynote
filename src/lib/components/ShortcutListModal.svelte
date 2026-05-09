@@ -8,7 +8,7 @@
   // Global shortcuts (exclude context-specific ones)
   const globalActions = [
     'toggleSearch',
-    'toggleNotesList',
+    'toggleNoteBrowser',
     'toggleSettings',
     'manageTags',
     'closePopup',

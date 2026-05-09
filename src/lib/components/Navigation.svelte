@@ -14,14 +14,14 @@
 
   useShortcuts({
     toggleSearch: () => togglePopup('search'),
-    toggleNotesList: () => togglePopup('notesList'),
+    toggleNoteBrowser: () => togglePopup('noteBrowser'),
     toggleSettings: () => togglePopup('folderSelector'),
   });
 </script>
 
 <nav class="navigation">
   <button
-    onclick={() => togglePopup('notesList')}
+    onclick={() => togglePopup('noteBrowser')}
     class="nav-icon"
     title={$t('navigation.home')}
   >
