@@ -41,9 +41,9 @@
             <div class="section-item">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                height="14px"
+                height="1rem"
                 viewBox="0 -960 960 960"
-                width="14px"
+                width="1rem"
                 fill="currentColor"
                 ><path
                   d="m382-354 182-182-182-182 56-56 238 238-238 238-56-56Z"
@@ -80,15 +80,14 @@
 
 <style>
   .notes-grid {
-    column-count: 3;
-    column-gap: 1rem;
+    column-count: 4;
     padding: 1.5rem;
     width: 100%;
   }
 
   @media (max-width: 1200px) {
     .notes-grid {
-      column-count: 2;
+      column-count: 3;
     }
   }
 
@@ -117,7 +116,6 @@
   .note-card.selected {
     border-color: var(--accent);
     background-color: color-mix(in srgb, var(--accent), transparent 92%);
-    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 

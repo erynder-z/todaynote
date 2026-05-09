@@ -64,7 +64,7 @@
   });
 
   $effect(() => {
-    if (nav.index !== -1) {
+    if (nav.index !== -1 && settings.notesListLayout === 'list') {
       const selected = document.querySelector(
         '.note-card.selected, .result-item.selected',
       );
