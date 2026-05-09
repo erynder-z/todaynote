@@ -16,6 +16,12 @@ export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 		primary: true,
 		description: "Toggle settings",
 	},
+	toggleNoteBrowserLayout: {
+		key: "l",
+		primary: true,
+		secondary: true,
+		description: "Toggle note browser layout",
+	},
 	manageTags: {
 		key: "t",
 		primary: true,

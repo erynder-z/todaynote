@@ -6,6 +6,7 @@ export type ShortcutAction =
 	| "toggleSearch"
 	| "toggleNoteBrowser"
 	| "toggleSettings"
+	| "toggleNoteBrowserLayout"
 	| "manageTags"
 	| "closePopup"
 	| "focusLastLine"

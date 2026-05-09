@@ -11,6 +11,7 @@
     settings,
     t,
     toast,
+    useShortcuts,
   } from '$lib';
   import type { FormattedNote } from '$lib/types/notes';
   import { listNotes } from '$lib/utils/folder';
@@ -18,6 +19,14 @@
 
   let notes: FormattedNote[] = $state([]);
   let isLoading = $state(true);
+
+  useShortcuts({
+    toggleNoteBrowserLayout: () => {
+      const nextLayout =
+        settings.notesListLayout === 'list' ? 'masonry' : 'list';
+      setLayout(nextLayout);
+    },
+  });
 
   /**
    * Fetches the list of all available notes from the backend.
@@ -143,6 +152,7 @@
     shortcuts={[
       { label: $t('search.footer.navigate'), key: '↑↓' },
       { label: $t('search.footer.open'), key: 'Enter' },
+      { label: $t('shortcuts.action.toggle_note_browser_layout'), key: 'l' },
       { label: $t('search.footer.close'), key: 'Esc' },
     ]}
     count={notes.length}
