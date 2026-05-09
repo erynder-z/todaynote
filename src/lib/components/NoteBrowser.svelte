@@ -152,7 +152,10 @@
     shortcuts={[
       { label: $t('search.footer.navigate'), key: '↑↓' },
       { label: $t('search.footer.open'), key: 'Enter' },
-      { label: $t('shortcuts.action.toggle_note_browser_layout'), key: 'l' },
+      {
+        label: $t('shortcuts.action.toggle_note_browser_layout'),
+        action: 'toggleNoteBrowserLayout',
+      },
       { label: $t('search.footer.close'), key: 'Esc' },
     ]}
     count={notes.length}

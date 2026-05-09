@@ -228,7 +228,7 @@
       { label: $t('search.footer.open'), key: 'Enter' },
       {
         label: $t('search.footer.fuzzy'),
-        key: `${inputManager.primaryLabel}+${inputManager.secondaryLabel}+F`,
+        action: 'toggleFuzzy',
       },
       { label: $t('search.footer.close'), key: 'Esc' },
     ]}

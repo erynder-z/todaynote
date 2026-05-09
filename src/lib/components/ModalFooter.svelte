@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { ShortcutHint } from '$lib/types/ui';
+
   /**
    * Reusable footer component for modal dialogs.
    * Displays keyboard shortcuts and optional item count.
    */
 
+  import { defaultShortcuts } from '$lib/config/shortcuts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
   let {
@@ -23,8 +25,19 @@
     {#each shortcuts as shortcut}
       <div class="shortcut-item">
         <span>{shortcut.label}</span>
-        {#if shortcut.key}
-          <KeyboardShortcut key={shortcut.key} />
+        {#if shortcut.action && defaultShortcuts[shortcut.action]}
+          {@const config = defaultShortcuts[shortcut.action]}
+          <KeyboardShortcut
+            key={config.key}
+            primary={config.primary}
+            secondary={config.secondary}
+          />
+        {:else if shortcut.key}
+          <KeyboardShortcut
+            key={shortcut.key}
+            primary={shortcut.primary}
+            secondary={shortcut.secondary}
+          />
         {/if}
       </div>
     {/each}
