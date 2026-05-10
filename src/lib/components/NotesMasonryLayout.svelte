@@ -12,93 +12,178 @@
     nav: ListNavigator;
     onSelect: (note: FormattedNote) => void;
   } = $props();
+
+  let containerWidth = $state(0);
+  let columnCount = $derived.by(() => {
+    if (containerWidth > 1200) return 4;
+    if (containerWidth > 768) return 3;
+    return 1;
+  });
+
+  let columns = $derived.by(() => {
+    const cols: FormattedNote[][] = Array.from(
+      { length: columnCount },
+      () => [],
+    );
+
+    const base = Math.floor(notes.length / columnCount);
+    const remainder = notes.length % columnCount;
+
+    let currentIdx = 0;
+    for (let c = 0; c < columnCount; c++) {
+      const size = base + (c < remainder ? 1 : 0);
+      cols[c] = notes.slice(currentIdx, currentIdx + size);
+      currentIdx += size;
+    }
+
+    return cols;
+  });
+
+  const getPositionFromIndex = (index: number) => {
+    let accumulated = 0;
+    for (let c = 0; c < columns.length; c++) {
+      if (index < accumulated + columns[c].length) {
+        return { col: c, row: index - accumulated };
+      }
+      accumulated += columns[c].length;
+    }
+    return { col: 0, row: 0 };
+  };
+
+  const getIndexFromPosition = (col: number, row: number) => {
+    let accumulated = 0;
+    for (let c = 0; c < col; c++) {
+      accumulated += columns[c].length;
+    }
+    return accumulated + Math.min(row, columns[col].length - 1);
+  };
+
+  /**
+   * Handles grid navigation with arrow keys
+   */
+  export const handleKey = (e: KeyboardEvent) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+
+      const pos = getPositionFromIndex(nav.index === -1 ? 0 : nav.index);
+      let nextCol = pos.col;
+
+      if (e.key === 'ArrowLeft') {
+        nextCol = (pos.col - 1 + columnCount) % columnCount;
+      } else {
+        nextCol = (pos.col + 1) % columnCount;
+      }
+
+      // Preserve relative vertical position if possible
+      const nextIndex = getIndexFromPosition(nextCol, pos.row);
+      nav.setIndex(nextIndex, 'keyboard');
+      return true;
+    }
+
+    // Default Up/Down handling via the navigator
+    return nav.handleKey(e);
+  };
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="notes-grid" onmouseleave={() => nav.reset()}>
-  {#each notes as note, i (note.filename)}
-    <button
-      class="note-card"
-      class:selected={i === nav.index}
-      onclick={() => onSelect(note)}
-      onmouseenter={() => (nav.index = i)}
-    >
-      <div class="card-header">
-        <span class="note-name">{note.formattedName}</span>
-      </div>
-
-      {#if note.tags && note.tags.length > 0}
-        <div class="note-tags">
-          {#each note.tags as tag}
-            <span class="tag-pill">{tag}</span>
-          {/each}
-        </div>
-      {/if}
-
-      {#if note.sections && note.sections.length > 0}
-        <div class="note-sections">
-          {#each note.sections as section}
-            <div class="section-item">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="1rem"
-                viewBox="0 -960 960 960"
-                width="1rem"
-                fill="currentColor"
-                ><path
-                  d="m382-354 182-182-182-182 56-56 238 238-238 238-56-56Z"
-                /></svg
-              >
-              <span>{section}</span>
+<div
+  class="notes-masonry-container"
+  bind:clientWidth={containerWidth}
+  onmouseleave={() => nav.reset()}
+>
+  <div class="columns-wrapper" style="--cols: {columnCount}">
+    {#each columns as column}
+      <div class="column-lane">
+        {#each column as note}
+          {@const globalIdx = notes.indexOf(note)}
+          <button
+            class="note-card"
+            class:selected={globalIdx === nav.index}
+            onclick={() => onSelect(note)}
+            onmouseenter={() => {
+              if (nav.shouldIgnoreMouseEnter()) return;
+              nav.setIndex(globalIdx, 'mouse');
+            }}
+          >
+            <div class="card-header">
+              <span class="note-name">{note.formattedName}</span>
             </div>
-          {/each}
-        </div>
-      {/if}
 
-      <div class="note-footer">
-        <div class="note-stats">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="14px"
-            viewBox="0 -960 960 960"
-            width="14px"
-            fill="currentColor"
-            ><path
-              d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0-33-23.5-56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h400v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Z"
-            /></svg
-          >
-          <span
-            >{$t('notes.list.wordCount', {
-              count: note.wordCount,
-            })}</span
-          >
-        </div>
+            {#if note.tags && note.tags.length > 0}
+              <div class="note-tags">
+                {#each note.tags as tag}
+                  <span class="tag-pill">{tag}</span>
+                {/each}
+              </div>
+            {/if}
+
+            {#if note.sections && note.sections.length > 0}
+              <div class="note-sections">
+                {#each note.sections as section}
+                  <div class="section-item">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      height="1rem"
+                      viewBox="0 -960 960 960"
+                      width="1rem"
+                      fill="currentColor"
+                      ><path
+                        d="m382-354 182-182-182-182 56-56 238 238-238 238-56-56Z"
+                      /></svg
+                    >
+                    <span>{section}</span>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+
+            <div class="note-footer">
+              <div class="note-stats">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="1rem"
+                  viewBox="0 -960 960 960"
+                  width="1rem"
+                  fill="currentColor"
+                  ><path
+                    d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0-33-23.5-56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h400v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Z"
+                  /></svg
+                >
+                <span
+                  >{$t('notes.list.wordCount', {
+                    count: note.wordCount,
+                  })}</span
+                >
+              </div>
+            </div>
+          </button>
+        {/each}
       </div>
-    </button>
-  {/each}
+    {/each}
+  </div>
 </div>
 
 <style>
-  .notes-grid {
-    column-count: 4;
-    padding: 1.5rem;
+  .notes-masonry-container {
     width: 100%;
+    padding: 1.5rem;
   }
 
-  @media (max-width: 1200px) {
-    .notes-grid {
-      column-count: 3;
-    }
+  .columns-wrapper {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
   }
 
-  @media (max-width: 768px) {
-    .notes-grid {
-      column-count: 1;
-    }
+  .column-lane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
   }
 
   .note-card {
-    break-inside: avoid;
     display: flex;
     flex-direction: column;
     padding: 1.25rem;
@@ -108,7 +193,6 @@
     text-align: left;
     cursor: pointer;
     width: 100%;
-    margin-bottom: 1rem;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }

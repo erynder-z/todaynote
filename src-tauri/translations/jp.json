@@ -60,5 +60,6 @@
 	"shortcuts.action.go_to_yesterday's_note": "昨日のノートへ移動",
 	"shortcuts.action.go_to_last_available_note": "最後の有効なノートへ移動",
 	"shortcuts.action.go_to_today's_note": "今日のノートへ移動",
-	"shortcuts.action.toggle_fuzzy_search": "曖昧検索を切り替える"
+	"shortcuts.action.toggle_fuzzy_search": "曖昧検索を切り替える",
+	"browser.navigate": "選択を移動"
 }

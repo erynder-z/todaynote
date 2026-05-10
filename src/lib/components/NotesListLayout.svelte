@@ -20,7 +20,10 @@
       class="result-item"
       class:selected={i === nav.index}
       onclick={() => onSelect(note)}
-      onmouseenter={() => (nav.index = i)}
+      onmouseenter={() => {
+        if (nav.shouldIgnoreMouseEnter()) return;
+        nav.setIndex(i, 'mouse');
+      }}
     >
       <div class="result-content">
         <span class="note-name">{note.formattedName}</span>

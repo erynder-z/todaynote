@@ -15,7 +15,7 @@
     key?: string;
   } = $props();
 
-  const isMultiKey = $derived(key.includes(',') && key.length > 5);
+  const isMultiKey = $derived(key.split(',').length > 5);
   const displayKey = $derived(
     key === ' ' ? 'Space' : isMultiKey ? '1-9, A-K' : key,
   );

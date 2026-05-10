@@ -117,7 +117,10 @@
     class:selected={globalIndex === nav.index}
     class:is-added={isAdded}
     onclick={() => handleToggleTag(tag)}
-    onmouseenter={() => (nav.index = globalIndex)}
+    onmouseenter={() => {
+      if (nav.shouldIgnoreMouseEnter()) return;
+      nav.setIndex(globalIndex, 'mouse');
+    }}
   >
     <span class="hashtag">#</span>
     <span class="tag-label">{tag}</span>

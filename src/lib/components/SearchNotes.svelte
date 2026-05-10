@@ -186,7 +186,10 @@
             class="result-item"
             class:selected={i === nav.index}
             onclick={() => selectResult(result)}
-            onmouseenter={() => (nav.index = i)}
+            onmouseenter={() => {
+              if (nav.shouldIgnoreMouseEnter()) return;
+              nav.setIndex(i, 'mouse');
+            }}
           >
             <div class="result-meta">
               <span class="date">{result.formattedName}</span>
