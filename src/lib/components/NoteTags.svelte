@@ -110,7 +110,10 @@
     white-space: nowrap;
     cursor: pointer;
     border: 0.125rem solid transparent;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      border-color 0.15s cubic-bezier(0.2, 0, 0, 1);
     max-width: 12rem;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -131,7 +134,10 @@
     padding-block: 0.125rem;
     border-radius: 999rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      border-color 0.15s cubic-bezier(0.2, 0, 0, 1);
     display: flex;
     align-items: center;
     justify-content: center;

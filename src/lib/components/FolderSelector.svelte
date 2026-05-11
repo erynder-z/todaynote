@@ -137,7 +137,9 @@
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition:
+      opacity 0.15s cubic-bezier(0.2, 0, 0, 1),
+      transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--accent-text);
     min-width: 12ch;
   }

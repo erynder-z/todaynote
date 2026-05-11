@@ -41,7 +41,7 @@
 
 <style>
   .results-list {
-    display: flex;
+    /*     display: flex; */
     flex-direction: column;
   }
 
@@ -55,7 +55,7 @@
     text-align: left;
     cursor: pointer;
     width: 100%;
-    transition: background-color 0.1s;
+    transition: background-color 0.1s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .result-item:last-child {
@@ -86,6 +86,11 @@
   .list-tags {
     display: flex;
     gap: 0.3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .tag-pill.mini {

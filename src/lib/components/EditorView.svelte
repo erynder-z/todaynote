@@ -107,7 +107,8 @@
       height: 100%;
       z-index: 1000;
       transform: translateX(100%);
-      transition: transform 0.3s ease;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: transform;
     }
 
     .sidebar-wrapper.open {

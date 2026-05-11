@@ -237,8 +237,8 @@
     border-radius: 0.5rem;
     padding: 0 0.75rem;
     transition:
-      border-color 0.2s,
-      box-shadow 0.2s;
+      border-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      box-shadow 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .input-wrapper:focus-within {
@@ -303,7 +303,7 @@
     color: var(--text-main);
     cursor: pointer;
     font-size: 0.95rem;
-    transition: background-color 0.1s;
+    transition: background-color 0.1s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .suggestion-item:last-child {

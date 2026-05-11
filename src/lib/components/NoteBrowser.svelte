@@ -223,7 +223,9 @@
     border-radius: 0.35rem;
     color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .toggle-btn:hover {
@@ -257,7 +259,7 @@
 
   @keyframes spin {
     to {
-      transform: rotate(360deg);
+      transform: rotateZ(360deg);
     }
   }
 

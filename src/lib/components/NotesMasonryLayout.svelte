@@ -193,7 +193,10 @@
     text-align: left;
     cursor: pointer;
     width: 100%;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      border-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      box-shadow 0.15s cubic-bezier(0.2, 0, 0, 1);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   }
 
