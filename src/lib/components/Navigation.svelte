@@ -112,7 +112,9 @@
     align-items: center;
     padding: 0.6rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .nav-icon:hover,

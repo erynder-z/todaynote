@@ -61,5 +61,6 @@
 	"shortcuts.action.go_to_yesterday's_note": "Go to Yesterday's Note",
 	"shortcuts.action.go_to_last_available_note": "Go to Last Available Note",
 	"shortcuts.action.go_to_today's_note": "Go to Today's Note",
-	"shortcuts.action.toggle_fuzzy_search": "Toggle Fuzzy Search"
+	"shortcuts.action.toggle_fuzzy_search": "Toggle Fuzzy Search",
+	"browser.navigate": "Navigate"
 }

@@ -73,12 +73,21 @@
     (i) => selectNote(notes[i]),
   );
 
+  let masonryLayout: { handleKey: (e: KeyboardEvent) => boolean } | null =
+    $state(null);
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (settings.notesListLayout === 'masonry' && masonryLayout)
+      if (masonryLayout.handleKey(e)) return;
+    nav.handleKey(e);
+  };
+
   $effect(() => {
     if (settings.notesFolder) loadNotes(50);
   });
 
   $effect(() => {
-    if (nav.index !== -1) {
+    if (nav.index !== -1 && nav.lastInputSource === 'keyboard') {
       const selected = document.querySelector(
         '.note-card.selected, .result-item.selected',
       );
@@ -98,12 +107,7 @@
 
 <!-- svelte-ignore a11y_autofocus -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-  class="notes-container"
-  onkeydown={(e) => nav.handleKey(e)}
-  tabindex="-1"
-  autofocus
->
+<div class="notes-container" onkeydown={handleKeyDown} tabindex="-1" autofocus>
   <div class="layout-toolbar">
     <div class="toggle-group">
       <button
@@ -114,9 +118,9 @@
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          height="20px"
+          height="1.25rem"
           viewBox="0 -960 960 960"
-          width="20px"
+          width="1.25rem"
           fill="currentColor"
           ><path
             d="M240-240v-120h480v120H240Zm0-200v-120h480v120H240Zm0-200v-120h480v120H240Z"
@@ -131,9 +135,9 @@
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          height="20px"
+          height="1.25rem"
           viewBox="0 -960 960 960"
-          width="20px"
+          width="1.25rem"
           fill="currentColor"
           ><path
             d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0-33-23.5-56.5T760-120H200Zm0-80h240v-180H200v180Zm320 0h240v-300H520v300ZM200-460h240v-300H200v300Zm320 0h240v-180H520v180Z"
@@ -151,7 +155,12 @@
       </div>
     {:else if notes.length > 0}
       {#if settings.notesListLayout === 'masonry'}
-        <NotesMasonryLayout {notes} {nav} onSelect={selectNote} />
+        <NotesMasonryLayout
+          bind:this={masonryLayout}
+          {notes}
+          {nav}
+          onSelect={selectNote}
+        />
       {:else}
         <NotesListLayout {notes} {nav} onSelect={selectNote} />
       {/if}
@@ -181,9 +190,14 @@
 
   <ModalFooter
     shortcuts={[
-      { label: $t('search.footer.navigate'), key: '↑↓' },
+      ...(settings.notesListLayout === 'masonry'
+        ? [{ label: 'browser.navigate', key: '↑↓←→' }]
+        : [{ label: $t('search.footer.navigate'), key: '↑↓' }]),
       { label: $t('search.footer.open'), key: 'Enter' },
-      { label: $t('shortcuts.action.toggle_note_browser_layout'), key: 'l' },
+      {
+        label: $t('shortcuts.action.toggle_note_browser_layout'),
+        action: 'toggleNoteBrowserLayout',
+      },
       { label: $t('search.footer.close'), key: 'Esc' },
     ]}
     count={notes.length}
@@ -240,7 +254,9 @@
     border-radius: 0.35rem;
     color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .toggle-btn:hover {
@@ -280,7 +296,7 @@
 
   @keyframes spin {
     to {
-      transform: rotate(360deg);
+      transform: rotateZ(360deg);
     }
   }
 

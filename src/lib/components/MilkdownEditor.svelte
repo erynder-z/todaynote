@@ -124,7 +124,7 @@
     color: var(--md-link);
     text-decoration: underline;
     text-underline-offset: 2px;
-    transition: color 0.2s ease;
+    transition: color 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .milkdown-editor-wrapper :global(.milkdown a:hover) {

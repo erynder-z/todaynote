@@ -186,7 +186,10 @@
             class="result-item"
             class:selected={i === nav.index}
             onclick={() => selectResult(result)}
-            onmouseenter={() => (nav.index = i)}
+            onmouseenter={() => {
+              if (nav.shouldIgnoreMouseEnter()) return;
+              nav.setIndex(i, 'mouse');
+            }}
           >
             <div class="result-meta">
               <span class="date">{result.formattedName}</span>
@@ -228,7 +231,7 @@
       { label: $t('search.footer.open'), key: 'Enter' },
       {
         label: $t('search.footer.fuzzy'),
-        key: `${inputManager.primaryLabel}+${inputManager.secondaryLabel}+F`,
+        action: 'toggleFuzzy',
       },
       { label: $t('search.footer.close'), key: 'Esc' },
     ]}
@@ -267,8 +270,8 @@
     border-radius: 0.5rem;
     padding: 0 0.75rem;
     transition:
-      border-color 0.2s,
-      box-shadow 0.2s;
+      border-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      box-shadow 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .input-wrapper:focus-within {
@@ -302,7 +305,10 @@
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      border-color 0.15s cubic-bezier(0.2, 0, 0, 1);
     user-select: none;
   }
 
@@ -338,7 +344,7 @@
     text-align: left;
     cursor: pointer;
     width: 100%;
-    transition: background-color 0.1s;
+    transition: background-color 0.1s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .result-item:last-child {

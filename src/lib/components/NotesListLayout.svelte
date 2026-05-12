@@ -20,7 +20,10 @@
       class="result-item"
       class:selected={i === nav.index}
       onclick={() => onSelect(note)}
-      onmouseenter={() => (nav.index = i)}
+      onmouseenter={() => {
+        if (nav.shouldIgnoreMouseEnter()) return;
+        nav.setIndex(i, 'mouse');
+      }}
     >
       <div class="result-content">
         <span class="note-name">{note.formattedName}</span>
@@ -38,7 +41,7 @@
 
 <style>
   .results-list {
-    display: flex;
+    /*     display: flex; */
     flex-direction: column;
   }
 
@@ -52,7 +55,7 @@
     text-align: left;
     cursor: pointer;
     width: 100%;
-    transition: background-color 0.1s;
+    transition: background-color 0.1s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .result-item:last-child {
@@ -83,6 +86,11 @@
   .list-tags {
     display: flex;
     gap: 0.3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
   }
 
   .tag-pill.mini {

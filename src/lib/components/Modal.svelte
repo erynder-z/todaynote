@@ -136,7 +136,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: width 0.3s ease;
+    transition: width 0.2s ease;
   }
 
   .popup.wide {
@@ -163,7 +163,7 @@
     font-size: 2rem;
     cursor: pointer;
     color: var(--text-muted);
-    transition: color 0.2s;
+    transition: color 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .close-button:hover {

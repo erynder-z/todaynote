@@ -2,6 +2,7 @@ export { focusTrap } from "./actions/focusTrap";
 export { lang } from "./actions/lang";
 export { default as EditorView } from "./components/EditorView.svelte";
 export { default as FolderSelector } from "./components/FolderSelector.svelte";
+export { default as KeyboardShortcut } from "./components/KeyboardShortcut.svelte";
 export { default as LanguageSelector } from "./components/LanguageSelector.svelte";
 export { default as MainView } from "./components/MainView.svelte";
 export { default as MilkdownEditor } from "./components/MilkdownEditor.svelte";
