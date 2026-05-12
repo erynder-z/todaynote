@@ -1,6 +1,6 @@
 //! Manager to handle note operations and formatting.
 
-use crate::models::response_types::FormattedNote;
+use crate::models::response_types::{FormattedNote, NoteListResponse};
 use crate::utils;
 use chrono::{Locale, NaiveDate};
 use std::fs;
@@ -75,44 +75,65 @@ impl NoteManager {
     /// Lists all valid Markdown notes in the configured notes folder.
     ///
     /// Notes are returned as `FormattedNote` objects with localized display names.
-    pub fn list_notes(&self) -> Result<Vec<FormattedNote>, String> {
+    /// If a limit is provided, only the most recent N notes are fully processed.
+    pub fn list_notes(&self, limit: Option<usize>) -> Result<NoteListResponse, String> {
         if !self.notes_folder.exists() {
-            return Ok(vec![]);
+            return Ok(NoteListResponse {
+                notes: vec![],
+                total_count: 0,
+            });
         }
 
         let entries = fs::read_dir(&self.notes_folder)
             .map_err(|e| format!("Failed to read directory: {}", e))?;
 
-        let mut notes: Vec<FormattedNote> = entries
+        // 1. First, collect all valid filenames and sort them
+        let mut all_files: Vec<String> = entries
             .filter_map(|entry| {
                 let entry = entry.ok()?;
                 let file_name = entry.file_name().into_string().ok()?;
                 if file_name.ends_with(".md") && !file_name.starts_with(".") {
-                    let path = entry.path();
-                    let content = fs::read_to_string(&path).unwrap_or_default();
-                    let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
-                    let preview = self.extract_preview(&content);
-                    let sections = self.extract_sections(&content, 5);
-                    let word_count = crate::utils::markdown::count_words(&content);
-
-                    Some(FormattedNote {
-                        filename: file_name.clone(),
-                        formatted_name: self.format_note_name(&file_name),
-                        preview,
-                        tags,
-                        sections,
-                        word_count,
-                    })
+                    Some(file_name)
                 } else {
                     None
                 }
             })
             .collect();
 
-        notes.sort_by(|a, b| a.filename.cmp(&b.filename));
-        notes.reverse();
+        all_files.sort_by(|a, b| b.cmp(a)); // Sort descending (most recent first)
 
-        Ok(notes)
+        let total_count = all_files.len();
+
+        // 2. Apply limit if requested
+        let files_to_process = if let Some(l) = limit {
+            all_files.into_iter().take(l).collect::<Vec<String>>()
+        } else {
+            all_files
+        };
+
+        // 3. Process only the requested files
+        let notes: Vec<FormattedNote> = files_to_process
+            .into_iter()
+            .filter_map(|file_name| {
+                let path = self.notes_folder.join(&file_name);
+                let content = fs::read_to_string(&path).unwrap_or_default();
+                let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
+                let preview = self.extract_preview(&content);
+                let sections = self.extract_sections(&content, 5);
+                let word_count = crate::utils::markdown::count_words(&content);
+
+                Some(FormattedNote {
+                    filename: file_name.clone(),
+                    formatted_name: self.format_note_name(&file_name),
+                    preview,
+                    tags,
+                    sections,
+                    word_count,
+                })
+            })
+            .collect();
+
+        Ok(NoteListResponse { notes, total_count })
     }
 
     /// Extracts the first N section names (headings) from the content.

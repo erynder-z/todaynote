@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import type { FormattedNote } from "$lib/types/notes";
+import type { NoteListResponse } from "$lib/types/notes";
 
 /**
  * Opens a native file dialog to let the user select a directory for their notes.
@@ -33,12 +33,17 @@ export const createNewNote = async () => {
 };
 
 /**
- * Fetches a list of all notes available in the currently configured notes folder.
+ * Fetches a list of notes available in the currently configured notes folder.
+ * If a limit is provided, only the most recent N notes are processed.
  */
-export const listNotes = async () => {
+export const listNotes = async (
+	limit?: number,
+): Promise<NoteListResponse | null> => {
 	try {
-		const notes = (await invoke("list_notes")) as FormattedNote[];
-		return notes;
+		const response = (await invoke("list_notes", {
+			limit,
+		})) as NoteListResponse;
+		return response;
 	} catch (error) {
 		console.error("Frontend: Error listing notes:", error);
 		return null;

@@ -29,6 +29,14 @@ pub struct FormattedNote {
     pub word_count: usize,
 }
 
+/// A paginated response for note listing.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NoteListResponse {
+    pub notes: Vec<FormattedNote>,
+    pub total_count: usize,
+}
+
 /// A search match from the note archive.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

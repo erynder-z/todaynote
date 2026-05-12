@@ -36,6 +36,7 @@
 	"notes.list.empty": "Keine Notizen gefunden",
 	"notes.list.length": "{{count}} Notizen",
 	"notes.list.wordCount": "{{count}} Wörter",
+	"notes.list.load_all": "Alle Notizen laden ({{count}} insgesamt)",
 	"note.header": "Notizen",
 	"tag.manager.title": "Tags verwalten",
 	"tag.placeholder": "Tag...",

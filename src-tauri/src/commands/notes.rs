@@ -4,7 +4,7 @@
 
 use crate::models::app_state::AppState;
 use crate::models::note_session::NoteSection;
-use crate::models::response_types::{FormattedNote, NoteContentResponse};
+use crate::models::response_types::{NoteContentResponse, NoteListResponse};
 use std::fs;
 use std::path::PathBuf;
 use tauri::State;
@@ -128,10 +128,10 @@ pub async fn get_last_available_note_path(
     state: State<'_, AppState>,
 ) -> Result<Option<String>, String> {
     let note_manager = state.note_manager()?;
-    let notes = note_manager.list_notes()?;
+    let response = note_manager.list_notes(None)?;
     let today_filename = format!("{}.md", crate::utils::date::get_current_date());
 
-    for note in notes {
+    for note in response.notes {
         if note.filename != today_filename {
             let file_path = note_manager.notes_folder.join(note.filename);
             return Ok(Some(file_path.to_string_lossy().into_owned()));
@@ -222,9 +222,12 @@ pub async fn read_note_content(
 
 /// Returns a list of all notes available in the current notes folder.
 #[tauri::command]
-pub async fn list_notes(state: State<'_, AppState>) -> Result<Vec<FormattedNote>, String> {
+pub async fn list_notes(
+    limit: Option<usize>,
+    state: State<'_, AppState>,
+) -> Result<NoteListResponse, String> {
     let note_manager = state.note_manager()?;
-    note_manager.list_notes()
+    note_manager.list_notes(limit)
 }
 
 /// Finds or creates a section by name and returns its content-relative line index.

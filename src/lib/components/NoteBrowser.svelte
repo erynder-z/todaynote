@@ -18,7 +18,9 @@
   import { readNoteContent } from '$lib/utils/notes';
 
   let notes: FormattedNote[] = $state([]);
+  let totalCount = $state(0);
   let isLoading = $state(true);
+  let isLoadingAll = $state(false);
 
   useShortcuts({
     toggleNoteBrowserLayout: () => {
@@ -29,14 +31,26 @@
   });
 
   /**
-   * Fetches the list of all available notes from the backend.
+   * Fetches a list of notes with an optional limit from the backend.
    */
-  const loadNotes = async () => {
-    isLoading = true;
-    const loadedNotes = await listNotes();
-    if (loadedNotes) notes = loadedNotes;
+  const loadNotes = async (limit?: number) => {
+    if (limit) isLoading = true;
+    else isLoadingAll = true;
+
+    const response = await listNotes(limit);
+    if (response) {
+      notes = response.notes;
+      totalCount = response.totalCount;
+    }
+
     isLoading = false;
+    isLoadingAll = false;
   };
+
+  /**
+   * Fetches all available notes.
+   */
+  const loadAll = () => loadNotes();
 
   /**
    * Loads the content of a specific note and sets it as active in the app.
@@ -60,7 +74,7 @@
   );
 
   $effect(() => {
-    if (settings.notesFolder) loadNotes();
+    if (settings.notesFolder) loadNotes(50);
   });
 
   $effect(() => {
@@ -140,6 +154,23 @@
         <NotesMasonryLayout {notes} {nav} onSelect={selectNote} />
       {:else}
         <NotesListLayout {notes} {nav} onSelect={selectNote} />
+      {/if}
+
+      {#if notes.length < totalCount}
+        <div class="load-more-container">
+          <button
+            class="load-more-btn"
+            onclick={loadAll}
+            disabled={isLoadingAll}
+          >
+            {#if isLoadingAll}
+              <div class="spinner mini"></div>
+              <span>{$t('notes.loading')}</span>
+            {:else}
+              <span>{$t('notes.list.load_all', { count: totalCount })}</span>
+            {/if}
+          </button>
+        </div>
       {/if}
     {:else}
       <div class="status-view">
@@ -241,10 +272,51 @@
     animation: spin 0.8s linear infinite;
   }
 
+  .spinner.mini {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+  }
+
   @keyframes spin {
     to {
       transform: rotate(360deg);
     }
+  }
+
+  .load-more-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(to bottom, transparent, var(--bg-main) 50%);
+  }
+
+  .load-more-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .load-more-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .load-more-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 
   .muted {
