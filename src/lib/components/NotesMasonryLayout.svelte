@@ -14,73 +14,85 @@
   } = $props();
 
   let containerWidth = $state(0);
+
+  /**
+   * Number of columns based on container width.
+   * 4 columns for wide (>1200px), 3 for medium (>768px), 1 for narrow.
+   */
   let columnCount = $derived.by(() => {
     if (containerWidth > 1200) return 4;
     if (containerWidth > 768) return 3;
     return 1;
   });
 
+  /**
+   * Distributes notes into columns for masonry layout.
+   * Notes are filled row-wise (left-to-right, top-to-bottom).
+   */
   let columns = $derived.by(() => {
     const cols: FormattedNote[][] = Array.from(
       { length: columnCount },
       () => [],
     );
 
-    const base = Math.floor(notes.length / columnCount);
-    const remainder = notes.length % columnCount;
-
-    let currentIdx = 0;
     for (let c = 0; c < columnCount; c++) {
-      const size = base + (c < remainder ? 1 : 0);
-      cols[c] = notes.slice(currentIdx, currentIdx + size);
-      currentIdx += size;
+      for (let r = 0; r * columnCount + c < notes.length; r++) {
+        cols[c].push(notes[r * columnCount + c]);
+      }
     }
 
     return cols;
   });
 
-  const getPositionFromIndex = (index: number) => {
-    let accumulated = 0;
-    for (let c = 0; c < columns.length; c++) {
-      if (index < accumulated + columns[c].length) {
-        return { col: c, row: index - accumulated };
-      }
-      accumulated += columns[c].length;
-    }
-    return { col: 0, row: 0 };
-  };
+  /**
+   * Converts a flat index to grid position (column, row).
+   */
+  const getPositionFromIndex = (index: number) => ({
+    col: index % columnCount,
+    row: Math.floor(index / columnCount),
+  });
 
-  const getIndexFromPosition = (col: number, row: number) => {
-    let accumulated = 0;
-    for (let c = 0; c < col; c++) {
-      accumulated += columns[c].length;
-    }
-    return accumulated + Math.min(row, columns[col].length - 1);
-  };
+  /**
+   * Converts a grid position (column, row) to flat index.
+   */
+  const getIndexFromPosition = (col: number, row: number) =>
+    col + row * columnCount;
 
   /**
    * Handles grid navigation with arrow keys
    */
   export const handleKey = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    if (
+      e.key === 'ArrowRight' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowUp' ||
+      e.key === 'ArrowDown'
+    ) {
       e.preventDefault();
 
-      const pos = getPositionFromIndex(nav.index === -1 ? 0 : nav.index);
+      const currentIndex = nav.index === -1 ? 0 : nav.index;
+      const pos = getPositionFromIndex(currentIndex);
+
       let nextCol = pos.col;
+      let nextRow = pos.row;
 
       if (e.key === 'ArrowLeft') {
         nextCol = (pos.col - 1 + columnCount) % columnCount;
-      } else {
+      } else if (e.key === 'ArrowRight') {
         nextCol = (pos.col + 1) % columnCount;
+      } else if (e.key === 'ArrowUp') {
+        nextRow = Math.max(0, pos.row - 1);
+      } else if (e.key === 'ArrowDown') {
+        nextRow = pos.row + 1;
       }
 
-      // Preserve relative vertical position if possible
-      const nextIndex = getIndexFromPosition(nextCol, pos.row);
-      nav.setIndex(nextIndex, 'keyboard');
+      const nextIndex = getIndexFromPosition(nextCol, nextRow);
+      if (nextIndex < notes.length) {
+        nav.setIndex(nextIndex, 'keyboard');
+      }
       return true;
     }
 
-    // Default Up/Down handling via the navigator
     return nav.handleKey(e);
   };
 </script>
