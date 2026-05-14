@@ -69,16 +69,96 @@ impl<'a> SearchService<'a> {
         }
     }
 
-    /// Searches all notes in the notes folder for the given query.
-    /// Returns a vector of SearchResult, sorted and truncated to 100 results.
-    pub fn search(&self, query: &str, is_fuzzy: bool) -> Result<Vec<SearchResult>, String> {
-        if query.trim().is_empty() {
-            return Ok(vec![]);
+    /// Searches a single note file for matches against the query.
+    /// Returns all SearchResult matches found in the file.
+    fn search_file(
+        &self,
+        path: &std::path::Path,
+        is_fuzzy: bool,
+        query_utf32: &Utf32Str,
+        query_normalized: &str,
+        matcher: &mut Matcher,
+    ) -> Vec<SearchResult> {
+        let content = match fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => return vec![],
+        };
+        let (frontmatter_len, _) = Self::extract_frontmatter(&content);
+        let filename = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default();
+        let formatted_name = self.note_manager.format_note_name(&filename);
+        let mut results = Vec::new();
+
+        for (i, line) in content.lines().enumerate().skip(frontmatter_len) {
+            let stripped = crate::utils::markdown::strip_markdown(line);
+            if stripped.is_empty() {
+                continue;
+            }
+
+            if let Some((score, indices)) =
+                self.find_match(matcher, query_utf32, query_normalized, is_fuzzy, &stripped)
+            {
+                let (excerpt, adjusted) =
+                    crate::utils::markdown::generate_excerpt(&stripped, &indices, 100);
+                results.push(SearchResult {
+                    filename: filename.to_string(),
+                    formatted_name: formatted_name.clone(),
+                    excerpt,
+                    line_number: i,
+                    score,
+                    indices: adjusted,
+                });
+            }
         }
+        results
+    }
 
-        let notes_folder = &self.note_manager.notes_folder;
+    /// Finds match score and character indices for a line.
+    fn find_match(
+        &self,
+        matcher: &mut Matcher,
+        query_utf32: &Utf32Str,
+        query_normalized: &str,
+        is_fuzzy: bool,
+        line: &str,
+    ) -> Option<(i64, Vec<u32>)> {
+        if is_fuzzy {
+            Self::fuzzy_match(matcher, line, query_utf32, query_normalized)
+        } else {
+            Self::find_exact_match_indices(line, query_normalized)
+        }
+    }
 
-        if !notes_folder.exists() {
+    /// Finds character indices for an exact match.
+    fn find_exact_match_indices(line: &str, query: &str) -> Option<(i64, Vec<u32>)> {
+        line.to_lowercase().find(query).map(|pos| {
+            let chars: Vec<char> = line.chars().collect();
+            let mut current_byte = 0;
+            let start_idx = chars
+                .iter()
+                .enumerate()
+                .find_map(|(idx, c)| {
+                    if current_byte == pos {
+                        Some(idx)
+                    } else {
+                        current_byte += c.len_utf8();
+                        None
+                    }
+                })
+                .unwrap_or(0);
+            let indices: Vec<u32> = (start_idx..start_idx + query.chars().count())
+                .map(|i| i as u32)
+                .collect();
+            (0, indices)
+        })
+    }
+
+    /// Searches all notes in the notes folder for the given query.
+    /// Returns up to 100 results, sorted by score (fuzzy) or filename (exact).
+    pub fn search(&self, query: &str, is_fuzzy: bool) -> Result<Vec<SearchResult>, String> {
+        if query.trim().is_empty() || !self.note_manager.notes_folder.exists() {
             return Ok(vec![]);
         }
 
@@ -86,90 +166,31 @@ impl<'a> SearchService<'a> {
         let query_normalized = query.to_lowercase();
         let mut query_buf = Vec::new();
         let query_utf32 = Utf32Str::new(&query_normalized, &mut query_buf);
-        let mut results: Vec<SearchResult> = Vec::new();
 
-        let entries =
-            fs::read_dir(notes_folder).map_err(|e| format!("Failed to read directory: {}", e))?;
+        let entries = fs::read_dir(&self.note_manager.notes_folder)
+            .map_err(|e| format!("Failed to read directory: {}", e))?;
 
-        for entry in entries {
-            let entry = match entry {
-                Ok(e) => e,
-                Err(_) => continue,
-            };
-
-            let path = entry.path();
-            if !path.is_file() || path.extension().and_then(|s| s.to_str()) != Some("md") {
-                continue;
-            }
-
-            let content = match fs::read_to_string(&path) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
-
-            let (frontmatter_len, _) = Self::extract_frontmatter(&content);
-            let filename = entry.file_name().into_string().unwrap_or_default();
-            let formatted_name = self.note_manager.format_note_name(&filename);
-
-            for (i, line) in content.lines().enumerate().skip(frontmatter_len) {
-                let stripped_line = crate::utils::markdown::strip_markdown(line);
-                if stripped_line.is_empty() {
-                    continue;
-                }
-
-                let match_data = if is_fuzzy {
-                    Self::fuzzy_match(
-                        &mut matcher,
-                        &stripped_line,
-                        &query_utf32,
-                        &query_normalized,
-                    )
-                } else if let Some(pos) = stripped_line.to_lowercase().find(&query_normalized) {
-                    // For exact match, we need to convert byte position to codepoint indices
-                    let chars: Vec<char> = stripped_line.chars().collect();
-                    let mut current_byte = 0;
-                    let mut start_idx = 0;
-                    for (idx, c) in chars.iter().enumerate() {
-                        if current_byte == pos {
-                            start_idx = idx;
-                            break;
-                        }
-                        current_byte += c.len_utf8();
-                    }
-
-                    let query_chars_len = query_normalized.chars().count();
-                    let indices: Vec<u32> = (start_idx..start_idx + query_chars_len)
-                        .map(|idx| idx as u32)
-                        .collect();
-                    Some((0, indices))
-                } else {
-                    None
-                };
-
-                if let Some((score, indices)) = match_data {
-                    let (excerpt, adjusted_indices) =
-                        crate::utils::markdown::generate_excerpt(&stripped_line, &indices, 100);
-
-                    results.push(SearchResult {
-                        filename: filename.clone(),
-                        formatted_name: formatted_name.clone(),
-                        excerpt,
-                        line_number: i,
-                        score,
-                        indices: adjusted_indices,
-                    });
-                }
-            }
-        }
+        let mut all_results: Vec<SearchResult> = entries
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("md"))
+            .flat_map(|e| {
+                self.search_file(
+                    &e.path(),
+                    is_fuzzy,
+                    &query_utf32,
+                    &query_normalized,
+                    &mut matcher,
+                )
+            })
+            .collect();
 
         if is_fuzzy {
-            results.sort_by(|a, b| b.score.cmp(&a.score));
+            all_results.sort_by(|a, b| b.score.cmp(&a.score));
         } else {
-            results.sort_by(|a, b| b.filename.cmp(&a.filename));
+            all_results.sort_by(|a, b| b.filename.cmp(&a.filename));
         }
 
-        results.truncate(100);
-
-        Ok(results)
+        all_results.truncate(100);
+        Ok(all_results)
     }
 }

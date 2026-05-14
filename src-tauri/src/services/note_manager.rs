@@ -72,67 +72,58 @@ impl NoteManager {
         Ok(file_path)
     }
 
-    /// Lists all valid Markdown notes in the configured notes folder.
-    ///
-    /// Notes are returned as `FormattedNote` objects with localized display names.
-    /// If a limit is provided, only the most recent N notes are fully processed.
-    pub fn list_notes(&self, limit: Option<usize>) -> Result<NoteListResponse, String> {
+    /// Retrieves all valid Markdown note filenames from the notes folder,
+    /// sorted by name descending (most recent first).
+    fn get_sorted_note_files(&self) -> Result<Vec<String>, String> {
         if !self.notes_folder.exists() {
-            return Ok(NoteListResponse {
-                notes: vec![],
-                total_count: 0,
-            });
+            return Ok(vec![]);
         }
-
         let entries = fs::read_dir(&self.notes_folder)
             .map_err(|e| format!("Failed to read directory: {}", e))?;
-
-        // 1. First, collect all valid filenames and sort them
-        let mut all_files: Vec<String> = entries
-            .filter_map(|entry| {
-                let entry = entry.ok()?;
-                let file_name = entry.file_name().into_string().ok()?;
-                if file_name.ends_with(".md") && !file_name.starts_with(".") {
-                    Some(file_name)
+        let mut files: Vec<String> = entries
+            .filter_map(|e| {
+                let e = e.ok()?;
+                let name = e.file_name().into_string().ok()?;
+                if name.ends_with(".md") && !name.starts_with(".") {
+                    Some(name)
                 } else {
                     None
                 }
             })
             .collect();
+        files.sort_by(|a, b| b.cmp(a));
+        Ok(files)
+    }
 
-        all_files.sort_by(|a, b| b.cmp(a)); // Sort descending (most recent first)
+    /// Transforms a note filename into a FormattedNote by reading and processing its content.
+    fn format_note_file(&self, file_name: &str) -> Option<FormattedNote> {
+        let path = self.notes_folder.join(file_name);
+        let content = fs::read_to_string(&path).unwrap_or_default();
+        Some(FormattedNote {
+            filename: file_name.to_string(),
+            formatted_name: self.format_note_name(file_name),
+            preview: self.extract_preview(&content),
+            tags: crate::utils::tag_parser::parse_tags_from_content(&content),
+            sections: self.extract_sections(&content, 5),
+            word_count: crate::utils::markdown::count_words(&content),
+        })
+    }
 
+    /// Lists all valid Markdown notes in the configured notes folder.
+    ///
+    /// Notes are returned as `FormattedNote` objects with localized display names.
+    /// If a limit is provided, only the most recent N notes are fully processed.
+    pub fn list_notes(&self, limit: Option<usize>) -> Result<NoteListResponse, String> {
+        let all_files = self.get_sorted_note_files()?;
         let total_count = all_files.len();
-
-        // 2. Apply limit if requested
-        let files_to_process = if let Some(l) = limit {
-            all_files.into_iter().take(l).collect::<Vec<String>>()
-        } else {
-            all_files
+        let files_to_process: Vec<String> = match limit {
+            Some(l) => all_files[..l.min(all_files.len())].to_vec(),
+            None => all_files,
         };
-
-        // 3. Process only the requested files
-        let notes: Vec<FormattedNote> = files_to_process
-            .into_iter()
-            .filter_map(|file_name| {
-                let path = self.notes_folder.join(&file_name);
-                let content = fs::read_to_string(&path).unwrap_or_default();
-                let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
-                let preview = self.extract_preview(&content);
-                let sections = self.extract_sections(&content, 5);
-                let word_count = crate::utils::markdown::count_words(&content);
-
-                Some(FormattedNote {
-                    filename: file_name.clone(),
-                    formatted_name: self.format_note_name(&file_name),
-                    preview,
-                    tags,
-                    sections,
-                    word_count,
-                })
-            })
+        let notes = files_to_process
+            .iter()
+            .filter_map(|f| self.format_note_file(f))
             .collect();
-
         Ok(NoteListResponse { notes, total_count })
     }
 
