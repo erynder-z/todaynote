@@ -40,3 +40,19 @@ export type SearchResult = {
 	score: number;
 	indices: number[];
 };
+
+export type ThreadSearchResult = {
+	name: string;
+	noteCount: number;
+};
+
+export type ThreadAggregationResult = {
+	threadName: string;
+	items: ThreadAggregationItem[];
+};
+
+export type ThreadAggregationItem = {
+	filename: string;
+	formattedDate: string;
+	content: string;
+};

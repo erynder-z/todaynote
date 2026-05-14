@@ -14,6 +14,7 @@
     sessionState,
     settings,
     TagManagerModal,
+    ThreadAggregationView,
     t,
   } from '$lib';
   import { toast } from '$lib/stores/toast.svelte';
@@ -42,6 +43,10 @@
 {:else if sessionState.activePopup === 'shortcuts'}
   <Modal title={$t('shortcuts.title')}>
     <ShortcutListModal />
+  </Modal>
+{:else if sessionState.activePopup === 'threadAggregation'}
+  <Modal title={sessionState.aggregatedThread?.threadName} wide>
+    <ThreadAggregationView />
   </Modal>
 {/if}
 

@@ -3,7 +3,12 @@
    * A pure wrapper around the Milkdown editor.
    * Handles initialization, destruction, and basic content syncing.
    */
-  import { defaultValueCtx, Editor, rootCtx } from '@milkdown/core';
+  import {
+    defaultValueCtx,
+    Editor,
+    editorViewOptionsCtx,
+    rootCtx,
+  } from '@milkdown/core';
   import type { MilkdownPlugin } from '@milkdown/ctx';
   import { listener, listenerCtx } from '@milkdown/plugin-listener';
   import { commonmark } from '@milkdown/preset-commonmark';
@@ -15,11 +20,13 @@
     onUpdate,
     instance = $bindable(null),
     plugins = [],
+    readonly = false,
   } = $props<{
     content: string;
     onUpdate?: (markdown: string) => void;
     instance?: Editor | null;
     plugins?: MilkdownPlugin[];
+    readonly?: boolean;
   }>();
 
   let container: HTMLDivElement | null = $state(null);
@@ -35,6 +42,9 @@
           defaultValueCtx,
           untrack(() => content),
         );
+        ctx.set(editorViewOptionsCtx, {
+          editable: () => !readonly,
+        });
         ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
           if (onUpdate) onUpdate(markdown);
         });

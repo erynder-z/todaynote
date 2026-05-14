@@ -49,6 +49,31 @@ pub struct SearchResult {
     pub indices: Vec<u32>,
 }
 
+/// A unique thread name found during search.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThreadSearchResult {
+    pub name: String,
+    pub note_count: usize,
+}
+
+/// An aggregated view of content from sections with the same name across notes.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThreadAggregationResult {
+    pub thread_name: String,
+    pub items: Vec<ThreadAggregationItem>,
+}
+
+/// Content of a single section within a thread.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThreadAggregationItem {
+    pub filename: String,
+    pub formatted_date: String,
+    pub content: String,
+}
+
 /// The complete state payload sent to the frontend during initialization.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

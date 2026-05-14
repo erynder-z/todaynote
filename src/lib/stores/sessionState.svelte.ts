@@ -6,6 +6,7 @@ import type { SessionState } from "$lib/types/appState";
 export const sessionState = $state<SessionState>({
 	todayNotePath: null,
 	todayNoteContent: null,
+	aggregatedThread: null,
 	activePopup: null,
 	isMac: false,
 	sidebarOpen: false,

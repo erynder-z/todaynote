@@ -10,7 +10,7 @@ use commands::notes::{
     ensure_section, get_last_available_note_path, get_note_path_by_offset, get_today_note_path,
     insert_note_line, list_notes, read_note_content, save_note_content, update_note_line,
 };
-use commands::search::search_notes;
+use commands::search::{aggregate_thread, search_notes, search_threads};
 use commands::settings::{
     get_config, set_locale, set_notes_folder, set_notes_list_layout, set_remember_window_size,
     switch_notes_folder,
@@ -78,6 +78,8 @@ pub fn run() {
             initialize_app,
             show_window,
             search_notes,
+            search_threads,
+            aggregate_thread,
             get_config,
             get_translations,
             get_theme_colors,

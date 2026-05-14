@@ -12,18 +12,30 @@
     toast,
   } from '$lib';
   import { inputManager } from '$lib/stores/input.svelte';
-  import type { SearchResult } from '$lib/types/notes';
-  import { readNoteContent, searchNotes } from '$lib/utils/notes';
+  import type { SearchResult, ThreadSearchResult } from '$lib/types/notes';
+  import {
+    aggregateThread,
+    readNoteContent,
+    searchNotes,
+    searchThreads,
+  } from '$lib/utils/notes';
 
   let query = $state('');
   let isFuzzy = $state(true);
-  let results = $state<SearchResult[]>([]);
+  let searchMode = $state<'notes' | 'threads'>('notes');
+  let results = $state<SearchResult[] | ThreadSearchResult[]>([]);
   let isSearching = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   const nav = new ListNavigator(
     () => results.length,
-    (i) => selectResult(results[i]),
+    (i) => {
+      if (searchMode === 'notes') {
+        selectResult(results[i] as SearchResult);
+      } else {
+        selectThread(results[i] as ThreadSearchResult);
+      }
+    },
   );
 
   $effect(() => {
@@ -33,15 +45,18 @@
   });
 
   const performSearch = async () => {
-    if (query.trim().length === 0) {
+    if (query.trim().length === 0 && searchMode === 'notes') {
       results = [];
       nav.reset();
       return;
     }
 
     isSearching = true;
-    const searchResults = await searchNotes(query, isFuzzy);
-    results = searchResults;
+    if (searchMode === 'notes') {
+      results = await searchNotes(query, isFuzzy);
+    } else {
+      results = await searchThreads(query, isFuzzy);
+    }
     isSearching = false;
     nav.reset();
   };
@@ -61,6 +76,17 @@
       sessionState.activePopup = null;
     } else {
       toast.error($t('notes.error.load'));
+    }
+  };
+
+  const selectThread = async (thread: ThreadSearchResult) => {
+    if (!thread) return;
+    const aggregation = await aggregateThread(thread.name);
+    if (aggregation) {
+      sessionState.aggregatedThread = aggregation;
+      sessionState.activePopup = 'threadAggregation';
+    } else {
+      toast.error('Failed to aggregate thread');
     }
   };
 
@@ -157,19 +183,46 @@
         type="text"
         bind:value={query}
         oninput={onInput}
-        placeholder={$t('search.start_typing')}
+        placeholder={searchMode === 'notes'
+          ? $t('search.start_typing')
+          : 'Search threads...'}
         spellcheck="false"
         autofocus
       />
 
-      <button
-        class="mode-badge"
-        class:active={isFuzzy}
-        onclick={() => (isFuzzy = !isFuzzy)}
-        title={$t('search.fuzzy')}
-      >
-        <span>Fuzzy</span>
-      </button>
+      <div class="header-actions">
+        <button
+          class="mode-badge"
+          class:active={searchMode === 'notes'}
+          onclick={() => {
+            searchMode = 'notes';
+            performSearch();
+          }}
+        >
+          Notes
+        </button>
+        <button
+          class="mode-badge"
+          class:active={searchMode === 'threads'}
+          onclick={() => {
+            searchMode = 'threads';
+            performSearch();
+          }}
+        >
+          Threads
+        </button>
+
+        <div class="divider"></div>
+
+        <button
+          class="mode-badge"
+          class:active={isFuzzy}
+          onclick={() => (isFuzzy = !isFuzzy)}
+          title={$t('search.fuzzy')}
+        >
+          <span>Fuzzy</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -182,25 +235,51 @@
     {:else if results.length > 0}
       <div class="results-list">
         {#each results as result, i}
-          <button
-            class="result-item"
-            class:selected={i === nav.index}
-            onclick={() => selectResult(result)}
-            onmouseenter={() => {
-              if (nav.shouldIgnoreMouseEnter()) return;
-              nav.setIndex(i, 'mouse');
-            }}
-          >
-            <div class="result-meta">
-              <span class="date">{result.formattedName}</span>
-              <span class="ln">L{result.lineNumber + 1}</span>
-            </div>
-            <div class="result-content">
-              <p class="excerpt">
-                {@html highlight(result.excerpt, result.indices, query)}
-              </p>
-            </div>
-          </button>
+          {#if searchMode === 'notes'}
+            {@const noteResult = result as SearchResult}
+            <button
+              class="result-item"
+              class:selected={i === nav.index}
+              onclick={() => selectResult(noteResult)}
+              onmouseenter={() => {
+                if (nav.shouldIgnoreMouseEnter()) return;
+                nav.setIndex(i, 'mouse');
+              }}
+            >
+              <div class="result-meta">
+                <span class="date">{noteResult.formattedName}</span>
+                <span class="ln">L{noteResult.lineNumber + 1}</span>
+              </div>
+              <div class="result-content">
+                <p class="excerpt">
+                  {@html highlight(
+                    noteResult.excerpt,
+                    noteResult.indices,
+                    query,
+                  )}
+                </p>
+              </div>
+            </button>
+          {:else}
+            {@const threadResult = result as ThreadSearchResult}
+            <button
+              class="result-item section-mode"
+              class:selected={i === nav.index}
+              onclick={() => selectThread(threadResult)}
+              onmouseenter={() => {
+                if (nav.shouldIgnoreMouseEnter()) return;
+                nav.setIndex(i, 'mouse');
+              }}
+            >
+              <div class="result-meta">
+                <span class="section-name">{threadResult.name}</span>
+                <span class="note-count">
+                  {threadResult.noteCount}
+                  {threadResult.noteCount === 1 ? 'note' : 'notes'}
+                </span>
+              </div>
+            </button>
+          {/if}
         {/each}
       </div>
     {:else if query.trim().length > 0}
@@ -285,6 +364,19 @@
     align-items: center;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .divider {
+    width: 1px;
+    height: 1.2rem;
+    background-color: var(--border);
+    margin: 0 0.2rem;
+  }
+
   input {
     flex: 1;
     background: none;
@@ -302,14 +394,17 @@
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    padding: 0.2rem 0.5rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 4px;
     cursor: pointer;
-    transition:
-      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
-      color 0.15s cubic-bezier(0.2, 0, 0, 1),
-      border-color 0.15s cubic-bezier(0.2, 0, 0, 1);
+    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
     user-select: none;
+    white-space: nowrap;
+  }
+
+  .mode-badge:hover {
+    border-color: var(--accent);
+    color: var(--text-main);
   }
 
   .mode-badge.active {
@@ -347,6 +442,10 @@
     transition: background-color 0.1s cubic-bezier(0.2, 0, 0, 1);
   }
 
+  .result-item.section-mode {
+    padding: 1rem;
+  }
+
   .result-item:last-child {
     border-bottom: none;
   }
@@ -362,16 +461,27 @@
     margin-bottom: 0.25rem;
   }
 
-  .date {
+  .date,
+  .section-name {
     font-weight: 600;
     font-size: 0.8rem;
     color: var(--accent);
   }
 
-  .ln {
+  .section-name {
+    font-size: 0.95rem;
+  }
+
+  .ln,
+  .note-count {
     font-size: 0.7rem;
     color: var(--text-muted);
     font-family: var(--font-mono);
+  }
+
+  .note-count {
+    font-size: 0.8rem;
+    font-weight: 500;
   }
 
   .excerpt {

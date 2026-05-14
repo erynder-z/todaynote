@@ -6,6 +6,7 @@ export type PopupType =
 	| "search"
 	| "tagManager"
 	| "shortcuts"
+	| "threadAggregation"
 	| null;
 
 export type ShortcutHint = {

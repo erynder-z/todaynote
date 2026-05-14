@@ -23,6 +23,7 @@ export { default as SettingsView } from "./components/SettingsView.svelte";
 export { default as ShortcutListModal } from "./components/ShortcutListModal.svelte";
 export { default as ShortcutSelector } from "./components/ShortcutSelector.svelte";
 export { default as TagManagerModal } from "./components/TagManagerModal.svelte";
+export { default as ThreadAggregationView } from "./components/ThreadAggregationView.svelte";
 export * from "./stores/input.svelte";
 export * from "./stores/listNav.svelte";
 export * from "./stores/sessionState.svelte";

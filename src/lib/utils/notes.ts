@@ -1,5 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { NoteContentResponse, SearchResult } from "$lib/types/notes";
+import type {
+	NoteContentResponse,
+	SearchResult,
+	ThreadAggregationResult,
+	ThreadSearchResult,
+} from "$lib/types/notes";
 
 /**
  * Performs a full-text search across all notes.
@@ -17,6 +22,42 @@ export const searchNotes = async (
 	} catch (error) {
 		console.error("Error searching notes:", error);
 		return [];
+	}
+};
+
+/**
+ * Searches for unique thread names across all notes.
+ */
+export const searchThreads = async (
+	query: string,
+	isFuzzy: boolean,
+): Promise<ThreadSearchResult[]> => {
+	try {
+		const results = (await invoke("search_threads", {
+			query,
+			isFuzzy,
+		})) as ThreadSearchResult[];
+		return results;
+	} catch (error) {
+		console.error("Error searching threads:", error);
+		return [];
+	}
+};
+
+/**
+ * Aggregates content from all sections with the given thread name.
+ */
+export const aggregateThread = async (
+	name: string,
+): Promise<ThreadAggregationResult | null> => {
+	try {
+		const result = (await invoke("aggregate_thread", {
+			name,
+		})) as ThreadAggregationResult;
+		return result;
+	} catch (error) {
+		console.error(`Error aggregating thread ${name}:`, error);
+		return null;
 	}
 };
 
