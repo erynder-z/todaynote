@@ -4,7 +4,7 @@
    */
   import type { NoteContentResponse, NoteSection } from '$lib/types/notes';
   import NoteDate from './NoteDate.svelte';
-  import NoteSectionShortcuts from './NoteSectionShortcuts.svelte';
+  import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';
   import NoteTags from './NoteTags.svelte';
 
   let { noteContent, sections, onSelect } = $props<{
@@ -25,8 +25,8 @@
   </div>
 
   <div class="sidebar-section">
-    <h3 class="sidebar-title">Sections</h3>
-    <NoteSectionShortcuts {sections} {onSelect} />
+    <h3 class="sidebar-title">Threads</h3>
+    <NoteThreadShortcuts {sections} {onSelect} />
   </div>
 </div>
 

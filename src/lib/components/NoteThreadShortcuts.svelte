@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * Component for displaying note sections with shortcut hints for quick navigation.
+   * Component for displaying note threads with shortcut hints for quick navigation.
    */
 
   import type { NoteSection } from '$lib/types/notes';
@@ -12,7 +12,7 @@
     onSelect: (name: string) => void;
   }>();
 
-  // Show only up to 20 sections as there are only 20 shortcuts (1-9, A-K)
+  // Show only up to 20 threads as there are only 20 shortcuts (1-9, A-K)
   let visibleSections = $derived(sections.slice(0, 20));
 </script>
 

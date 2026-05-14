@@ -57,7 +57,7 @@
 	"shortcuts.action.manage_tags": "タグを管理する",
 	"shortcuts.action.close_popup": "ポップアップを閉じる",
 	"shortcuts.action.focus_last_line": "最後の行にフォーカスする",
-	"shortcuts.action.jump_to_section": "ノートセクションへ移動",
+	"shortcuts.action.jump_to_section": "スレッドへ移動",
 	"shortcuts.action.go_to_yesterday's_note": "昨日のノートへ移動",
 	"shortcuts.action.go_to_last_available_note": "最後の有効なノートへ移動",
 	"shortcuts.action.go_to_today's_note": "今日のノートへ移動",

@@ -13,7 +13,7 @@ export { default as NoteBrowser } from "./components/NoteBrowser.svelte";
 export { default as NoteControlCenter } from "./components/NoteControlCenter.svelte";
 export { default as NoteDate } from "./components/NoteDate.svelte";
 export { default as NoteEditor } from "./components/NoteEditor.svelte";
-export { default as NoteSectionShortcuts } from "./components/NoteSectionShortcuts.svelte";
+export { default as NoteThreadShortcuts } from "./components/NoteThreadShortcuts.svelte";
 export { default as NotesListLayout } from "./components/NotesListLayout.svelte";
 export { default as NotesMasonryLayout } from "./components/NotesMasonryLayout.svelte";
 export { default as NoteTags } from "./components/NoteTags.svelte";
