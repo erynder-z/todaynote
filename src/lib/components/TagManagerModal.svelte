@@ -177,8 +177,8 @@
     {:else}
       <div class="results-list">
         {#if currentTags.length > 0}
-          <div class="section">
-            <div class="section-label">{$t('tag.tags')}</div>
+          <div class="thread">
+            <div class="thread-label">{$t('tag.tags')}</div>
             {#each currentTags as tag}
               {@render tagItem(tag)}
             {/each}
@@ -186,8 +186,8 @@
         {/if}
 
         {#if suggestedTags.length > 0}
-          <div class="section">
-            <div class="section-label">{$t('tag.suggestions')}</div>
+          <div class="thread">
+            <div class="thread-label">{$t('tag.suggestions')}</div>
             {#each suggestedTags as tag}
               {@render tagItem(tag)}
             {/each}
@@ -274,12 +274,12 @@
     flex-direction: column;
   }
 
-  .section {
+  .thread {
     display: flex;
     flex-direction: column;
   }
 
-  .section-label {
+  .thread-label {
     font-size: 0.7rem;
     font-weight: 700;
     color: var(--text-muted);

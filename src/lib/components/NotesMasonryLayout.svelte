@@ -129,10 +129,10 @@
               </div>
             {/if}
 
-            {#if note.sections && note.sections.length > 0}
-              <div class="note-sections">
-                {#each note.sections as section}
-                  <div class="section-item">
+            {#if note.threads && note.threads.length > 0}
+              <div class="note-threads">
+                {#each note.threads as thread}
+                  <div class="thread-item">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       height="1rem"
@@ -143,7 +143,7 @@
                         d="m382-354 182-182-182-182 56-56 238 238-238 238-56-56Z"
                       /></svg
                     >
-                    <span>{section}</span>
+                    <span>{thread}</span>
                   </div>
                 {/each}
               </div>
@@ -250,14 +250,14 @@
     font-weight: 500;
   }
 
-  .note-sections {
+  .note-threads {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
     margin-bottom: 1rem;
   }
 
-  .section-item {
+  .thread-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -265,7 +265,7 @@
     color: var(--text-muted);
   }
 
-  .section-item svg {
+  .thread-item svg {
     color: var(--accent);
     opacity: 0.7;
     flex-shrink: 0;

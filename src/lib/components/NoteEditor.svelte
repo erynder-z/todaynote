@@ -1,13 +1,13 @@
 <script lang="ts">
   /**
    * The main note editor component. Coordinates the Milkdown instance with the EditorStore.
-   * Handles high-level actions like shortcuts and section navigation.
+   * Handles high-level actions like shortcuts and thread navigation.
    */
   import type { Editor } from '@milkdown/core';
   import { keymap } from '@milkdown/prose/keymap';
   import { $prose as prosePlugin } from '@milkdown/utils';
   import { untrack } from 'svelte';
-  import type { NoteContentResponse, NoteSection } from '$lib/types/notes';
+  import type { NoteContentResponse, NoteThread } from '$lib/types/notes';
   import { tagSuggestionShortcuts } from '../config/shortcuts';
   import type { EditorStore } from '../stores/editor.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
@@ -17,7 +17,7 @@
   } from '../utils/dailyNote';
   import {
     focusEditor,
-    jumpToSectionInEditor,
+    jumpToThreadInEditor,
     updateEditorContent,
   } from '../utils/editor';
   import { useShortcuts } from '../utils/shortcuts';
@@ -63,30 +63,30 @@
   // --- Actions & Helpers ---
 
   /**
-   * Main entry point for jumping to a section.
+   * Main entry point for jumping to a thread.
    */
   const handleJump = async (name: string) => {
     const instance = milkdownInstance;
     if (!instance) return;
 
-    const exists = editor.sections.some((s: NoteSection) => s.name === name);
+    const exists = editor.threads.some((s: NoteThread) => s.name === name);
     if (exists) {
-      jumpToSectionInEditor(instance, name);
+      jumpToThreadInEditor(instance, name);
     } else {
-      await editor.ensureSectionExists(name);
-      // Wait for the next tick/update to ensure section is rendered before jumping
+      await editor.ensureThreadExists(name);
+      // Wait for the next tick/update to ensure thread is rendered before jumping
       setTimeout(() => {
-        if (milkdownInstance) jumpToSectionInEditor(milkdownInstance, name);
+        if (milkdownInstance) jumpToThreadInEditor(milkdownInstance, name);
       }, 100);
     }
   };
 
   /**
-   * Jumps to a section based on its index (0-8).
+   * Jumps to a thread based on its index (0-8).
    */
-  const jumpToSectionByIndex = async (idx: number) => {
-    const section = editor.sections[idx];
-    if (section?.name) await handleJump(section.name);
+  const jumpToThreadByIndex = async (idx: number) => {
+    const thread = editor.threads[idx];
+    if (thread?.name) await handleJump(thread.name);
   };
 
   useShortcuts({
@@ -98,7 +98,7 @@
       if (sessionState.activePopup !== null) return false;
 
       const idx = tagSuggestionShortcuts.codes.indexOf(e.code);
-      if (idx !== -1 && idx < editor.sections.length) jumpToSectionByIndex(idx);
+      if (idx !== -1 && idx < editor.threads.length) jumpToThreadByIndex(idx);
     },
     navigateYesterday: async (e) => {
       if (sessionState.activePopup !== null) {
@@ -137,9 +137,9 @@
 
   // Expose jump functionality to parent components
   $effect(() => {
-    editor.jumpToSection = (name: string) => {
+    editor.jumpToThread = (name: string) => {
       const instance = milkdownInstance;
-      if (instance) jumpToSectionInEditor(instance, name);
+      if (instance) jumpToThreadInEditor(instance, name);
     };
   });
 </script>

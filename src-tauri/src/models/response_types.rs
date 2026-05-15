@@ -1,6 +1,6 @@
 //! Serializable data structures for frontend communication.
 
-use crate::models::note_session::{NoteSection, NoteSession};
+use crate::models::note_session::{NoteSession, NoteThread};
 use crate::services::note_manager::NoteManager;
 use crate::services::tag_manager::TagManager;
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,7 @@ pub struct FormattedNote {
     pub formatted_name: String,
     pub preview: String,
     pub tags: Vec<String>,
-    pub sections: Vec<String>,
+    pub threads: Vec<String>,
     pub word_count: usize,
 }
 
@@ -57,7 +57,7 @@ pub struct ThreadSearchResult {
     pub note_count: usize,
 }
 
-/// An aggregated view of content from sections with the same name across notes.
+/// An aggregated view of content from threads with the same name across notes.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThreadAggregationResult {
@@ -65,7 +65,7 @@ pub struct ThreadAggregationResult {
     pub items: Vec<ThreadAggregationItem>,
 }
 
-/// Content of a single section within a thread.
+/// Content of a single thread block.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThreadAggregationItem {
@@ -132,7 +132,7 @@ pub struct NoteMetadata {
 pub struct NoteContentResponse {
     pub content: String,
     pub metadata: NoteMetadata,
-    pub sections: Vec<NoteSection>,
+    pub threads: Vec<NoteThread>,
 }
 
 impl NoteContentResponse {
@@ -155,9 +155,9 @@ impl NoteContentResponse {
 
         let content_start = session.get_content_start_index();
 
-        // Map absolute section indices to relative content indices
-        let sections: Vec<NoteSection> = session
-            .sections
+        // Map absolute thread indices to relative content indices
+        let threads: Vec<NoteThread> = session
+            .threads
             .iter()
             .map(|s| {
                 let rel_start = if s.start_line >= content_start {
@@ -170,7 +170,7 @@ impl NoteContentResponse {
                 } else {
                     0
                 };
-                NoteSection {
+                NoteThread {
                     name: s.name.clone(),
                     level: s.level,
                     start_line: rel_start,
@@ -190,7 +190,7 @@ impl NoteContentResponse {
                 tags,
                 raw: raw_metadata,
             },
-            sections,
+            threads,
         }
     }
 }

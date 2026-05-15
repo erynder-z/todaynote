@@ -2,10 +2,10 @@ import { type Editor, editorViewCtx, parserCtx } from "@milkdown/core";
 import { Selection } from "@milkdown/prose/state";
 
 /**
- * Directs the Milkdown editor to a specific named section.
- * Finds the heading and moves the cursor to the end of that section.
+ * Directs the Milkdown editor to a specific named thread.
+ * Finds the heading and moves the cursor to the end of that thread.
  */
-export const jumpToSectionInEditor = (instance: Editor, name: string) => {
+export const jumpToThreadInEditor = (instance: Editor, name: string) => {
 	instance.action((ctx) => {
 		const view = ctx.get(editorViewCtx);
 		const { doc } = view.state;

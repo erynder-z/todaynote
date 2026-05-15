@@ -20,16 +20,16 @@
   });
 
   /**
-   * Handles navigation to a specific section, creating it if it doesn't exist.
+   * Handles navigation to a specific thread, creating it if it doesn't exist.
    */
   const handleJump = async (name: string) => {
-    // Update content to ensure section exists
-    if (!editor.sections.some((s) => s.name === name)) {
-      const updatedContent = await editor.ensureSectionExists(name);
+    // Update content to ensure thread exists
+    if (!editor.threads.some((s) => s.name === name)) {
+      const updatedContent = await editor.ensureThreadExists(name);
       noteContent = updatedContent;
     }
 
-    if (editor.jumpToSection) editor.jumpToSection(name);
+    if (editor.jumpToThread) editor.jumpToThread(name);
 
     // Close sidebar in vertical layout after jumping
     sessionState.sidebarOpen = false;
@@ -54,7 +54,7 @@
     <div class="sidebar-wrapper" class:open={sessionState.sidebarOpen}>
       <NoteControlCenter
         {noteContent}
-        sections={editor.sections}
+        threads={editor.threads}
         onSelect={handleJump}
       />
     </div>

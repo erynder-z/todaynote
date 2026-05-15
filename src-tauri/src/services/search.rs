@@ -277,7 +277,7 @@ impl<'a> SearchService<'a> {
         Ok(results)
     }
 
-    /// Aggregates content from all sections matching the given thread name across all notes.
+    /// Aggregates content from all threads matching the given name across all notes.
     pub fn aggregate_thread(&self, thread_name: &str) -> Result<ThreadAggregationResult, String> {
         if !self.note_manager.notes_folder.exists() {
             return Err("Notes folder does not exist".to_string());
@@ -311,37 +311,37 @@ impl<'a> SearchService<'a> {
             let (frontmatter_len, _) = Self::extract_frontmatter(&content);
             let lines: Vec<&str> = content.lines().collect();
 
-            let mut section_content = Vec::new();
-            let mut in_section = false;
+            let mut thread_content = Vec::new();
+            let mut in_thread = false;
 
             for line in lines.iter().skip(frontmatter_len) {
                 if line.starts_with("# ") {
                     let name = line[2..].trim();
                     if name == thread_name {
-                        in_section = true;
+                        in_thread = true;
                         continue;
-                    } else if in_section {
+                    } else if in_thread {
                         // Reached another H1, end extraction
                         break;
                     }
                 }
 
-                if in_section {
-                    section_content.push(*line);
+                if in_thread {
+                    thread_content.push(*line);
                 }
             }
 
-            if in_section {
+            if in_thread {
                 // Trim trailing empty lines
-                while section_content.last().map(|l| l.trim().is_empty()) == Some(true) {
-                    section_content.pop();
+                while thread_content.last().map(|l| l.trim().is_empty()) == Some(true) {
+                    thread_content.pop();
                 }
 
-                if !section_content.is_empty() {
+                if !thread_content.is_empty() {
                     items.push(ThreadAggregationItem {
                         filename,
                         formatted_date,
-                        content: section_content.join("\n").trim().to_string(),
+                        content: thread_content.join("\n").trim().to_string(),
                     });
                 }
             }

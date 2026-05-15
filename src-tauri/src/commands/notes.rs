@@ -3,7 +3,7 @@
 //! This module provides functions for reading, writing, and manipulating note files, as well as managing the current note editing session.
 
 use crate::models::app_state::AppState;
-use crate::models::note_session::NoteSection;
+use crate::models::note_session::NoteThread;
 use crate::models::response_types::{NoteContentResponse, NoteListResponse};
 use std::fs;
 use std::path::PathBuf;
@@ -230,16 +230,16 @@ pub async fn list_notes(
     note_manager.list_notes(limit)
 }
 
-/// Finds or creates a section by name and returns its content-relative line index.
+/// Finds or creates a thread by name and returns its content-relative line index.
 ///
-/// Jumps to the end of the section (ready to type). If the section does not exist,
+/// Jumps to the end of the thread (ready to type). If the thread does not exist,
 /// it is appended to the end of the note.
 ///
 /// The `current_content` parameter should be the content portion from the frontend
 /// (excluding frontmatter). The backend reconstructs the full note by reading the
 /// frontmatter from disk.
 #[tauri::command]
-pub async fn ensure_section(
+pub async fn ensure_thread(
     name: String,
     current_content: String,
     state: State<'_, AppState>,
@@ -254,7 +254,7 @@ pub async fn ensure_section(
         return Err("No note session loaded".to_string());
     }
 
-    if !session.sections.iter().any(|s| s.name == name) {
+    if !session.threads.iter().any(|s| s.name == name) {
         let last_idx = session.lines.len();
         session.insert_line(last_idx, format!("# {}", name));
         session.insert_line(last_idx + 1, "".to_string());
@@ -276,22 +276,22 @@ pub async fn ensure_section(
     ))
 }
 
-/// Detects top-level headings (`# `) in markdown content and returns them as sections.
+/// Detects top-level headings (`# `) in markdown content and returns them as threads.
 #[tauri::command]
-pub async fn detect_sections(content: String) -> Result<Vec<NoteSection>, String> {
+pub async fn detect_threads(content: String) -> Result<Vec<NoteThread>, String> {
     let lines: Vec<&str> = content.split('\n').collect();
-    let mut sections: Vec<NoteSection> = Vec::new();
+    let mut threads: Vec<NoteThread> = Vec::new();
 
     for (i, line) in lines.iter().enumerate() {
         if line.starts_with("# ") && !line.starts_with("## ") {
             let name = line[2..].trim().to_string();
             if !name.is_empty() {
-                // Update previous section's end_line
-                if let Some(prev) = sections.last_mut() {
+                // Update previous thread's end_line
+                if let Some(prev) = threads.last_mut() {
                     prev.end_line = i;
                 }
 
-                sections.push(NoteSection {
+                threads.push(NoteThread {
                     name,
                     level: 1,
                     start_line: i,
@@ -301,5 +301,5 @@ pub async fn detect_sections(content: String) -> Result<Vec<NoteSection>, String
         }
     }
 
-    Ok(sections)
+    Ok(threads)
 }

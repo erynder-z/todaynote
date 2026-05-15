@@ -1,32 +1,32 @@
 <script lang="ts">
   /**
-   * Control Center sidebar containing date, tags, and section shortcuts.
+   * Control Center sidebar containing date, tags, and thread shortcuts.
    */
-  import type { NoteContentResponse, NoteSection } from '$lib/types/notes';
+  import type { NoteContentResponse, NoteThread } from '$lib/types/notes';
   import NoteDate from './NoteDate.svelte';
-  import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';
   import NoteTags from './NoteTags.svelte';
+  import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';
 
-  let { noteContent, sections, onSelect } = $props<{
+  let { noteContent, threads, onSelect } = $props<{
     noteContent: NoteContentResponse | null;
-    sections: NoteSection[];
+    threads: NoteThread[];
     onSelect: (name: string) => void;
   }>();
 </script>
 
 <div class="note-control-center">
-  <div class="sidebar-section">
+  <div class="sidebar-thread">
     <NoteDate {noteContent} />
   </div>
 
-  <div class="sidebar-section">
+  <div class="sidebar-thread">
     <h3 class="sidebar-title">Tags</h3>
     <NoteTags {noteContent} />
   </div>
 
-  <div class="sidebar-section">
+  <div class="sidebar-thread">
     <h3 class="sidebar-title">Threads</h3>
-    <NoteThreadShortcuts {sections} {onSelect} />
+    <NoteThreadShortcuts {threads} {onSelect} />
   </div>
 </div>
 
@@ -43,7 +43,7 @@
     overflow-y: auto;
   }
 
-  .sidebar-section {
+  .sidebar-thread {
     margin-bottom: 2.5rem;
   }
 

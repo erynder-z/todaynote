@@ -1,14 +1,10 @@
 import { untrack } from "svelte";
-import type { NoteContentResponse, NoteSection } from "$lib/types/notes";
-import {
-	detectSections,
-	ensureSection,
-	saveNoteContent,
-} from "$lib/utils/notes";
+import type { NoteContentResponse, NoteThread } from "$lib/types/notes";
+import { detectThreads, ensureThread, saveNoteContent } from "$lib/utils/notes";
 
 /**
  * Manages the state and logic for the Note Editor.
- * Handles markdown content, auto-saving, and section navigation.
+ * Handles markdown content, auto-saving, and thread navigation.
  */
 export class EditorStore {
 	content = $state<string>("");
@@ -17,13 +13,13 @@ export class EditorStore {
 	hasChanges = $state<boolean>(false);
 	pendingExternalUpdate = $state<boolean>(false);
 	private autoSaveTimeout: ReturnType<typeof setTimeout> | null = null;
-	sections = $state<NoteSection[]>([]);
+	threads = $state<NoteThread[]>([]);
 
-	// Callback for section jumps
+	// Callback for thread jumps
 	onJump: (updated: NoteContentResponse) => void = () => {};
 
-	// Function to jump to a section (set by NoteEditor component)
-	jumpToSection: (name: string) => void = () => {};
+	// Function to jump to a thread (set by NoteEditor component)
+	jumpToThread: (name: string) => void = () => {};
 
 	// --- Initialization ---
 
@@ -41,7 +37,7 @@ export class EditorStore {
 			this.content = noteContent?.content ?? "";
 			this.hasChanges = false;
 			this.pendingExternalUpdate = true;
-			this.refreshSections();
+			this.refreshThreads();
 		} else if (
 			noteContent?.content !== undefined &&
 			currentContent !== noteContent.content
@@ -49,7 +45,7 @@ export class EditorStore {
 			// External content change (e.g., tag update) - sync content
 			this.content = noteContent.content;
 			this.pendingExternalUpdate = true;
-			this.sections = noteContent.sections ?? [];
+			this.threads = noteContent.threads ?? [];
 			this.hasChanges = false;
 		}
 	}
@@ -66,25 +62,25 @@ export class EditorStore {
 
 		this.hasChanges = true;
 		this.scheduleAutoSave();
-		this.refreshSections();
+		this.refreshThreads();
 	}
 
-	private refreshSections() {
+	private refreshThreads() {
 		const content = this.content;
-		detectSections(content).then((sections) => {
-			this.sections = sections;
+		detectThreads(content).then((threads) => {
+			this.threads = threads;
 		});
 	}
 
 	/**
-	 * Creates a section via the backend and updates the store.
+	 * Creates a thread via the backend and updates the store.
 	 * Navigation logic remains in the component.
 	 */
-	async ensureSectionExists(name: string) {
-		const updated = await ensureSection(name, this.content);
+	async ensureThreadExists(name: string) {
+		const updated = await ensureThread(name, this.content);
 		if (updated) {
 			this.content = updated.content;
-			this.sections = updated.sections;
+			this.threads = updated.threads;
 			this.pendingExternalUpdate = true;
 			this.hasChanges = false;
 			this.onJump(updated);

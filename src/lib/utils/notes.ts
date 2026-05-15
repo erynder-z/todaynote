@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
 	NoteContentResponse,
+	NoteThread,
 	SearchResult,
 	ThreadAggregationResult,
 	ThreadSearchResult,
@@ -45,7 +46,7 @@ export const searchThreads = async (
 };
 
 /**
- * Aggregates content from all sections with the given thread name.
+ * Aggregates content from all threads with the given thread name.
  */
 export const aggregateThread = async (
 	name: string,
@@ -133,44 +134,30 @@ export const getTagSuggestions = async (query: string) => {
 };
 
 /**
- * Asks the backend to find or create a section and returns the updated note.
+ * Asks the backend to find or create a thread and returns the updated note.
  * Pass the current content to ensure unsaved edits are not lost.
  */
-export const ensureSection = async (name: string, currentContent: string) => {
+export const ensureThread = async (name: string, currentContent: string) => {
 	try {
-		const content = (await invoke("ensure_section", {
+		const content = (await invoke("ensure_thread", {
 			name,
 			currentContent,
 		})) as NoteContentResponse;
 		return content;
 	} catch (error) {
-		console.error(`Error ensuring section ${name}:`, error);
+		console.error(`Error ensuring thread ${name}:`, error);
 		return null;
 	}
 };
 
 /**
- * Asks the backend to detect sections in the given markdown content.
+ * Asks the backend to detect threads in the given markdown content.
  */
-export const detectSections = async (
-	content: string,
-): Promise<
-	Array<{
-		name: string;
-		level: number;
-		startLine: number;
-		endLine: number;
-	}>
-> => {
+export const detectThreads = async (content: string): Promise<NoteThread[]> => {
 	try {
-		return (await invoke("detect_sections", { content })) as Array<{
-			name: string;
-			level: number;
-			startLine: number;
-			endLine: number;
-		}>;
+		return (await invoke("detect_threads", { content })) as NoteThread[];
 	} catch (error) {
-		console.error("Error detecting sections:", error);
+		console.error("Error detecting threads:", error);
 		return [];
 	}
 };

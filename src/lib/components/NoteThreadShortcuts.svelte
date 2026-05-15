@@ -3,24 +3,24 @@
    * Component for displaying note threads with shortcut hints for quick navigation.
    */
 
-  import type { NoteSection } from '$lib/types/notes';
+  import type { NoteThread } from '$lib/types/notes';
   import { tagSuggestionShortcuts } from '../config/shortcuts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
-  let { sections, onSelect } = $props<{
-    sections: NoteSection[];
+  let { threads, onSelect } = $props<{
+    threads: NoteThread[];
     onSelect: (name: string) => void;
   }>();
 
   // Show only up to 20 threads as there are only 20 shortcuts (1-9, A-K)
-  let visibleSections = $derived(sections.slice(0, 20));
+  let visibleThreads = $derived(threads.slice(0, 20));
 </script>
 
-{#if visibleSections.length > 0}
-  <div class="sections-container">
-    {#each visibleSections as section, i}
-      <button class="section-pill" onclick={() => onSelect(section.name)}>
-        <span class="section-name">{section.name}</span>
+{#if visibleThreads.length > 0}
+  <div class="threads-container">
+    {#each visibleThreads as thread, i}
+      <button class="thread-pill" onclick={() => onSelect(thread.name)}>
+        <span class="thread-name">{thread.name}</span>
         <span class="shortcut-hint">
           <KeyboardShortcut
             primary
@@ -34,14 +34,14 @@
 {/if}
 
 <style>
-  .sections-container {
+  .threads-container {
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
     margin-bottom: 1.5rem;
   }
 
-  .section-pill {
+  .thread-pill {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -58,12 +58,12 @@
     width: 100%;
   }
 
-  .section-pill:hover {
+  .thread-pill:hover {
     background-color: color-mix(in srgb, var(--accent), transparent 90%);
     color: var(--accent);
   }
 
-  .section-name {
+  .thread-name {
     font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -84,7 +84,7 @@
     flex-shrink: 0;
   }
 
-  .section-pill:hover .shortcut-hint {
+  .thread-pill:hover .shortcut-hint {
     color: var(--text-main);
     opacity: 1;
   }

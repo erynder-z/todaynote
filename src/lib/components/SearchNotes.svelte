@@ -263,7 +263,7 @@
           {:else}
             {@const threadResult = result as ThreadSearchResult}
             <button
-              class="result-item section-mode"
+              class="result-item thread-mode"
               class:selected={i === nav.index}
               onclick={() => selectThread(threadResult)}
               onmouseenter={() => {
@@ -272,7 +272,7 @@
               }}
             >
               <div class="result-meta">
-                <span class="section-name">{threadResult.name}</span>
+                <span class="thread-name">{threadResult.name}</span>
                 <span class="note-count">
                   {threadResult.noteCount}
                   {threadResult.noteCount === 1 ? 'note' : 'notes'}
@@ -442,7 +442,7 @@
     transition: background-color 0.1s cubic-bezier(0.2, 0, 0, 1);
   }
 
-  .result-item.section-mode {
+  .result-item.thread-mode {
     padding: 1rem;
   }
 
@@ -462,13 +462,13 @@
   }
 
   .date,
-  .section-name {
+  .thread-name {
     font-weight: 600;
     font-size: 0.8rem;
     color: var(--accent);
   }
 
-  .section-name {
+  .thread-name {
     font-size: 0.95rem;
   }
 

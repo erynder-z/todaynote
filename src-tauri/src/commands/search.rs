@@ -27,7 +27,7 @@ pub async fn search_threads(
     service.search_threads(&query, is_fuzzy)
 }
 
-/// Aggregates content from all sections with the given thread name.
+/// Aggregates content from all threads with the given thread name.
 #[tauri::command]
 pub async fn aggregate_thread(
     name: String,

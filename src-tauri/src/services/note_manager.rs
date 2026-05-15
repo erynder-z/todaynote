@@ -52,7 +52,7 @@ impl NoteManager {
 
     /// Creates today's daily note if it doesn't already exist.
     ///
-    /// The note is initialized with YAML metadata and a default section header.
+    /// The note is initialized with YAML metadata and a default thread header.
     pub fn create_todays_note(&self, note_header: &str) -> Result<PathBuf, String> {
         self.ensure_notes_folder_exists()?;
         let file_path = self.get_today_note_path();
@@ -104,7 +104,7 @@ impl NoteManager {
             formatted_name: self.format_note_name(file_name),
             preview: self.extract_preview(&content),
             tags: crate::utils::tag_parser::parse_tags_from_content(&content),
-            sections: self.extract_sections(&content, 5),
+            threads: self.extract_threads(&content, 5),
             word_count: crate::utils::markdown::count_words(&content),
         })
     }
@@ -127,8 +127,8 @@ impl NoteManager {
         Ok(NoteListResponse { notes, total_count })
     }
 
-    /// Extracts the first N section names (headings) from the content.
-    fn extract_sections(&self, content: &str, limit: usize) -> Vec<String> {
+    /// Extracts the first N thread names (headings) from the content.
+    fn extract_threads(&self, content: &str, limit: usize) -> Vec<String> {
         content
             .lines()
             .filter(|l| l.starts_with("# "))

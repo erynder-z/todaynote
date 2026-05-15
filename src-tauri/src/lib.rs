@@ -6,9 +6,9 @@ mod utils;
 use commands::folder::validate_folder;
 use commands::i18n::get_translations;
 use commands::notes::{
-    check_todays_note_exists, create_todays_note, delete_note_line, detect_sections,
-    ensure_section, get_last_available_note_path, get_note_path_by_offset, get_today_note_path,
-    insert_note_line, list_notes, read_note_content, save_note_content, update_note_line,
+    check_todays_note_exists, create_todays_note, delete_note_line, detect_threads, ensure_thread,
+    get_last_available_note_path, get_note_path_by_offset, get_today_note_path, insert_note_line,
+    list_notes, read_note_content, save_note_content, update_note_line,
 };
 use commands::search::{aggregate_thread, search_notes, search_threads};
 use commands::settings::{
@@ -65,7 +65,7 @@ pub fn run() {
             remove_note_tag,
             check_todays_note_exists,
             create_todays_note,
-            detect_sections,
+            detect_threads,
             get_last_available_note_path,
             get_note_path_by_offset,
             get_today_note_path,
@@ -74,7 +74,7 @@ pub fn run() {
             update_note_line,
             insert_note_line,
             delete_note_line,
-            ensure_section,
+            ensure_thread,
             initialize_app,
             show_window,
             search_notes,

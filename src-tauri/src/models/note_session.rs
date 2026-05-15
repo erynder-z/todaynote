@@ -4,15 +4,15 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-/// Represents a named block or section within a note, typically defined by a `#` heading.
+/// Represents a named block or thread within a note, typically defined by a `#` heading.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct NoteSection {
-    /// The display name of the section (e.g., "Work").
+pub struct NoteThread {
+    /// The display name of the thread (e.g., "Work").
     pub name: String,
-    /// The absolute line index where the section header starts.
+    /// The absolute line index where the thread header starts.
     pub start_line: usize,
-    /// The absolute line index where the section ends (exclusive).
+    /// The absolute line index where the thread ends (exclusive).
     pub end_line: usize,
     /// The heading level (1 for #, 2 for ##, etc.).
     pub level: usize,
@@ -27,8 +27,8 @@ pub struct NoteSession {
     pub lines: Vec<String>,
     /// The start and end indices (inclusive) of the YAML frontmatter block.
     pub frontmatter_range: Option<(usize, usize)>,
-    /// List of detected sections in the note.
-    pub sections: Vec<NoteSection>,
+    /// List of detected threads in the note.
+    pub threads: Vec<NoteThread>,
 }
 
 impl NoteSession {
@@ -38,7 +38,7 @@ impl NoteSession {
             path: None,
             lines: Vec::new(),
             frontmatter_range: None,
-            sections: Vec::new(),
+            threads: Vec::new(),
         }
     }
 
@@ -48,7 +48,7 @@ impl NoteSession {
         self.lines = content.split('\n').map(|s| s.to_string()).collect();
         self.detect_frontmatter();
         self.ensure_trailing_empty_line();
-        self.detect_sections();
+        self.detect_threads();
     }
 
     /// Detects YAML frontmatter (delimited by '---' on the first line and another '---').
@@ -68,10 +68,10 @@ impl NoteSession {
         }
         self.frontmatter_range = None;
     }
-    /// Scans the lines to identify sections based on `#` headings.
-    /// Only top-level headings (#) are considered sections.
-    pub fn detect_sections(&mut self) {
-        self.sections.clear();
+    /// Scans the lines to identify threads based on `#` headings.
+    /// Only top-level headings (#) are considered threads.
+    pub fn detect_threads(&mut self) {
+        self.threads.clear();
         let content_start = self.get_content_start_index();
 
         for i in content_start..self.lines.len() {
@@ -81,12 +81,12 @@ impl NoteSession {
                 let name = line[2..].trim().to_string();
 
                 if !name.is_empty() {
-                    // Update previous section's end_line
-                    if let Some(prev) = self.sections.last_mut() {
+                    // Update previous thread's end_line
+                    if let Some(prev) = self.threads.last_mut() {
                         prev.end_line = i;
                     }
 
-                    self.sections.push(NoteSection {
+                    self.threads.push(NoteThread {
                         name,
                         start_line: i,
                         end_line: self.lines.len(),
@@ -138,7 +138,7 @@ impl NoteSession {
             if index == 0 || self.frontmatter_range.is_some() {
                 self.detect_frontmatter();
             }
-            self.detect_sections();
+            self.detect_threads();
         }
     }
 
@@ -147,7 +147,7 @@ impl NoteSession {
         if index <= self.lines.len() {
             self.lines.insert(index, content);
             self.detect_frontmatter();
-            self.detect_sections();
+            self.detect_threads();
         }
     }
 
@@ -156,7 +156,7 @@ impl NoteSession {
         if index < self.lines.len() && self.lines.len() > 1 {
             self.lines.remove(index);
             self.detect_frontmatter();
-            self.detect_sections();
+            self.detect_threads();
         }
     }
 

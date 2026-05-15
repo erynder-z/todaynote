@@ -3,7 +3,7 @@ export type FormattedNote = {
 	formattedName: string;
 	preview: string;
 	tags: string[];
-	sections: string[];
+	threads: string[];
 	wordCount: number;
 };
 
@@ -18,7 +18,7 @@ export type NoteMetadata = {
 	raw: Record<string, string>;
 };
 
-export type NoteSection = {
+export type NoteThread = {
 	name: string;
 	level: number;
 	startLine: number;
@@ -29,7 +29,7 @@ export type NoteSection = {
 export type NoteContentResponse = {
 	content: string;
 	metadata: NoteMetadata;
-	sections: NoteSection[];
+	threads: NoteThread[];
 };
 
 export type SearchResult = {
