@@ -12,6 +12,7 @@
 	"search.results_count": "{{count}} results",
 	"search.footer.navigate": "Navigate",
 	"search.footer.open": "Open",
+	"search.footer.mode": "Mode",
 	"search.footer.fuzzy": "Fuzzy",
 	"search.footer.close": "Close",
 	"settings.title": "Settings",
@@ -50,6 +51,7 @@
 	"shortcuts.tags.toggle": "Add/Remove Tag",
 	"shortcuts.search.description": "While Search is open:",
 	"shortcuts.search.toggle_fuzzy": "Toggle Fuzzy Search",
+	"shortcuts.search.toggle_mode": "Toggle Search Mode",
 	"shortcuts.action.toggle_search": "Toggle Search",
 	"shortcuts.action.toggle_note_browser": "Toggle Note Browser",
 	"shortcuts.action.toggle_settings": "Toggle Settings",
@@ -62,5 +64,6 @@
 	"shortcuts.action.go_to_last_available_note": "Go to Last Available Note",
 	"shortcuts.action.go_to_today's_note": "Go to Today's Note",
 	"shortcuts.action.toggle_fuzzy_search": "Toggle Fuzzy Search",
+	"shortcuts.action.toggle_search_mode": "Toggle Search Mode",
 	"browser.navigate": "Navigate"
 }

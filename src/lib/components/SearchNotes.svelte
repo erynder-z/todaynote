@@ -39,8 +39,14 @@
   );
 
   $effect(() => {
-    return inputManager.registerAction('toggleFuzzy', () => {
-      isFuzzy = !isFuzzy;
+    return inputManager.registerActions({
+      toggleFuzzy: () => {
+        isFuzzy = !isFuzzy;
+      },
+      toggleSearchMode: () => {
+        searchMode = searchMode === 'notes' ? 'threads' : 'notes';
+        performSearch();
+      },
     });
   });
 
@@ -308,6 +314,10 @@
     shortcuts={[
       { label: $t('search.footer.navigate'), key: '↑↓' },
       { label: $t('search.footer.open'), key: 'Enter' },
+      {
+        label: $t('search.footer.mode'),
+        action: 'toggleSearchMode',
+      },
       {
         label: $t('search.footer.fuzzy'),
         action: 'toggleFuzzy',

@@ -22,6 +22,7 @@
     (action) => defaultShortcuts[action as keyof typeof defaultShortcuts],
   );
   const fuzzyShortcut = defaultShortcuts.toggleFuzzy;
+  const searchModeShortcut = defaultShortcuts.toggleSearchMode;
 </script>
 
 <div class="shortcut-list">
@@ -60,21 +61,37 @@
     </div>
   </div>
 
-  {#if fuzzyShortcut}
+  {#if fuzzyShortcut || searchModeShortcut}
     <div class="search-shortcuts">
       <h3>{$t('shortcuts.search.description')}</h3>
-      <div class="shortcut-item">
-        <span class="shortcut-description"
-          >{$t('shortcuts.search.toggle_fuzzy')}</span
-        >
-        <div class="shortcut-keys">
-          <KeyboardShortcut
-            primary={fuzzyShortcut.primary}
-            secondary={fuzzyShortcut.secondary}
-            key={fuzzyShortcut.key.toUpperCase()}
-          />
+      {#if fuzzyShortcut}
+        <div class="shortcut-item">
+          <span class="shortcut-description"
+            >{$t('shortcuts.search.toggle_fuzzy')}</span
+          >
+          <div class="shortcut-keys">
+            <KeyboardShortcut
+              primary={fuzzyShortcut.primary}
+              secondary={fuzzyShortcut.secondary}
+              key={fuzzyShortcut.key.toUpperCase()}
+            />
+          </div>
         </div>
-      </div>
+      {/if}
+      {#if searchModeShortcut}
+        <div class="shortcut-item">
+          <span class="shortcut-description"
+            >{$t('shortcuts.search.toggle_mode')}</span
+          >
+          <div class="shortcut-keys">
+            <KeyboardShortcut
+              primary={searchModeShortcut.primary}
+              secondary={searchModeShortcut.secondary}
+              key={searchModeShortcut.key.toUpperCase()}
+            />
+          </div>
+        </div>
+      {/if}
     </div>
   {/if}
 </div>

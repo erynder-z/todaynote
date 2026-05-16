@@ -12,6 +12,7 @@
 	"search.results_count": "{{count}} 件の結果",
 	"search.footer.navigate": "移動",
 	"search.footer.open": "開く",
+	"search.footer.mode": "モード",
 	"search.footer.fuzzy": "曖昧",
 	"search.footer.close": "閉じる",
 	"settings.title": "設定",
@@ -50,6 +51,7 @@
 	"shortcuts.tags.toggle": "タグを切り替える",
 	"shortcuts.search.description": "検索が開いているとき:",
 	"shortcuts.search.toggle_fuzzy": "曖昧検索を切り替える",
+	"shortcuts.search.toggle_mode": "検索モードを切り替える",
 	"shortcuts.action.toggle_search": "検索を切り替える",
 	"shortcuts.action.toggle_note_browser": "ノートブラウザを切り替える",
 	"shortcuts.action.toggle_settings": "設定を切り替える",
@@ -62,5 +64,6 @@
 	"shortcuts.action.go_to_last_available_note": "最後の有効なノートへ移動",
 	"shortcuts.action.go_to_today's_note": "今日のノートへ移動",
 	"shortcuts.action.toggle_fuzzy_search": "曖昧検索を切り替える",
+	"shortcuts.action.toggle_search_mode": "検索モードを切り替える",
 	"browser.navigate": "選択を移動"
 }

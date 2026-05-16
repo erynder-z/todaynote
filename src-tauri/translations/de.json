@@ -12,6 +12,7 @@
 	"search.results_count": "{{count}} Ergebnisse",
 	"search.footer.navigate": "Navigieren",
 	"search.footer.open": "Öffnen",
+	"search.footer.mode": "Modus",
 	"search.footer.fuzzy": "Fuzzy",
 	"search.footer.close": "Schließen",
 	"settings.title": "Einstellungen",
@@ -50,6 +51,7 @@
 	"shortcuts.tags.toggle": "Tag an-/abwählen",
 	"shortcuts.search.description": "Bei geöffnetem Suchfenster:",
 	"shortcuts.search.toggle_fuzzy": "Fuzzy Search ein-/ausschalten",
+	"shortcuts.search.toggle_mode": "Suchmodus umschalten",
 	"shortcuts.action.toggle_search": "Suche einblenden",
 	"shortcuts.action.toggle_note_browser": "Notenbrowser einblenden",
 	"shortcuts.action.toggle_settings": "Einstellungen einblenden",
@@ -62,5 +64,6 @@
 	"shortcuts.action.go_to_last_available_note": "Gehe zu letzter verfügbarer Notiz",
 	"shortcuts.action.go_to_today's_note": "Gehe zu heutiger Notiz",
 	"shortcuts.action.toggle_fuzzy_search": "Fuzzy-Suche umschalten",
+	"shortcuts.action.toggle_search_mode": "Suchmodus umschalten",
 	"browser.navigate": "Navigation"
 }

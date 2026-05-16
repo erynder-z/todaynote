@@ -38,7 +38,7 @@ export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 		description: "Focus last line",
 	},
 	jumpByNumber: {
-		key: "1,2,3,4,5,6,7,8,9,b,c,d,g,h,i,j,k,m,n,p",
+		key: "1,2,3,4,5,6,7,8,9,b,c,d,g,h,i,j,k,n,p,r",
 		primary: true,
 		secondary: true,
 		description: "Jump to thread",
@@ -48,6 +48,12 @@ export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 		primary: true,
 		secondary: true,
 		description: "Toggle fuzzy search",
+	},
+	toggleSearchMode: {
+		key: "m",
+		primary: true,
+		secondary: true,
+		description: "Toggle search mode",
 	},
 	navigateYesterday: {
 		key: "e",
@@ -88,9 +94,9 @@ export const tagSuggestionShortcuts = {
 		"KeyI",
 		"KeyJ",
 		"KeyK",
-		"KeyM",
 		"KeyN",
 		"KeyP",
+		"KeyR",
 	],
-	labels: "123456789BCDGHIKMNP".split(""),
+	labels: "123456789BCDGHIKNPR".split(""),
 };

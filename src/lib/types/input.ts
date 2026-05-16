@@ -12,6 +12,7 @@ export type ShortcutAction =
 	| "focusLastLine"
 	| "jumpByNumber"
 	| "toggleFuzzy"
+	| "toggleSearchMode"
 	| "navigateYesterday"
 	| "navigateLastAvailable"
 	| "navigateToday";
