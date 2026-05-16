@@ -17,6 +17,7 @@
   } from '../utils/dailyNote';
   import {
     focusEditor,
+    focusEnd,
     jumpToThreadInEditor,
     updateEditorContent,
   } from '../utils/editor';
@@ -92,13 +93,20 @@
   useShortcuts({
     focusLastLine: () => {
       if (sessionState.activePopup !== null) return false;
-      if (milkdownInstance) focusEditor(milkdownInstance);
+      if (milkdownInstance) {
+        focusEnd(milkdownInstance);
+        return true;
+      }
     },
     jumpByNumber: (e) => {
       if (sessionState.activePopup !== null) return false;
 
       const idx = tagSuggestionShortcuts.codes.indexOf(e.code);
-      if (idx !== -1 && idx < editor.threads.length) jumpToThreadByIndex(idx);
+      if (idx !== -1 && idx < editor.threads.length) {
+        jumpToThreadByIndex(idx);
+        return true;
+      }
+      return false;
     },
     navigateYesterday: async (e) => {
       if (sessionState.activePopup !== null) {

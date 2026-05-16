@@ -66,3 +66,16 @@ export const updateEditorContent = (instance: Editor, markdown: string) => {
 export const focusEditor = (instance: Editor) => {
 	instance.action((ctx) => ctx.get(editorViewCtx).focus());
 };
+
+/**
+ * Focuses the editor and moves selection to the end.
+ */
+export const focusEnd = (instance: Editor) => {
+	instance.action((ctx) => {
+		const view = ctx.get(editorViewCtx);
+		view.focus();
+		const tr = view.state.tr;
+		const selection = Selection.atEnd(tr.doc);
+		view.dispatch(tr.setSelection(selection).scrollIntoView());
+	});
+};
