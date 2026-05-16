@@ -169,6 +169,60 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="search-container" onkeydown={handleKeydown}>
   <header class="search-header">
+    <div class="toolbar">
+      <div class="mode-tabs">
+        <button
+          class="tab"
+          class:active={searchMode === 'notes'}
+          onclick={() => {
+            searchMode = 'notes';
+            performSearch();
+          }}
+        >
+          {$t('search.notes')}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="1rem"
+            viewBox="0 -960 960 960"
+            width="1rem"
+            fill="currentColor"
+            ><path
+              d="M280-160v-441q0-33 24-56t57-23h439q33 0 56.5 23.5T880-600v320L680-80H360q-33 0-56.5-23.5T280-160ZM81-710q-6-33 13-59.5t52-32.5l434-77q33-6 59.5 13t32.5 52l10 54h-82l-7-40-433 77 40 226v279q-16-9-27.5-24T158-276L81-710Zm279 110v440h280v-160h160v-280H360Zm220 220Z"
+            /></svg
+          >
+        </button>
+        <button
+          class="tab"
+          class:active={searchMode === 'threads'}
+          onclick={() => {
+            searchMode = 'threads';
+            performSearch();
+          }}
+        >
+          {$t('search.threads')}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="1rem"
+            viewBox="0 -960 960 960"
+            width="1rem"
+            fill="currentColor"
+            ><path
+              d="M600-80v-100L320-320H120v-240h172l108-124v-196h240v240H468L360-516v126l240 120v-50h240v240H600ZM480-720h80v-80h-80v80ZM200-400h80v-80h-80v80Zm480 240h80v-80h-80v80ZM520-760ZM240-440Zm480 240Z"
+            /></svg
+          >
+        </button>
+      </div>
+
+      <button
+        class="fuzzy-btn"
+        class:active={isFuzzy}
+        onclick={() => (isFuzzy = !isFuzzy)}
+        title={isFuzzy ? $t('search.fuzzy_on') : $t('search.fuzzy_off')}
+      >
+        {$t('search.fuzzy')}
+      </button>
+    </div>
+
     <div class="input-wrapper">
       <div class="search-icon">
         <svg
@@ -191,44 +245,10 @@
         oninput={onInput}
         placeholder={searchMode === 'notes'
           ? $t('search.start_typing')
-          : 'Search threads...'}
+          : $t('search.start_typing_threads')}
         spellcheck="false"
         autofocus
       />
-
-      <div class="header-actions">
-        <button
-          class="mode-badge"
-          class:active={searchMode === 'notes'}
-          onclick={() => {
-            searchMode = 'notes';
-            performSearch();
-          }}
-        >
-          Notes
-        </button>
-        <button
-          class="mode-badge"
-          class:active={searchMode === 'threads'}
-          onclick={() => {
-            searchMode = 'threads';
-            performSearch();
-          }}
-        >
-          Threads
-        </button>
-
-        <div class="divider"></div>
-
-        <button
-          class="mode-badge"
-          class:active={isFuzzy}
-          onclick={() => (isFuzzy = !isFuzzy)}
-          title={$t('search.fuzzy')}
-        >
-          <span>Fuzzy</span>
-        </button>
-      </div>
     </div>
   </header>
 
@@ -279,9 +299,14 @@
             >
               <div class="result-meta">
                 <span class="thread-name">{threadResult.name}</span>
+
                 <span class="note-count">
-                  {threadResult.noteCount}
-                  {threadResult.noteCount === 1 ? 'note' : 'notes'}
+                  {$t(
+                    threadResult.noteCount === 1
+                      ? 'search.note_count_single'
+                      : 'search.note_count_multiple',
+                    { count: threadResult.noteCount },
+                  )}
                 </span>
               </div>
             </button>
@@ -297,12 +322,12 @@
         <div class="empty-icon">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            height="10rem"
+            height="5rem"
             viewBox="0 -960 960 960"
-            width="10rem"
+            width="5rem"
             fill="currentColor"
             ><path
-              d="M784-120 532-372q-30 24-69 38t-83 14q-109 0-184.5-75.5T120-580q0-109 75.5-184.5T380-840q109 0 184.5 75.5T640-580q0 44-14 83t-38 69l252 252-56 56ZM380-400q75 0 127.5-52.5T560-580q0-75-52.5-127.5T380-760q-75 0-127.5 52.5T200-580q0 75 52.5 127.5T380-400Z"
+              d="M120-240v-80h480v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"
             /></svg
           >
         </div>
@@ -347,6 +372,76 @@
     padding: 1rem;
     border-bottom: 1px solid var(--border);
     background-color: var(--bg-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mode-tabs {
+    display: flex;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .mode-tabs button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 800;
+  }
+
+  .tab {
+    padding: 0.4rem 0.8rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    user-select: none;
+  }
+
+  .tab:hover {
+    color: var(--text-main);
+    background-color: var(--bg-surface);
+  }
+
+  .tab.active {
+    background-color: var(--accent);
+    color: var(--accent-text);
+  }
+
+  .fuzzy-btn {
+    padding: 0.4rem 0.8rem;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    user-select: none;
+    font-weight: 800;
+  }
+
+  .fuzzy-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-main);
+  }
+
+  .fuzzy-btn.active {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
   }
 
   .input-wrapper {
@@ -364,7 +459,7 @@
   }
 
   .input-wrapper:focus-within {
-    border-color: var(--accent);
+    background-color: color-mix(in srgb, var(--accent), transparent 80%);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent), transparent 80%);
   }
 
@@ -374,20 +469,7 @@
     align-items: center;
   }
 
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  .divider {
-    width: 1px;
-    height: 1.2rem;
-    background-color: var(--border);
-    margin: 0 0.2rem;
-  }
-
-  input {
+  .input-wrapper input {
     flex: 1;
     background: none;
     border: none;
@@ -395,32 +477,6 @@
     padding: 0.75rem 0;
     font-size: 1rem;
     outline: none;
-  }
-
-  .mode-badge {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
-    user-select: none;
-    white-space: nowrap;
-  }
-
-  .mode-badge:hover {
-    border-color: var(--accent);
-    color: var(--text-main);
-  }
-
-  .mode-badge.active {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: var(--accent);
   }
 
   .results-area {

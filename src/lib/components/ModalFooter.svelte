@@ -66,6 +66,8 @@
     display: flex;
     gap: 2rem;
     align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .shortcut-item {
