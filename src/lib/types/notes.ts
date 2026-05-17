@@ -46,6 +46,11 @@ export type ThreadSearchResult = {
 	noteCount: number;
 };
 
+export type TagSearchResult = {
+	name: string;
+	noteCount: number;
+};
+
 export type ThreadAggregationResult = {
 	threadName: string;
 	items: ThreadAggregationItem[];

@@ -9,33 +9,47 @@
     NoteSearchResults,
     sessionState,
     settings,
+    TagSearchResults,
     ThreadSearchResults,
     t,
     toast,
   } from '$lib';
   import { inputManager } from '$lib/stores/input.svelte';
-  import type { SearchResult, ThreadSearchResult } from '$lib/types/notes';
+  import type {
+    SearchResult,
+    TagSearchResult,
+    ThreadSearchResult,
+  } from '$lib/types/notes';
   import {
     aggregateThread,
     readNoteContent,
     searchNotes,
+    searchNotesByTag,
+    searchTags,
     searchThreads,
   } from '$lib/utils/notes';
 
   let query = $state('');
   let isFuzzy = $state(true);
-  let searchMode = $state<'notes' | 'threads'>('notes');
-  let results = $state<SearchResult[] | ThreadSearchResult[]>([]);
+  let searchMode = $state<'notes' | 'threads' | 'tags'>('notes');
+  let results = $state<
+    SearchResult[] | ThreadSearchResult[] | TagSearchResult[]
+  >([]);
   let isSearching = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let selectedTag = $state<string | null>(null);
 
   const nav = new ListNavigator(
     () => results.length,
     (i) => {
       if (searchMode === 'notes') {
         selectResult(results[i] as SearchResult);
-      } else {
+      } else if (searchMode === 'threads') {
         selectThread(results[i] as ThreadSearchResult);
+      } else if (selectedTag) {
+        selectResult(results[i] as SearchResult);
+      } else {
+        selectTag(results[i] as TagSearchResult);
       }
     },
   );
@@ -46,7 +60,11 @@
         isFuzzy = !isFuzzy;
       },
       toggleSearchMode: () => {
-        searchMode = searchMode === 'notes' ? 'threads' : 'notes';
+        selectedTag = null;
+        if (searchMode === 'notes') searchMode = 'threads';
+        else if (searchMode === 'threads') searchMode = 'tags';
+        else searchMode = 'notes';
+        results = []; // Clear results to prevent stale data rendering
         performSearch();
       },
     });
@@ -64,13 +82,23 @@
     }
 
     isSearching = true;
-    if (searchMode === 'notes') {
-      results = await searchNotes(query, isFuzzy);
-    } else {
-      results = await searchThreads(query, isFuzzy);
+    try {
+      if (searchMode === 'notes') {
+        results = await searchNotes(query, isFuzzy);
+      } else if (searchMode === 'threads') {
+        results = await searchThreads(query, isFuzzy);
+      } else if (selectedTag) {
+        results = await searchNotesByTag(selectedTag, query, isFuzzy);
+      } else {
+        results = await searchTags(query, isFuzzy);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      results = [];
+    } finally {
+      isSearching = false;
+      nav.reset();
     }
-    isSearching = false;
-    nav.reset();
   };
 
   /**
@@ -112,6 +140,27 @@
   };
 
   /**
+   * Activates drill-down view for a specific tag.
+   */
+  const selectTag = (tag: TagSearchResult) => {
+    if (!tag) return;
+    selectedTag = tag.name;
+    query = '';
+    results = []; // Clear current tag list immediately
+    performSearch();
+  };
+
+  /**
+   * Clears the current tag filter and returns to the full tag list.
+   */
+  const clearTagFilter = () => {
+    selectedTag = null;
+    query = '';
+    results = [];
+    performSearch();
+  };
+
+  /**
    * Handles global keydown events for list navigation.
    */
   const handleKeydown = (e: KeyboardEvent) => {
@@ -136,6 +185,8 @@
           class:active={searchMode === 'notes'}
           onclick={() => {
             searchMode = 'notes';
+            selectedTag = null;
+            results = [];
             performSearch();
           }}
         >
@@ -156,6 +207,8 @@
           class:active={searchMode === 'threads'}
           onclick={() => {
             searchMode = 'threads';
+            selectedTag = null;
+            results = [];
             performSearch();
           }}
         >
@@ -167,7 +220,29 @@
             width="1rem"
             fill="currentColor"
             ><path
-              d="M600-80v-100L320-320H120v-240h172l108-124v-196h240v240H468L360-516v126l240 120v-50h240v240H600ZM480-720h80v-80h-80v80ZM200-400h80v-80h-80v80Zm480 240h80v-80h-80v80ZM520-760ZM240-440Zm480 240Z"
+              d="M600-80v-100L320-320H120v-240h172l108-124v-196h240v240H468L360-516v126l240 120v-50h240v240H600ZM480-720h80v-80h-80v80ZM200-400h80v-80h-80v80Zm480 240h80v-80h-80v80ZM520-760ZM240-440ZM480 240Z"
+            /></svg
+          >
+        </button>
+        <button
+          class="tab"
+          class:active={searchMode === 'tags'}
+          onclick={() => {
+            searchMode = 'tags';
+            selectedTag = null;
+            results = [];
+            performSearch();
+          }}
+        >
+          {$t('search.tags')}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="1rem"
+            viewBox="0 -960 960 960"
+            width="1rem"
+            fill="currentColor"
+            ><path
+              d="m240-160 40-160H120l20-80h160l40-160H180l20-80h160l40-160h80l-40 160h160l40-160h80l-40 160h160l-20 80H660l-40 160h160l-20 80H600l-40 160h-80l40-160H360l-40 160h-80Zm140-240h160l40-160H420l-40 160Z"
             /></svg
           >
         </button>
@@ -198,14 +273,23 @@
         </svg>
       </div>
 
+      {#if selectedTag}
+        <button class="tag-breadcrumb" onclick={clearTagFilter}>
+          #{selectedTag}
+          <span class="clear">×</span>
+        </button>
+      {/if}
+
       <!-- svelte-ignore a11y_autofocus -->
       <input
         type="text"
         bind:value={query}
         oninput={onInput}
-        placeholder={searchMode === 'notes'
+        placeholder={searchMode === 'notes' || selectedTag
           ? $t('search.start_typing')
-          : $t('search.start_typing_threads')}
+          : searchMode === 'threads'
+            ? $t('search.start_typing_threads')
+            : $t('search.start_typing_tags')}
         spellcheck="false"
         autofocus
       />
@@ -226,14 +310,27 @@
           {query}
           onSelect={selectResult}
         />
-      {:else}
+      {:else if searchMode === 'threads'}
         <ThreadSearchResults
           results={results as ThreadSearchResult[]}
           {nav}
           onSelect={selectThread}
         />
+      {:else if selectedTag}
+        <NoteSearchResults
+          results={results as SearchResult[]}
+          {nav}
+          {query}
+          onSelect={selectResult}
+        />
+      {:else}
+        <TagSearchResults
+          results={results as TagSearchResult[]}
+          {nav}
+          onSelect={selectTag}
+        />
       {/if}
-    {:else if query.trim().length > 0}
+    {:else if query.trim().length > 0 || selectedTag}
       <div class="status-view">
         <p class="muted">{$t('search.no_results')}</p>
       </div>
@@ -387,6 +484,31 @@
     color: var(--text-muted);
     display: flex;
     align-items: center;
+  }
+
+  .tag-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: var(--accent);
+    color: var(--accent-text);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .tag-breadcrumb .clear {
+    font-size: 1.1rem;
+    line-height: 1;
+    opacity: 0.7;
+  }
+
+  .tag-breadcrumb:hover .clear {
+    opacity: 1;
   }
 
   .input-wrapper input {

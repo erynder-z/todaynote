@@ -1,7 +1,8 @@
 //! Note search functionality using fuzzy and exact matching.
 
 use crate::models::response_types::{
-    SearchResult, ThreadAggregationItem, ThreadAggregationResult, ThreadSearchResult,
+    SearchResult, TagSearchResult, ThreadAggregationItem, ThreadAggregationResult,
+    ThreadSearchResult,
 };
 use nucleo_matcher::{Config, Matcher, Utf32Str};
 use std::collections::HashMap;
@@ -338,6 +339,141 @@ impl<'a> SearchService<'a> {
         }
 
         Ok(self.filter_thread_results(thread_counts, query, is_fuzzy))
+    }
+
+    /// Searches for unique tags across all notes.
+    pub fn search_tags(&self, query: &str, is_fuzzy: bool) -> Result<Vec<TagSearchResult>, String> {
+        let files = self.get_note_files()?;
+        let mut tag_counts: HashMap<String, usize> = HashMap::new();
+
+        for path in files {
+            let content = match fs::read_to_string(path) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+            let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
+            for tag in tags {
+                *tag_counts.entry(tag).or_insert(0) += 1;
+            }
+        }
+
+        Ok(self.filter_tag_results(tag_counts, query, is_fuzzy))
+    }
+
+    /// Filters and sorts a map of tag names based on the search query.
+    fn filter_tag_results(
+        &self,
+        tag_counts: HashMap<String, usize>,
+        query: &str,
+        is_fuzzy: bool,
+    ) -> Vec<TagSearchResult> {
+        let mut results = Vec::new();
+
+        if query.is_empty() {
+            results = tag_counts
+                .into_iter()
+                .map(|(name, count)| TagSearchResult {
+                    name,
+                    note_count: count,
+                })
+                .collect();
+        } else {
+            let mut matcher = Matcher::new(Config::DEFAULT);
+            let query_normalized = query.to_lowercase();
+            let mut query_buf = Vec::new();
+            let query_utf32 = Utf32Str::new(&query_normalized, &mut query_buf);
+
+            for (name, count) in tag_counts {
+                let matched = if is_fuzzy {
+                    Self::fuzzy_match(&mut matcher, &name, &query_utf32, &query_normalized)
+                        .is_some()
+                } else {
+                    name.to_lowercase().contains(&query_normalized)
+                };
+
+                if matched {
+                    results.push(TagSearchResult {
+                        name,
+                        note_count: count,
+                    });
+                }
+            }
+        }
+
+        // Sort by note count descending, then by name
+        results.sort_by(|a, b| b.note_count.cmp(&a.note_count).then(a.name.cmp(&b.name)));
+        results
+    }
+
+    /// Finds all notes that contain a specific tag, optionally filtered by a query.
+    pub fn search_notes_by_tag(
+        &self,
+        tag: &str,
+        query: &str,
+        is_fuzzy: bool,
+    ) -> Result<Vec<SearchResult>, String> {
+        let files = self.get_note_files()?;
+        let mut results = Vec::new();
+
+        let mut matcher = Matcher::new(Config::DEFAULT);
+        let query_normalized = query.to_lowercase();
+        let mut query_buf = Vec::new();
+        let query_utf32 = Utf32Str::new(&query_normalized, &mut query_buf);
+
+        for path in files {
+            let content = match fs::read_to_string(&path) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+
+            let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
+            if !tags.iter().any(|t| t.to_lowercase() == tag.to_lowercase()) {
+                continue;
+            }
+
+            if query.trim().is_empty() {
+                let filename = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                let formatted_name = self.note_manager.format_note_name(filename);
+
+                let (fm_len, _) = Self::extract_frontmatter(&content);
+                // Find first non-empty line after frontmatter
+                let first_line = content
+                    .lines()
+                    .skip(fm_len)
+                    .find(|l| !l.trim().is_empty())
+                    .map(|l| l.trim().to_string())
+                    .unwrap_or_else(|| formatted_name.clone());
+
+                results.push(SearchResult {
+                    filename: filename.to_string(),
+                    formatted_name,
+                    excerpt: first_line,
+                    line_number: fm_len,
+                    score: 0,
+                    indices: vec![],
+                });
+            } else {
+                results.extend(self.search_file(
+                    &path,
+                    is_fuzzy,
+                    &query_utf32,
+                    &query_normalized,
+                    &mut matcher,
+                ));
+            }
+        }
+
+        if is_fuzzy && !query.trim().is_empty() {
+            results.sort_by(|a, b| b.score.cmp(&a.score));
+        } else {
+            // Sort by filename descending (newest notes first)
+            results.sort_by(|a, b| b.filename.cmp(&a.filename));
+        }
+
+        Ok(results)
     }
 
     /// Aggregates content from all threads matching the given name across all notes.

@@ -57,6 +57,14 @@ pub struct ThreadSearchResult {
     pub note_count: usize,
 }
 
+/// A unique tag found during search.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TagSearchResult {
+    pub name: String,
+    pub note_count: usize,
+}
+
 /// An aggregated view of content from threads with the same name across notes.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

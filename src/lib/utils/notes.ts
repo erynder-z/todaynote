@@ -3,6 +3,7 @@ import type {
 	NoteContentResponse,
 	NoteThread,
 	SearchResult,
+	TagSearchResult,
 	ThreadAggregationResult,
 	ThreadSearchResult,
 } from "$lib/types/notes";
@@ -41,6 +42,46 @@ export const searchThreads = async (
 		return results;
 	} catch (error) {
 		console.error("Error searching threads:", error);
+		return [];
+	}
+};
+
+/**
+ * Searches for unique tags across all notes.
+ */
+export const searchTags = async (
+	query: string,
+	isFuzzy: boolean,
+): Promise<TagSearchResult[]> => {
+	try {
+		const results = (await invoke("search_tags", {
+			query,
+			isFuzzy,
+		})) as TagSearchResult[];
+		return results;
+	} catch (error) {
+		console.error("Error searching tags:", error);
+		return [];
+	}
+};
+
+/**
+ * Finds all notes that contain a specific tag.
+ */
+export const searchNotesByTag = async (
+	tag: string,
+	query = "",
+	isFuzzy = false,
+): Promise<SearchResult[]> => {
+	try {
+		const results = (await invoke("search_notes_by_tag", {
+			tag,
+			query,
+			isFuzzy,
+		})) as SearchResult[];
+		return results;
+	} catch (error) {
+		console.error(`Error searching notes by tag ${tag}:`, error);
 		return [];
 	}
 };
