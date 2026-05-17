@@ -13,7 +13,7 @@
     toast,
     useShortcuts,
   } from '$lib';
-  import type { FormattedNote } from '$lib/types/notes';
+  import type { FormattedNote } from '$lib/interfaces/notes';
   import { listNotes } from '$lib/utils/folder';
   import { readNoteContent } from '$lib/utils/notes';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
+  import type { Toast } from '$lib/interfaces/ui';
   import { toast } from '$lib/stores/toast.svelte';
-  import type { Toast } from '$lib/types/ui';
 
   let { t } = $props<{ t: Toast }>();
 </script>

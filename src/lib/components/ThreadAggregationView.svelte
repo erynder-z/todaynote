@@ -9,6 +9,9 @@
 
   let aggregation = $derived(sessionState.aggregatedThread);
 
+  /**
+   * Opens the original note when the date link button is clicked
+   */
   const openOriginalNote = async (filename: string) => {
     if (!settings.notesFolder) return;
     const path = `${settings.notesFolder}/${filename}`;

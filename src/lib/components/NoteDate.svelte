@@ -3,7 +3,7 @@
    * Component for displaying a note's formatted date.
    * Extracts the localized date from the provided note content.
    */
-  import type { NoteContentResponse } from '$lib/types/notes';
+  import type { NoteContentResponse } from '$lib/interfaces/notes';
 
   let { noteContent } = $props<{
     noteContent: NoteContentResponse | null;

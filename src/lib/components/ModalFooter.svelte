@@ -1,12 +1,10 @@
 <script lang="ts">
-  import type { ShortcutHint } from '$lib/types/ui';
-
   /**
    * Reusable footer component for modal dialogs.
    * Displays keyboard shortcuts and optional item count.
    */
-
   import { defaultShortcuts } from '$lib/config/shortcuts';
+  import type { ShortcutHint } from '$lib/interfaces/ui';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
   let {

@@ -3,7 +3,6 @@
    * Orchestrates which modal is currently displayed based on
    * the `sessionState.activePopup` state.
    */
-
   import { flip } from 'svelte/animate';
   import {
     Modal,

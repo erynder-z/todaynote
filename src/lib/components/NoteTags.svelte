@@ -4,7 +4,7 @@
    * Clicking the add button opens the Tag Manager modal.
    */
   import { removeNoteTag, sessionState, useShortcuts } from '$lib';
-  import type { NoteContentResponse } from '$lib/types/notes';
+  import type { NoteContentResponse } from '$lib/interfaces/notes';
 
   let { noteContent } = $props<{
     noteContent: NoteContentResponse | null;

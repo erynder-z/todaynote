@@ -2,8 +2,7 @@
   /**
    * Component for displaying note threads with shortcut hints for quick navigation.
    */
-
-  import type { NoteThread } from '$lib/types/notes';
+  import type { NoteThread } from '$lib/interfaces/notes';
   import { tagSuggestionShortcuts } from '../config/shortcuts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 

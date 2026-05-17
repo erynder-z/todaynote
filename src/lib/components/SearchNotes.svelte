@@ -1,6 +1,6 @@
 <script lang="ts">
   /**
-   * Enhanced note search component with "Control Center" aesthetics.
+   * Note search layout component.
    * Orchestrates sub-components for sidebar, input, and results.
    */
   import {
@@ -17,12 +17,13 @@
     toast,
     useShortcuts,
   } from '$lib';
-  import { inputManager } from '$lib/stores/input.svelte';
   import type {
     SearchResult,
     TagSearchResult,
     ThreadSearchResult,
-  } from '$lib/types/notes';
+  } from '$lib/interfaces/notes';
+  import { inputManager } from '$lib/stores/input.svelte';
+
   import {
     aggregateThread,
     readNoteContent,

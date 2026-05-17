@@ -16,15 +16,3 @@ export type ShortcutAction =
 	| "navigateYesterday"
 	| "navigateLastAvailable"
 	| "navigateToday";
-
-export type ShortcutConfig = {
-	key: string;
-	primary?: boolean;
-	secondary?: boolean;
-	shift?: boolean;
-	description?: string;
-};
-
-export type ShortcutRegistration = ShortcutConfig & {
-	callback: ShortcutCallback;
-};

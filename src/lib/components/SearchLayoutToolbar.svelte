@@ -3,12 +3,9 @@
    * Layout toggle toolbar for switching between list and masonry views.
    */
   import { settings } from '$lib';
+  import type { SearchLayoutToolbarProps } from '$lib/interfaces/ui';
 
-  interface Props {
-    onLayoutChange: (layout: 'list' | 'masonry') => void;
-  }
-
-  let { onLayoutChange }: Props = $props();
+  let { onLayoutChange }: SearchLayoutToolbarProps = $props();
 </script>
 
 <div class="layout-toolbar">

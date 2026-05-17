@@ -1,6 +1,9 @@
 <script lang="ts">
+  /**
+   * Component for displaying a list notes with each item as a button in a traditional list layout
+   */
+  import type { FormattedNote } from '$lib/interfaces/notes';
   import type { ListNavigator } from '$lib/stores/listNav.svelte';
-  import type { FormattedNote } from '$lib/types/notes';
 
   let {
     notes,

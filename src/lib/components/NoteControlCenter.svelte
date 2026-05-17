@@ -2,7 +2,7 @@
   /**
    * Control Center sidebar containing date, tags, and thread shortcuts.
    */
-  import type { NoteContentResponse, NoteThread } from '$lib/types/notes';
+  import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
   import NoteDate from './NoteDate.svelte';
   import NoteTags from './NoteTags.svelte';
   import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';

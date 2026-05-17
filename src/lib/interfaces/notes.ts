@@ -1,63 +1,63 @@
-export type FormattedNote = {
+export interface FormattedNote {
 	filename: string;
 	formattedName: string;
 	preview: string;
 	tags: string[];
 	threads: string[];
 	wordCount: number;
-};
+}
 
-export type NoteListResponse = {
+export interface NoteListResponse {
 	notes: FormattedNote[];
 	totalCount: number;
-};
+}
 
-export type NoteMetadata = {
+export interface NoteMetadata {
 	formattedDate: string;
 	tags: string[];
 	raw: Record<string, string>;
-};
+}
 
-export type NoteThread = {
+export interface NoteThread {
 	name: string;
 	level: number;
 	startLine: number;
 	endLine: number;
 	shortcut?: string;
-};
+}
 
-export type NoteContentResponse = {
+export interface NoteContentResponse {
 	content: string;
 	metadata: NoteMetadata;
 	threads: NoteThread[];
-};
+}
 
-export type SearchResult = {
+export interface SearchResult {
 	filename: string;
 	formattedName: string;
 	excerpt: string;
 	lineNumber: number;
 	score: number;
 	indices: number[];
-};
+}
 
-export type ThreadSearchResult = {
+export interface ThreadSearchResult {
 	name: string;
 	noteCount: number;
-};
+}
 
-export type TagSearchResult = {
+export interface TagSearchResult {
 	name: string;
 	noteCount: number;
-};
+}
 
-export type ThreadAggregationResult = {
+export interface ThreadAggregationResult {
 	threadName: string;
 	items: ThreadAggregationItem[];
-};
+}
 
-export type ThreadAggregationItem = {
+export interface ThreadAggregationItem {
 	filename: string;
 	formattedDate: string;
 	content: string;
-};
+}

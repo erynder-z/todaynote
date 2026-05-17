@@ -4,7 +4,10 @@
    * Displays items as adaptive cards with their respective note counts.
    */
   import { ListNavigator, t } from '$lib';
-  import type { TagSearchResult, ThreadSearchResult } from '$lib/types/notes';
+  import type {
+    TagSearchResult,
+    ThreadSearchResult,
+  } from '$lib/interfaces/notes';
 
   let { results, nav, searchMode, onSelect } = $props<{
     results: (ThreadSearchResult | TagSearchResult)[];

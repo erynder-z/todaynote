@@ -5,7 +5,7 @@
    */
   import type { ListNavigator } from '$lib';
   import { t } from '$lib';
-  import type { ThreadSearchResult } from '$lib/types/notes';
+  import type { ThreadSearchResult } from '$lib/interfaces/notes';
 
   let { results, nav, onSelect } = $props<{
     results: ThreadSearchResult[];

@@ -2,7 +2,7 @@
   /**
    * View component that combines the note editor with the note sidebar.
    */
-  import type { NoteContentResponse } from '$lib/types/notes';
+  import type { NoteContentResponse } from '$lib/interfaces/notes';
   import { EditorStore } from '../stores/editor.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
   import NoteControlCenter from './NoteControlCenter.svelte';

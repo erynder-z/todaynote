@@ -3,15 +3,10 @@
    * Status view component showing loading, empty, and no-results states.
    */
   import { settings, t } from '$lib';
+  import type { SearchStatusViewProps } from '$lib/interfaces/ui';
 
-  interface Props {
-    isSearching: boolean;
-    hasResults: boolean;
-    query: string;
-    selectedTag: string | null;
-  }
-
-  let { isSearching, hasResults, query, selectedTag }: Props = $props();
+  let { isSearching, hasResults, query, selectedTag }: SearchStatusViewProps =
+    $props();
 
   let showLoading = $derived(isSearching && !hasResults);
   let showNoResults = $derived(
@@ -54,7 +49,9 @@
           width="6rem"
           fill="currentColor"
         >
-          <path d="M120-240v-80h480v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
+          <path
+            d="M120-240v-80h480v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"
+          />
         </svg>
       {/if}
     </div>

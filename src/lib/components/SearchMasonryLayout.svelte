@@ -4,7 +4,7 @@
    * Displays search result excerpts in a grid-like card format with match highlighting.
    */
   import { ListNavigator } from '$lib';
-  import type { SearchResult } from '$lib/types/notes';
+  import type { SearchResult } from '$lib/interfaces/notes';
 
   let { results, nav, query, onSelect } = $props<{
     results: SearchResult[];

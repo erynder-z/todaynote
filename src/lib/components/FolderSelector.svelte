@@ -4,7 +4,7 @@
    */
   import { invoke } from '@tauri-apps/api/core';
   import { settings, t } from '$lib';
-  import type { FolderValidation } from '$lib/types/folder';
+  import type { FolderValidation } from '$lib/interfaces/folder';
   import { selectFolder } from '$lib/utils/folder';
 
   let selectedFolderPath = $state<string | null>(null);

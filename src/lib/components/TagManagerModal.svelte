@@ -18,7 +18,6 @@
 
   let newTag = $state('');
   let suggestedTags = $state<string[]>([]);
-
   let currentTags = $derived(
     sessionState.todayNoteContent?.metadata.tags || [],
   );

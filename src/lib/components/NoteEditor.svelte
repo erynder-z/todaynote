@@ -7,7 +7,7 @@
   import { keymap } from '@milkdown/prose/keymap';
   import { $prose as prosePlugin } from '@milkdown/utils';
   import { untrack } from 'svelte';
-  import type { NoteContentResponse, NoteThread } from '$lib/types/notes';
+  import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
   import { tagSuggestionShortcuts } from '../config/shortcuts';
   import type { EditorStore } from '../stores/editor.svelte';
   import { sessionState } from '../stores/sessionState.svelte';

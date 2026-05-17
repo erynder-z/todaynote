@@ -3,7 +3,6 @@
    * Container component that renders the appropriate result component
    * based on search mode, layout, and selected tag.
    */
-  import type { ListNavigator } from '$lib';
   import {
     NoteSearchResults,
     SearchMasonryLayout,
@@ -12,12 +11,13 @@
     ThreadSearchResults,
     ThreadTagMasonryLayout,
   } from '$lib';
-  import type { SearchResultsContainerProps } from '$lib/types/interfaces/ui';
   import type {
     SearchResult,
     TagSearchResult,
     ThreadSearchResult,
-  } from '$lib/types/notes';
+  } from '$lib/interfaces/notes';
+
+  import type { SearchResultsContainerProps } from '$lib/interfaces/ui';
 
   let {
     results,
