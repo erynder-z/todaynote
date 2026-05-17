@@ -6,14 +6,16 @@
   import { tick } from 'svelte';
   import { focusTrap, sessionState, useShortcuts } from '$lib';
 
+  type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+
   let {
     title,
     children,
-    wide = false,
+    size = 'md',
   } = $props<{
     title?: string;
     children: any;
-    wide?: boolean;
+    size?: ModalSize;
   }>();
 
   /**
@@ -82,8 +84,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="overlay" onclick={close}>
   <div
-    class="popup"
-    class:wide
+    class="popup size-{size}"
     use:setupModal
     use:focusTrap
     tabindex="-1"
@@ -130,18 +131,41 @@
     padding: 2rem;
     max-width: 90dvw;
     height: 85dvh;
-    width: 37.5rem;
     color: var(--text-main);
     outline: none;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: width 0.2s ease;
+    transition: width 0.3s cubic-bezier(0.2, 0, 0, 1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
   }
 
-  .popup.wide {
+  /* Size Variants */
+  .size-sm {
+    width: 25rem;
+  }
+  .size-md {
+    width: 40rem;
+  }
+  .size-lg {
+    width: 60rem;
+  }
+  .size-xl {
     width: 80rem;
-    max-width: 95dvw;
+  }
+  .size-full {
+    width: 95dvw;
+    max-width: 100dvw;
+    height: 95dvh;
+  }
+
+  @media (max-width: 768px) {
+    .popup {
+      width: 95dvw !important;
+      padding: 1rem;
+    }
   }
 
   .popup-header {
@@ -155,6 +179,7 @@
     margin: 0;
     font-size: 1.4rem;
     text-align: center;
+    font-weight: 800;
   }
 
   .close-button {
@@ -171,7 +196,7 @@
   }
 
   .popup-content {
-    height: 100%;
+    flex: 1;
     overflow-y: auto;
   }
 </style>

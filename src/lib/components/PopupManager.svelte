@@ -22,30 +22,30 @@
 </script>
 
 {#if sessionState.activePopup === 'folderSelector'}
-  <Modal title={$t('settings.title')}>
+  <Modal title={$t('settings.title')} size="md">
     <SettingsView />
   </Modal>
 {:else if sessionState.activePopup === 'noteBrowser'}
   <Modal
     title={$t('notes.list.title')}
-    wide={settings.notesListLayout === 'masonry'}
+    size={settings.notesListLayout === 'masonry' ? 'xl' : 'md'}
   >
     <NoteBrowser />
   </Modal>
 {:else if sessionState.activePopup === 'search'}
-  <Modal title={$t('search.title')}>
+  <Modal title={$t('search.title')} size="xl">
     <SearchNotes />
   </Modal>
 {:else if sessionState.activePopup === 'tagManager'}
-  <Modal title={$t('tag.manager.title')}>
+  <Modal title={$t('tag.manager.title')} size="sm">
     <TagManagerModal />
   </Modal>
 {:else if sessionState.activePopup === 'shortcuts'}
-  <Modal title={$t('shortcuts.title')}>
+  <Modal title={$t('shortcuts.title')} size="lg">
     <ShortcutListModal />
   </Modal>
 {:else if sessionState.activePopup === 'threadAggregation'}
-  <Modal title={sessionState.aggregatedThread?.threadName} wide>
+  <Modal title={sessionState.aggregatedThread?.threadName} size="xl">
     <ThreadAggregationView />
   </Modal>
 {/if}

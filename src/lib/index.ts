@@ -19,7 +19,10 @@ export { default as NotesMasonryLayout } from "./components/NotesMasonryLayout.s
 export { default as NoteTags } from "./components/NoteTags.svelte";
 export { default as NoteThreadShortcuts } from "./components/NoteThreadShortcuts.svelte";
 export { default as PopupManager } from "./components/PopupManager.svelte";
+export { default as SearchInput } from "./components/SearchInput.svelte";
+export { default as SearchMasonryLayout } from "./components/SearchMasonryLayout.svelte";
 export { default as SearchNotes } from "./components/SearchNotes.svelte";
+export { default as SearchSidebar } from "./components/SearchSidebar.svelte";
 export { default as SettingsView } from "./components/SettingsView.svelte";
 export { default as ShortcutListModal } from "./components/ShortcutListModal.svelte";
 export { default as ShortcutSelector } from "./components/ShortcutSelector.svelte";
@@ -27,6 +30,7 @@ export { default as TagManagerModal } from "./components/TagManagerModal.svelte"
 export { default as TagSearchResults } from "./components/TagSearchResults.svelte";
 export { default as ThreadAggregationView } from "./components/ThreadAggregationView.svelte";
 export { default as ThreadSearchResults } from "./components/ThreadSearchResults.svelte";
+export { default as ThreadTagMasonryLayout } from "./components/ThreadTagMasonryLayout.svelte";
 export * from "./stores/input.svelte";
 export * from "./stores/listNav.svelte";
 export * from "./stores/sessionState.svelte";
