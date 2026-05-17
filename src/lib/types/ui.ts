@@ -25,3 +25,5 @@ export type Toast = {
 	type: ToastType;
 	duration?: number;
 };
+
+export type ModalSize = "sm" | "md" | "lg" | "xl" | "full";

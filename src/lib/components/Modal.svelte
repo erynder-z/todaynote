@@ -3,10 +3,9 @@
    * Modal wrapper that handles displaying a popup as a child component.
    * Consolidates focus management and scroll locking into a single setup action.
    */
-  import { tick } from 'svelte';
+  import { type Component, tick } from 'svelte';
   import { focusTrap, sessionState, useShortcuts } from '$lib';
-
-  type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  import type { ModalSize } from '$lib/types/ui';
 
   let {
     title,
@@ -14,7 +13,7 @@
     size = 'md',
   } = $props<{
     title?: string;
-    children: any;
+    children: Component;
     size?: ModalSize;
   }>();
 
