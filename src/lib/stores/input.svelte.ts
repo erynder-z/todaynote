@@ -1,9 +1,6 @@
 import { defaultShortcuts } from "$lib/config/shortcuts";
-import type {
-	ShortcutAction,
-	ShortcutCallback,
-	ShortcutRegistration,
-} from "$lib/types/input";
+import type { ShortcutRegistration } from "$lib/interfaces/input";
+import type { ShortcutAction, ShortcutCallback } from "$lib/types/input";
 import { sessionState } from "./sessionState.svelte";
 
 /**
@@ -116,16 +113,26 @@ class InputManager {
 		for (let i = this.shortcuts.length - 1; i >= 0; i--) {
 			const shortcut = this.shortcuts[i];
 
-			const matchesPrimary =
-				shortcut.primary === undefined ||
-				!!shortcut.primary === this.primaryPressed;
+			// Map abstract modifiers to required physical states for exact matching.
+			// This ensures that if a modifier is NOT specified, it MUST NOT be pressed.
+			let reqMeta = false;
+			let reqCtrl = false;
+			let reqAlt = false;
+			let reqShift = !!shortcut.shift;
 
-			const matchesSecondary =
-				shortcut.secondary === undefined ||
-				!!shortcut.secondary === this.secondaryPressed;
+			if (sessionState.isMac) {
+				if (shortcut.primary) reqMeta = true;
+				if (shortcut.secondary) reqAlt = true;
+			} else {
+				if (shortcut.primary) reqCtrl = true;
+				if (shortcut.secondary) reqShift = true;
+			}
 
-			const matchesShift =
-				shortcut.shift === undefined || !!shortcut.shift === this.shiftPressed;
+			const matchesModifiers =
+				this.metaPressed === reqMeta &&
+				this.ctrlPressed === reqCtrl &&
+				this.altPressed === reqAlt &&
+				this.shiftPressed === reqShift;
 
 			// Handle comma key (',') as a special case because it's the split delimiter
 			const keys =
@@ -143,7 +150,7 @@ class InputManager {
 				);
 			});
 
-			if (matchesKey && matchesPrimary && matchesSecondary && matchesShift) {
+			if (matchesKey && matchesModifiers) {
 				// If typing in an input, ONLY allow shortcuts that use a modifier
 				// or are specifically the Escape key.
 				if (isInput) {
