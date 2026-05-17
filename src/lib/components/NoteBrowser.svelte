@@ -2,20 +2,19 @@
   /**
    * Displays the note browser which allows switching between list and masonry layouts.
    */
-  import {
-    ListNavigator,
-    ModalFooter,
-    NotesListLayout,
-    NotesMasonryLayout,
-    sessionState,
-    settings,
-    t,
-    toast,
-    useShortcuts,
-  } from '$lib';
   import type { FormattedNote } from '$lib/interfaces/notes';
   import { listNotes } from '$lib/utils/folder';
   import { readNoteContent } from '$lib/utils/notes';
+  import { ListNavigator } from '../stores/listNav.svelte';
+  import { sessionState } from '../stores/sessionState.svelte';
+  import { settings } from '../stores/settings.svelte';
+  import { toast } from '../stores/toast.svelte';
+  import { t } from '../utils/i18n';
+  import { useShortcuts } from '../utils/shortcuts';
+  import LayoutToolbar from './LayoutToolbar.svelte';
+  import ListLayout from './ListLayout.svelte';
+  import MasonryLayout from './MasonryLayout.svelte';
+  import ModalFooter from './ModalFooter.svelte';
 
   let notes: FormattedNote[] = $state([]);
   let totalCount = $state(0);
@@ -94,6 +93,7 @@
       selected?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   });
+
   const setLayout = (layout: 'list' | 'masonry') => {
     settings.save({
       notesFolder: settings.notesFolder,
@@ -105,47 +105,77 @@
   };
 </script>
 
+{#snippet listSnippet(note: FormattedNote, i: number)}
+  <div class="result-content">
+    <span class="note-name">{note.formattedName}</span>
+    {#if note.tags && note.tags.length > 0}
+      <div class="list-tags">
+        {#each note.tags as tag}
+          <span class="tag-pill mini">{tag}</span>
+        {/each}
+      </div>
+    {/if}
+  </div>
+{/snippet}
+
+{#snippet masonrySnippet(note: FormattedNote, i: number)}
+  <div class="card-header">
+    <span class="note-name">{note.formattedName}</span>
+  </div>
+
+  {#if note.tags && note.tags.length > 0}
+    <div class="note-tags">
+      {#each note.tags as tag}
+        <span class="tag-pill">{tag}</span>
+      {/each}
+    </div>
+  {/if}
+
+  {#if note.threads && note.threads.length > 0}
+    <div class="note-threads">
+      {#each note.threads as thread}
+        <div class="thread-item">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="1rem"
+            viewBox="0 -960 960 960"
+            width="1rem"
+            fill="currentColor"
+            ><path
+              d="m382-354 182-182-182-182 56-56 238 238-238 238-56-56Z"
+            /></svg
+          >
+          <span>{thread}</span>
+        </div>
+      {/each}
+    </div>
+  {/if}
+
+  <div class="note-footer">
+    <div class="note-stats">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="1rem"
+        viewBox="0 -960 960 960"
+        width="1rem"
+        fill="currentColor"
+        ><path
+          d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0-33-23.5-56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h400v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Z"
+        /></svg
+      >
+      <span
+        >{$t('notes.list.wordCount', {
+          count: note.wordCount,
+        })}</span
+      >
+    </div>
+  </div>
+{/snippet}
+
 <!-- svelte-ignore a11y_autofocus -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="notes-container" onkeydown={handleKeyDown} tabindex="-1" autofocus>
-  <div class="layout-toolbar">
-    <div class="toggle-group">
-      <button
-        class="toggle-btn"
-        class:active={settings.notesListLayout === 'list'}
-        onclick={() => setLayout('list')}
-        title="List View"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          height="1.25rem"
-          viewBox="0 -960 960 960"
-          width="1.25rem"
-          fill="currentColor"
-          ><path
-            d="M240-240v-120h480v120H240Zm0-200v-120h480v120H240Zm0-200v-120h480v120H240Z"
-          /></svg
-        >
-      </button>
-      <button
-        class="toggle-btn"
-        class:active={settings.notesListLayout === 'masonry'}
-        onclick={() => setLayout('masonry')}
-        title="Masonry View"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          height="1.25rem"
-          viewBox="0 -960 960 960"
-          width="1.25rem"
-          fill="currentColor"
-          ><path
-            d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0-33-23.5-56.5T760-120H200Zm0-80h240v-180H200v180Zm320 0h240v-300H520v300ZM200-460h240v-300H200v300Zm320 0h240v-180H520v180Z"
-          /></svg
-        >
-      </button>
-    </div>
-  </div>
+  <LayoutToolbar onLayoutChange={setLayout} />
 
   <main class="results-area" class:loading={isLoading}>
     {#if isLoading}
@@ -155,14 +185,20 @@
       </div>
     {:else if notes.length > 0}
       {#if settings.notesListLayout === 'masonry'}
-        <NotesMasonryLayout
+        <MasonryLayout
           bind:this={masonryLayout}
-          {notes}
+          items={notes}
           {nav}
           onSelect={selectNote}
+          itemSnippet={masonrySnippet}
         />
       {:else}
-        <NotesListLayout {notes} {nav} onSelect={selectNote} />
+        <ListLayout
+          items={notes}
+          {nav}
+          onSelect={selectNote}
+          itemSnippet={listSnippet}
+        />
       {/if}
 
       {#if notes.length < totalCount}
@@ -226,46 +262,6 @@
 
   .results-area.loading {
     opacity: 0.7;
-  }
-
-  .layout-toolbar {
-    display: flex;
-    justify-content: flex-end;
-    padding: 0.75rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    background-color: var(--bg-surface);
-  }
-
-  .toggle-group {
-    display: flex;
-    background-color: var(--bg-base);
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
-    padding: 2px;
-  }
-
-  .toggle-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.4rem;
-    background: none;
-    border: none;
-    border-radius: 0.35rem;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition:
-      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
-      color 0.15s cubic-bezier(0.2, 0, 0, 1);
-  }
-
-  .toggle-btn:hover {
-    color: var(--text-main);
-  }
-
-  .toggle-btn.active {
-    background-color: var(--accent);
-    color: white;
   }
 
   .status-view {
@@ -337,5 +333,101 @@
 
   .muted {
     font-style: italic;
+  }
+
+  /* Snippet Styles */
+  .result-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.5rem;
+    width: 100%;
+  }
+
+  .note-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  .list-tags {
+    display: flex;
+    gap: 0.3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .tag-pill.mini {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+  }
+
+  .tag-pill {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    background-color: color-mix(in srgb, var(--accent), transparent 85%);
+    color: var(--accent);
+    border-radius: 1rem;
+    font-weight: 500;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 1.25rem 1.25rem 0.25rem 1.25rem;
+  }
+
+  .note-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    padding: 0 1.25rem;
+  }
+
+  .note-threads {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+    padding: 0 1.25rem;
+  }
+
+  .thread-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .thread-item svg {
+    color: var(--accent);
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  .note-footer {
+    margin-top: auto;
+    padding: 0.75rem 1.25rem 1.25rem 1.25rem;
+    border-top: 1px solid color-mix(in srgb, var(--border), transparent 50%);
+  }
+
+  .note-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .note-stats svg {
+    opacity: 0.6;
   }
 </style>

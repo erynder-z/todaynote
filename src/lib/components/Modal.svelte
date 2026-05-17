@@ -4,8 +4,10 @@
    * Consolidates focus management and scroll locking into a single setup action.
    */
   import { type Component, tick } from 'svelte';
-  import { focusTrap, sessionState, useShortcuts } from '$lib';
   import type { ModalSize } from '$lib/types/ui';
+  import { focusTrap } from '../actions/focusTrap';
+  import { sessionState } from '../stores/sessionState.svelte';
+  import { useShortcuts } from '../utils/shortcuts';
 
   let {
     title,

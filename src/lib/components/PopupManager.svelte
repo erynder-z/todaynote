@@ -4,19 +4,17 @@
    * the `sessionState.activePopup` state.
    */
   import { flip } from 'svelte/animate';
-  import {
-    Modal,
-    NoteBrowser,
-    SearchNotes,
-    SettingsView,
-    ShortcutListModal,
-    sessionState,
-    settings,
-    TagManagerModal,
-    ThreadAggregationView,
-    t,
-  } from '$lib';
   import { toast } from '$lib/stores/toast.svelte';
+  import { sessionState } from '../stores/sessionState.svelte';
+  import { settings } from '../stores/settings.svelte';
+  import { t } from '../utils/i18n';
+  import Modal from './Modal.svelte';
+  import NoteBrowser from './NoteBrowser.svelte';
+  import SearchNotes from './SearchNotes.svelte';
+  import SettingsView from './SettingsView.svelte';
+  import ShortcutListModal from './ShortcutListModal.svelte';
+  import TagManagerModal from './TagManagerModal.svelte';
+  import ThreadAggregationView from './ThreadAggregationView.svelte';
   import Toast from './Toast.svelte';
 </script>
 

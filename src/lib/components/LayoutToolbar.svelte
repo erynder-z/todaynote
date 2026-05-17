@@ -2,10 +2,11 @@
   /**
    * Layout toggle toolbar for switching between list and masonry views.
    */
-  import { settings } from '$lib';
-  import type { SearchLayoutToolbarProps } from '$lib/interfaces/ui';
 
-  let { onLayoutChange }: SearchLayoutToolbarProps = $props();
+  import type { LayoutToolbarProps } from '$lib/interfaces/ui';
+  import { settings } from '../stores/settings.svelte';
+
+  let { onLayoutChange }: LayoutToolbarProps = $props();
 </script>
 
 <div class="layout-toolbar">

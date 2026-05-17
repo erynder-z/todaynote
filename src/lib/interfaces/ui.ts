@@ -7,7 +7,7 @@ import type {
 	ThreadSearchResult,
 } from "./notes";
 
-export interface SearchLayoutToolbarProps {
+export interface LayoutToolbarProps {
 	onLayoutChange: (layout: "list" | "masonry") => void;
 }
 

@@ -3,18 +3,14 @@
    * Modern, minimal Modal component for managing tags.
    * Refactored for better readability and Svelte 5 idiomatic patterns.
    */
-  import {
-    addNoteTag,
-    getTagSuggestions,
-    inputManager,
-    ListNavigator,
-    ModalFooter,
-    removeNoteTag,
-    sessionState,
-    t,
-  } from '$lib';
   import { tagSuggestionShortcuts } from '$lib/config/shortcuts';
+  import { inputManager } from '../stores/input.svelte';
+  import { ListNavigator } from '../stores/listNav.svelte';
+  import { sessionState } from '../stores/sessionState.svelte';
+  import { t } from '../utils/i18n';
+  import { addNoteTag, getTagSuggestions, removeNoteTag } from '../utils/notes';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
+  import ModalFooter from './ModalFooter.svelte';
 
   let newTag = $state('');
   let suggestedTags = $state<string[]>([]);

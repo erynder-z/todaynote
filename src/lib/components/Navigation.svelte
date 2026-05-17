@@ -2,8 +2,10 @@
   /**
    * Navigation bar that provides access to the several app features.
    */
-  import { sessionState, t, useShortcuts } from '$lib';
   import type { PopupType } from '$lib/types/ui';
+  import { sessionState } from '../stores/sessionState.svelte';
+  import { t } from '../utils/i18n';
+  import { useShortcuts } from '../utils/shortcuts';
 
   /**
    * Toggles the visibility of a specific popup by updating the global state.

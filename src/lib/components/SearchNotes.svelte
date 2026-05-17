@@ -3,27 +3,13 @@
    * Note search layout component.
    * Orchestrates sub-components for sidebar, input, and results.
    */
-  import {
-    ListNavigator,
-    ModalFooter,
-    SearchInput,
-    SearchLayoutToolbar,
-    SearchResultsContainer,
-    SearchSidebar,
-    SearchStatusView,
-    sessionState,
-    settings,
-    t,
-    toast,
-    useShortcuts,
-  } from '$lib';
+
   import type {
     SearchResult,
     TagSearchResult,
     ThreadSearchResult,
   } from '$lib/interfaces/notes';
   import { inputManager } from '$lib/stores/input.svelte';
-
   import {
     aggregateThread,
     readNoteContent,
@@ -32,6 +18,18 @@
     searchTags,
     searchThreads,
   } from '$lib/utils/notes';
+  import { ListNavigator } from '../stores/listNav.svelte';
+  import { sessionState } from '../stores/sessionState.svelte';
+  import { settings } from '../stores/settings.svelte';
+  import { toast } from '../stores/toast.svelte';
+  import { t } from '../utils/i18n';
+  import { useShortcuts } from '../utils/shortcuts';
+  import LayoutToolbar from './LayoutToolbar.svelte';
+  import ModalFooter from './ModalFooter.svelte';
+  import SearchInput from './SearchInput.svelte';
+  import SearchResultsContainer from './SearchResultsContainer.svelte';
+  import SearchSidebar from './SearchSidebar.svelte';
+  import SearchStatusView from './SearchStatusView.svelte';
 
   let query = $state('');
   let isFuzzy = $state(true);
@@ -225,7 +223,7 @@
     <SearchSidebar {searchMode} {selectedTag} onModeChange={setSearchMode} />
 
     <main class="main-content">
-      <SearchLayoutToolbar onLayoutChange={setLayout} />
+      <LayoutToolbar onLayoutChange={setLayout} />
 
       <SearchInput
         bind:query
@@ -269,9 +267,10 @@
             ? [{ label: $t('browser.navigate'), key: '↑↓←→' }]
             : [{ label: $t('browser.navigate'), key: '↑↓' }]),
           { label: $t('search.footer.open'), key: 'Enter' },
+          { label: $t('search.footer.clear'), key: 'Delete' },
           {
-            label: $t('search.footer.mode'),
-            action: 'toggleSearchMode',
+            label: $t('shortcuts.search.toggle_fuzzy'),
+            action: 'toggleFuzzy',
           },
           {
             label: $t('shortcuts.action.toggle_note_browser_layout'),

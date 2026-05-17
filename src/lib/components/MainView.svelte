@@ -3,7 +3,10 @@
    * Primary view orchestrator that decides whether to show the editor,
    * the welcome screen (for first-time setup), or a loading state.
    */
-  import { EditorView, FolderSelector, sessionState, settings } from '$lib';
+  import { sessionState } from '../stores/sessionState.svelte';
+  import { settings } from '../stores/settings.svelte';
+  import EditorView from './EditorView.svelte';
+  import FolderSelector from './FolderSelector.svelte';
 </script>
 
 {#if settings.notesFolder === ''}
