@@ -1,12 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
-import {
-	availableLocales,
-	locale,
-	sessionState,
-	settings,
-	translations,
-} from "$lib";
-import type { AppPayload } from "$lib/types/appState";
+import type { AppPayload } from "$lib/interfaces/appState";
+import { sessionState } from "../stores/sessionState.svelte";
+import { settings } from "../stores/settings.svelte";
+import { availableLocales, locale, translations } from "./i18n";
 import { applyThemeColors, availableThemes, currentTheme } from "./theme";
 
 /**

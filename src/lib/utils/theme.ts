@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { writable } from "svelte/store";
-import type { ThemeInfo } from "../types/settings";
+import type { ThemeInfo } from "$lib/interfaces/settings";
 
 /**
  * Holds the list of themes currently available in the application.

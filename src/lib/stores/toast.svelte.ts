@@ -1,4 +1,5 @@
-import type { Toast, ToastType } from "$lib/types/ui";
+import type { Toast } from "$lib/interfaces/ui";
+import type { ToastType } from "$lib/types/ui";
 
 class ToastStore {
 	toasts = $state<Toast[]>([]);

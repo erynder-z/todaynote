@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { derived, writable } from "svelte/store";
-import type { LocaleInfo } from "$lib/types/locale";
+import type { LocaleInfo } from "$lib/interfaces/locale";
 
 /**
  * Holds the current key-value pairs for translations.

@@ -1,5 +1,5 @@
 import { untrack } from "svelte";
-import type { NoteContentResponse, NoteThread } from "$lib/types/notes";
+import type { NoteContentResponse, NoteThread } from "$lib/interfaces/notes";
 import { detectThreads, ensureThread, saveNoteContent } from "$lib/utils/notes";
 
 /**

@@ -6,7 +6,7 @@ import type {
 	TagSearchResult,
 	ThreadAggregationResult,
 	ThreadSearchResult,
-} from "$lib/types/notes";
+} from "$lib/interfaces/notes";
 
 /**
  * Performs a full-text search across all notes.

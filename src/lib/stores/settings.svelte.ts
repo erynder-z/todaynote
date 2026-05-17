@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AppPayload } from "$lib/types/appState";
-import type { NoteContentResponse } from "$lib/types/notes";
-import type { AppSettings } from "$lib/types/settings";
+import type { AppPayload } from "$lib/interfaces/appState";
+import type { NoteContentResponse } from "$lib/interfaces/notes";
+import type { AppSettings } from "$lib/interfaces/settings";
 import { syncFullAppState } from "$lib/utils/appSetup";
 import { readNoteContent } from "$lib/utils/notes";
 import { updateTranslations } from "../utils/i18n";

@@ -1,4 +1,5 @@
-import type { ShortcutAction, ShortcutConfig } from "$lib/types/input";
+import type { ShortcutConfig } from "$lib/interfaces/input";
+import type { ShortcutAction } from "$lib/types/input";
 
 export const defaultShortcuts: Record<ShortcutAction, ShortcutConfig> = {
 	toggleSearch: {

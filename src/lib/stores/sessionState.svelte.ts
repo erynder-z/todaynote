@@ -1,5 +1,4 @@
-import type { SessionState } from "$lib/types/appState";
-
+import type { SessionState } from "$lib/interfaces/appState";
 /**
  * Global application state including current note information and UI state.
  */
