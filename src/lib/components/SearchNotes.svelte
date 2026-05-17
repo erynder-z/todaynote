@@ -9,7 +9,6 @@
     TagSearchResult,
     ThreadSearchResult,
   } from '$lib/interfaces/notes';
-  import { inputManager } from '$lib/stores/input.svelte';
   import {
     aggregateThread,
     readNoteContent,
@@ -32,23 +31,20 @@
   import SearchStatusView from './SearchStatusView.svelte';
 
   let query = $state('');
-  let isFuzzy = $state(true);
-  let searchMode = $state<'notes' | 'threads' | 'tags'>('notes');
   let results = $state<
     SearchResult[] | ThreadSearchResult[] | TagSearchResult[]
   >([]);
   let isSearching = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  let selectedTag = $state<string | null>(null);
 
   const nav = new ListNavigator(
     () => results.length,
     (i) => {
-      if (searchMode === 'notes') {
+      if (settings.searchMode === 'notes') {
         selectResult(results[i] as SearchResult);
-      } else if (searchMode === 'threads') {
+      } else if (settings.searchMode === 'threads') {
         selectThread(results[i] as ThreadSearchResult);
-      } else if (selectedTag) {
+      } else if (settings.searchSelectedTag) {
         selectResult(results[i] as SearchResult);
       } else {
         selectTag(results[i] as TagSearchResult);
@@ -63,43 +59,32 @@
     toggleNoteBrowserLayout: () => {
       const nextLayout =
         settings.notesListLayout === 'list' ? 'masonry' : 'list';
-      setLayout(nextLayout);
+      settings.setNotesListLayout(nextLayout);
+    },
+    toggleFuzzy: () => {
+      settings.setSearchIsFuzzy(!settings.searchIsFuzzy);
+    },
+    toggleSearchMode: () => {
+      setSearchMode(
+        settings.searchMode === 'notes'
+          ? 'threads'
+          : settings.searchMode === 'threads'
+            ? 'tags'
+            : 'notes',
+      );
     },
   });
 
-  $effect(() => {
-    return inputManager.registerActions({
-      toggleFuzzy: () => {
-        isFuzzy = !isFuzzy;
-      },
-      toggleSearchMode: () => {
-        setSearchMode(
-          searchMode === 'notes'
-            ? 'threads'
-            : searchMode === 'threads'
-              ? 'tags'
-              : 'notes',
-        );
-      },
-    });
-  });
-
   const setSearchMode = (mode: 'notes' | 'threads' | 'tags') => {
-    searchMode = mode;
-    selectedTag = null;
+    settings.setSearchMode(mode);
+    settings.setSearchSelectedTag(null);
     query = '';
     results = [];
     performSearch();
   };
 
   const setLayout = (layout: 'list' | 'masonry') => {
-    settings.save({
-      notesFolder: settings.notesFolder,
-      locale: settings.locale,
-      theme: settings.theme,
-      rememberWindowSize: settings.rememberWindowSize,
-      notesListLayout: layout,
-    });
+    settings.setNotesListLayout(layout);
   };
 
   /**
@@ -107,7 +92,11 @@
    * Debounced via onInput to prevent excessive API calls.
    */
   const performSearch = async () => {
-    if (query.trim().length === 0 && searchMode === 'notes' && !selectedTag) {
+    if (
+      query.trim().length === 0 &&
+      settings.searchMode === 'notes' &&
+      !settings.searchSelectedTag
+    ) {
       results = [];
       nav.reset();
       return;
@@ -115,14 +104,18 @@
 
     isSearching = true;
     try {
-      if (searchMode === 'notes') {
-        results = await searchNotes(query, isFuzzy);
-      } else if (searchMode === 'threads') {
-        results = await searchThreads(query, isFuzzy);
-      } else if (selectedTag) {
-        results = await searchNotesByTag(selectedTag, query, isFuzzy);
+      if (settings.searchMode === 'notes') {
+        results = await searchNotes(query, settings.searchIsFuzzy);
+      } else if (settings.searchMode === 'threads') {
+        results = await searchThreads(query, settings.searchIsFuzzy);
+      } else if (settings.searchSelectedTag) {
+        results = await searchNotesByTag(
+          settings.searchSelectedTag,
+          query,
+          settings.searchIsFuzzy,
+        );
       } else {
-        results = await searchTags(query, isFuzzy);
+        results = await searchTags(query, settings.searchIsFuzzy);
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -176,7 +169,7 @@
    */
   const selectTag = (tag: TagSearchResult) => {
     if (!tag) return;
-    selectedTag = tag.name;
+    settings.setSearchSelectedTag(tag.name);
     query = '';
     results = [];
     performSearch();
@@ -186,7 +179,7 @@
    * Clears the current tag filter and returns to the full tag list.
    */
   const clearTagFilter = () => {
-    selectedTag = null;
+    settings.setSearchSelectedTag(null);
     query = '';
     results = [];
     performSearch();
@@ -206,12 +199,12 @@
 
   $effect(() => {
     // Re-run search if fuzzy mode changes
-    if (isFuzzy !== undefined) performSearch();
+    if (settings.searchIsFuzzy !== undefined) performSearch();
   });
 
   // Initial search for non-notes modes to populate browser views
   $effect(() => {
-    if (searchMode !== 'notes' && query === '') {
+    if (settings.searchMode !== 'notes' && query === '') {
       performSearch();
     }
   });
@@ -220,30 +213,35 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="search-container" onkeydown={handleKeydown}>
   <div class="control-center">
-    <SearchSidebar {searchMode} {selectedTag} onModeChange={setSearchMode} />
+    <SearchSidebar
+      searchMode={settings.searchMode}
+      selectedTag={settings.searchSelectedTag}
+      onModeChange={setSearchMode}
+    />
 
     <main class="main-content">
       <LayoutToolbar onLayoutChange={setLayout} />
 
       <SearchInput
         bind:query
-        bind:isFuzzy
-        {searchMode}
-        {selectedTag}
+        isFuzzy={settings.searchIsFuzzy}
+        searchMode={settings.searchMode}
+        selectedTag={settings.searchSelectedTag}
         {onInput}
         onClearTag={clearTagFilter}
         onClearQuery={() => {
           query = '';
           performSearch();
         }}
+        onToggleFuzzy={() => settings.setSearchIsFuzzy(!settings.searchIsFuzzy)}
       />
 
       <div class="results-area" class:loading={isSearching}>
         {#if results.length > 0}
           <SearchResultsContainer
             {results}
-            {searchMode}
-            {selectedTag}
+            searchMode={settings.searchMode}
+            selectedTag={settings.searchSelectedTag}
             {query}
             {nav}
             bind:masonryLayout
@@ -256,7 +254,7 @@
             {isSearching}
             hasResults={results.length > 0}
             {query}
-            {selectedTag}
+            selectedTag={settings.searchSelectedTag}
           />
         {/if}
       </div>

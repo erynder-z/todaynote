@@ -59,6 +59,10 @@ export const syncSettingsState = (state: AppPayload) => {
 	settings.theme = state.theme;
 	settings.rememberWindowSize = state.rememberWindowSize;
 	settings.notesListLayout = state.notesListLayout;
+	settings.rememberSettings = state.rememberSettings;
+	settings.searchMode = state.searchMode as "notes" | "threads" | "tags";
+	settings.searchIsFuzzy = state.searchIsFuzzy;
+	settings.searchSelectedTag = state.searchSelectedTag;
 };
 
 /**

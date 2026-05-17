@@ -18,6 +18,10 @@ export interface AppPayload {
 	theme: string;
 	rememberWindowSize: boolean;
 	notesListLayout: "list" | "masonry";
+	rememberSettings: boolean;
+	searchMode: "notes" | "threads" | "tags";
+	searchIsFuzzy: boolean;
+	searchSelectedTag: string | null;
 	availableLocales: LocaleInfo[];
 	availableThemes: ThemeInfo[];
 	translations: Record<string, string>;

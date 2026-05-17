@@ -4,6 +4,10 @@ export interface AppSettings {
 	theme: string;
 	rememberWindowSize: boolean;
 	notesListLayout: "list" | "masonry";
+	rememberSettings: boolean;
+	searchMode: "notes" | "threads" | "tags";
+	searchIsFuzzy: boolean;
+	searchSelectedTag: string | null;
 }
 
 export interface ThemeInfo {

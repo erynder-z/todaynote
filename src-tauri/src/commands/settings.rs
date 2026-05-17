@@ -17,7 +17,47 @@ pub async fn get_config() -> Result<ConfigResponse, String> {
         theme: config.theme,
         remember_window_size: config.remember_window_size,
         notes_list_layout: config.notes_list_layout,
+        remember_settings: config.remember_settings,
+        search_mode: config.search_mode,
+        search_is_fuzzy: config.search_is_fuzzy,
+        search_selected_tag: config.search_selected_tag,
     })
+}
+
+/// Sets whether the application should remember component settings.
+#[tauri::command]
+pub async fn set_remember_settings(remember: bool) -> Result<(), String> {
+    let mut config = AppConfig::load();
+    config.remember_settings = remember;
+    config.save();
+    Ok(())
+}
+
+/// Sets the last used search mode.
+#[tauri::command]
+pub async fn set_search_mode(mode: String) -> Result<(), String> {
+    let mut config = AppConfig::load();
+    config.search_mode = mode;
+    config.save();
+    Ok(())
+}
+
+/// Sets the last used fuzzy search setting.
+#[tauri::command]
+pub async fn set_search_is_fuzzy(is_fuzzy: bool) -> Result<(), String> {
+    let mut config = AppConfig::load();
+    config.search_is_fuzzy = is_fuzzy;
+    config.save();
+    Ok(())
+}
+
+/// Sets the last selected tag in search.
+#[tauri::command]
+pub async fn set_search_selected_tag(tag: Option<String>) -> Result<(), String> {
+    let mut config = AppConfig::load();
+    config.search_selected_tag = tag;
+    config.save();
+    Ok(())
 }
 
 /// Sets the layout style for the notes list.

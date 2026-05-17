@@ -3,6 +3,7 @@
    * Search input component with integrated actions (fuzzy toggle, clear).
    */
   import { t } from '$lib';
+  import type { SearchInputProps } from '$lib/interfaces/ui';
 
   let {
     query = $bindable(),
@@ -12,15 +13,8 @@
     onInput,
     onClearTag,
     onClearQuery,
-  } = $props<{
-    query: string;
-    isFuzzy: boolean;
-    searchMode: string;
-    selectedTag: string | null;
-    onInput: () => void;
-    onClearTag: () => void;
-    onClearQuery: () => void;
-  }>();
+    onToggleFuzzy,
+  }: SearchInputProps = $props();
 </script>
 
 <header class="main-header">
@@ -64,7 +58,10 @@
       <button
         class="fuzzy-toggle"
         class:active={isFuzzy}
-        onclick={() => (isFuzzy = !isFuzzy)}
+        onclick={() => {
+          if (onToggleFuzzy) onToggleFuzzy();
+          else isFuzzy = !isFuzzy;
+        }}
         title={isFuzzy ? $t('search.fuzzy_on') : $t('search.fuzzy_off')}
       >
         {$t('search.fuzzy')}

@@ -4,6 +4,7 @@
    */
   import FolderSelector from './FolderSelector.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
+  import RememberSettingsSelector from './RememberSettingsSelector.svelte';
   import ShortcutSelector from './ShortcutSelector.svelte';
   import ThemeSelector from './ThemeSelector.svelte';
   import WindowSizeSelector from './WindowSizeSelector.svelte';
@@ -17,6 +18,8 @@
   <ThemeSelector />
   <div class="divider"></div>
   <WindowSizeSelector />
+  <div class="divider"></div>
+  <RememberSettingsSelector />
   <div class="divider"></div>
   <ShortcutSelector />
 </div>

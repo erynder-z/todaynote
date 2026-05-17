@@ -11,6 +11,17 @@ export interface LayoutToolbarProps {
 	onLayoutChange: (layout: "list" | "masonry") => void;
 }
 
+export interface SearchInputProps {
+	query: string;
+	isFuzzy: boolean;
+	searchMode: string;
+	selectedTag: string | null;
+	onInput: () => void;
+	onClearTag: () => void;
+	onClearQuery: () => void;
+	onToggleFuzzy?: () => void;
+}
+
 export interface SearchResultsContainerProps {
 	results: SearchResult[] | ThreadSearchResult[] | TagSearchResult[];
 	searchMode: "notes" | "threads" | "tags";

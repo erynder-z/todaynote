@@ -95,13 +95,7 @@
   });
 
   const setLayout = (layout: 'list' | 'masonry') => {
-    settings.save({
-      notesFolder: settings.notesFolder,
-      locale: settings.locale,
-      theme: settings.theme,
-      rememberWindowSize: settings.rememberWindowSize,
-      notesListLayout: layout,
-    });
+    settings.setNotesListLayout(layout);
   };
 </script>
 

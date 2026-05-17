@@ -36,6 +36,7 @@
 	"settings.language": "Language",
 	"settings.theme": "Theme",
 	"settings.remember_window_size": "Remember Window Size",
+	"settings.remember_settings": "Remember Component Settings",
 	"settings.save": "Save Settings",
 	"folder.select": "Select Folder",
 	"notes.empty": "No notes found",

@@ -15,6 +15,10 @@ pub struct ConfigResponse {
     pub theme: String,
     pub remember_window_size: bool,
     pub notes_list_layout: String,
+    pub remember_settings: bool,
+    pub search_mode: String,
+    pub search_is_fuzzy: bool,
+    pub search_selected_tag: Option<String>,
 }
 
 /// Metadata for a single note file in the list.
@@ -91,6 +95,10 @@ pub struct AppPayload {
     pub theme: String,
     pub remember_window_size: bool,
     pub notes_list_layout: String,
+    pub remember_settings: bool,
+    pub search_mode: String,
+    pub search_is_fuzzy: bool,
+    pub search_selected_tag: Option<String>,
     pub available_locales: Vec<LocaleInfo>,
     pub available_themes: Vec<ThemeInfo>,
     pub translations: HashMap<String, String>,

@@ -20,6 +20,14 @@ pub struct AppConfig {
     pub remember_window_size: bool,
     /// Layout style for the notes list ("list" or "masonry").
     pub notes_list_layout: String,
+    /// Whether to remember component settings (search mode, layout, etc.).
+    pub remember_settings: bool,
+    /// Last used search mode.
+    pub search_mode: String,
+    /// Last used fuzzy search setting.
+    pub search_is_fuzzy: bool,
+    /// Last selected tag in search.
+    pub search_selected_tag: Option<String>,
 }
 
 impl Default for AppConfig {
@@ -32,6 +40,10 @@ impl Default for AppConfig {
             theme: "blind-spot".to_string(),
             remember_window_size: true,
             notes_list_layout: "list".to_string(),
+            remember_settings: true,
+            search_mode: "notes".to_string(),
+            search_is_fuzzy: true,
+            search_selected_tag: None,
         }
     }
 }

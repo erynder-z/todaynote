@@ -14,7 +14,8 @@ use commands::search::{
     aggregate_thread, search_notes, search_notes_by_tag, search_tags, search_threads,
 };
 use commands::settings::{
-    get_config, set_locale, set_notes_folder, set_notes_list_layout, set_remember_window_size,
+    get_config, set_locale, set_notes_folder, set_notes_list_layout, set_remember_settings,
+    set_remember_window_size, set_search_is_fuzzy, set_search_mode, set_search_selected_tag,
     switch_notes_folder,
 };
 use commands::setup::initialize_app;
@@ -93,7 +94,11 @@ pub fn run() {
             set_locale,
             set_notes_folder,
             set_notes_list_layout,
+            set_remember_settings,
             set_remember_window_size,
+            set_search_mode,
+            set_search_is_fuzzy,
+            set_search_selected_tag,
             set_theme,
             switch_notes_folder,
             validate_folder
