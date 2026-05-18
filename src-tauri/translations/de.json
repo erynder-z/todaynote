@@ -75,5 +75,7 @@
 	"shortcuts.action.go_to_today's_note": "Gehe zu heutiger Notiz",
 	"shortcuts.action.toggle_fuzzy_search": "Fuzzy-Suche umschalten",
 	"shortcuts.action.toggle_search_mode": "Suchmodus umschalten",
-	"browser.navigate": "Navigation"
+	"browser.navigate": "Navigation",
+	"welcome.no_folder": "Bitte wähle einen Ordner für deine Notizen aus!",
+	"welcome.loading_notes": "Erstelle deine heutige Notiz..."
 }

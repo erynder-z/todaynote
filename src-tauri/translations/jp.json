@@ -75,5 +75,7 @@
 	"shortcuts.action.go_to_today's_note": "今日のノートへ移動",
 	"shortcuts.action.toggle_fuzzy_search": "曖昧検索を切り替える",
 	"shortcuts.action.toggle_search_mode": "検索モードを切り替える",
-	"browser.navigate": "選択を移動"
+	"browser.navigate": "選択を移動",
+	"welcome.no_folder": "フォルダを選んでください",
+	"welcome.loading_notes": "今日のノートを作成しています"
 }

@@ -75,5 +75,7 @@
 	"shortcuts.action.go_to_today's_note": "Go to Today's Note",
 	"shortcuts.action.toggle_fuzzy_search": "Toggle Fuzzy Search",
 	"shortcuts.action.toggle_search_mode": "Toggle Search Mode",
-	"browser.navigate": "Navigate"
+	"browser.navigate": "Navigate",
+	"welcome.no_folder": "Please select a folder!",
+	"welcome.loading_notes": "Preparing your daily note..."
 }
