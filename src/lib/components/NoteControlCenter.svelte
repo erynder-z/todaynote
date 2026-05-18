@@ -7,14 +7,20 @@
   import NoteTags from './NoteTags.svelte';
   import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';
 
-  let { noteContent, threads, onSelect } = $props<{
+  let {
+    noteContent,
+    threads,
+    onSelect,
+    width = 352,
+  } = $props<{
     noteContent: NoteContentResponse | null;
     threads: NoteThread[];
     onSelect: (name: string) => void;
+    width?: number;
   }>();
 </script>
 
-<div class="note-control-center">
+<div class="note-control-center" style="width: {width}px">
   <div class="sidebar-thread">
     <NoteDate {noteContent} />
   </div>
@@ -32,7 +38,6 @@
 
 <style>
   .note-control-center {
-    width: 22rem;
     height: 100%;
     flex-shrink: 0;
     padding: 3rem 1.5rem;
@@ -58,7 +63,7 @@
 
   @media (max-width: 1024px) {
     .note-control-center {
-      width: 100%;
+      width: 100% !important;
       height: auto;
       border-left: none;
       padding: 1.5rem;

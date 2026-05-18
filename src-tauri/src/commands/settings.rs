@@ -21,7 +21,17 @@ pub async fn get_config() -> Result<ConfigResponse, String> {
         search_mode: config.search_mode,
         search_is_fuzzy: config.search_is_fuzzy,
         search_selected_tag: config.search_selected_tag,
+        control_center_width: config.control_center_width,
     })
+}
+
+/// Sets the width of the NoteControlCenter sidebar.
+#[tauri::command]
+pub async fn set_control_center_width(width: f64) -> Result<(), String> {
+    let mut config = AppConfig::load();
+    config.control_center_width = width;
+    config.save();
+    Ok(())
 }
 
 /// Sets whether the application should remember component settings.

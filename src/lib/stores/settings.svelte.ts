@@ -21,6 +21,7 @@ export class SettingsStore {
 	searchMode = $state<"notes" | "threads" | "tags">("notes");
 	searchIsFuzzy = $state(true);
 	searchSelectedTag = $state<string | null>(null);
+	controlCenterWidth = $state(352);
 
 	/**
 	 * Loads initial configuration from the backend and initializes UI stores.
@@ -37,6 +38,7 @@ export class SettingsStore {
 			this.searchMode = config.searchMode;
 			this.searchIsFuzzy = config.searchIsFuzzy;
 			this.searchSelectedTag = config.searchSelectedTag;
+			this.controlCenterWidth = config.controlCenterWidth;
 
 			await updateTranslations(this.locale);
 			await updateTheme(this.theme);
@@ -53,6 +55,7 @@ export class SettingsStore {
 				searchMode: "notes",
 				searchIsFuzzy: true,
 				searchSelectedTag: null,
+				controlCenterWidth: 352,
 			};
 		}
 	}
@@ -119,10 +122,24 @@ export class SettingsStore {
 				await this.setSearchSelectedTag(newSettings.searchSelectedTag);
 			}
 
+			if (newSettings.controlCenterWidth !== undefined) {
+				await this.setControlCenterWidth(newSettings.controlCenterWidth);
+			}
+
 			return true;
 		} catch (error) {
 			console.error("Error saving settings:", error);
 			return false;
+		}
+	}
+
+	/**
+	 * Granular setter for control center width that handles conditional persistence.
+	 */
+	async setControlCenterWidth(width: number) {
+		this.controlCenterWidth = width;
+		if (this.rememberWindowSize) {
+			await invoke("set_control_center_width", { width });
 		}
 	}
 

@@ -63,6 +63,7 @@ export const syncSettingsState = (state: AppPayload) => {
 	settings.searchMode = state.searchMode as "notes" | "threads" | "tags";
 	settings.searchIsFuzzy = state.searchIsFuzzy;
 	settings.searchSelectedTag = state.searchSelectedTag;
+	settings.controlCenterWidth = state.controlCenterWidth;
 };
 
 /**

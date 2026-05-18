@@ -29,4 +29,5 @@ export interface AppPayload {
 	todayNotePath: string | null;
 	todayNoteContent: NoteContentResponse | null;
 	isMac: boolean;
+	controlCenterWidth: number;
 }

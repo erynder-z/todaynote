@@ -34,6 +34,7 @@ pub fn get_initial_state(
         search_mode: config.search_mode.clone(),
         search_is_fuzzy: config.search_is_fuzzy,
         search_selected_tag: config.search_selected_tag.clone(),
+        control_center_width: config.control_center_width,
         available_locales,
         available_themes,
         translations,

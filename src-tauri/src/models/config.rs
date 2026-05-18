@@ -28,6 +28,8 @@ pub struct AppConfig {
     pub search_is_fuzzy: bool,
     /// Last selected tag in search.
     pub search_selected_tag: Option<String>,
+    /// Width of the NoteControlCenter sidebar in pixels.
+    pub control_center_width: f64,
 }
 
 impl Default for AppConfig {
@@ -44,6 +46,7 @@ impl Default for AppConfig {
             search_mode: "notes".to_string(),
             search_is_fuzzy: true,
             search_selected_tag: None,
+            control_center_width: 352.0, // Default 22rem * 16px
         }
     }
 }

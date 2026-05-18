@@ -3,6 +3,7 @@
    * View component that combines the note editor with the note sidebar.
    */
   import type { NoteContentResponse } from '$lib/interfaces/notes';
+  import { settings } from '../index';
   import { EditorStore } from '../stores/editor.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
   import NoteControlCenter from './NoteControlCenter.svelte';
@@ -14,6 +15,11 @@
   }>();
 
   const editor = new EditorStore();
+
+  /**
+   * Indicates whether the sidebar is currently being resized.
+   */
+  let isResizing = $state(false);
 
   $effect(() => {
     editor.sync(noteContent, notePath);
@@ -34,13 +40,58 @@
     // Close sidebar in vertical layout after jumping
     sessionState.sidebarOpen = false;
   };
+
+  /**
+   * Initiates the resizing process for the sidebar.
+   */
+  const startResizing = () => {
+    isResizing = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  /**
+   * Concludes the resizing process and persists the new width.
+   */
+  const stopResizing = () => {
+    if (!isResizing) return;
+    isResizing = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    settings.setControlCenterWidth(settings.controlCenterWidth);
+  };
+
+  /**
+   * Updates the sidebar width based on mouse movement during resizing.
+   */
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+
+    const minWidth = 250;
+    const maxWidth = 600;
+    const newWidth = window.innerWidth - e.clientX;
+
+    if (newWidth >= minWidth && newWidth <= maxWidth) {
+      settings.controlCenterWidth = newWidth;
+    }
+  };
 </script>
+
+<svelte:window onmousemove={handleMouseMove} onmouseup={stopResizing} />
 
 <div class="note-container">
   <div class="note-layout">
     <div class="editor-main">
       <NoteEditor bind:noteContent {notePath} {editor} />
     </div>
+
+    <!-- Resizer Handle -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="resizer"
+      class:resizing={isResizing}
+      onmousedown={startResizing}
+    ></div>
 
     {#if sessionState.sidebarOpen}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -56,6 +107,7 @@
         {noteContent}
         threads={editor.threads}
         onSelect={handleJump}
+        width={settings.controlCenterWidth}
       />
     </div>
   </div>
@@ -90,6 +142,22 @@
     display: contents;
   }
 
+  .resizer {
+    width: 4px;
+    height: 100%;
+    cursor: col-resize;
+    background-color: transparent;
+    transition: background-color 0.2s;
+    z-index: 10;
+    margin-left: -2px;
+    margin-right: -2px;
+  }
+
+  .resizer:hover,
+  .resizer.resizing {
+    background-color: var(--accent);
+  }
+
   .vertical-layout {
     display: none;
   }
@@ -97,6 +165,10 @@
   @media (max-width: 1024px) {
     .editor-main {
       padding: 1.5rem;
+    }
+
+    .resizer {
+      display: none;
     }
 
     .sidebar-wrapper {

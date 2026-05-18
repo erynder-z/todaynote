@@ -8,6 +8,7 @@ export interface AppSettings {
 	searchMode: "notes" | "threads" | "tags";
 	searchIsFuzzy: boolean;
 	searchSelectedTag: string | null;
+	controlCenterWidth: number;
 }
 
 export interface ThemeInfo {

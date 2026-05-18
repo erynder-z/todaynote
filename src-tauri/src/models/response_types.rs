@@ -19,6 +19,7 @@ pub struct ConfigResponse {
     pub search_mode: String,
     pub search_is_fuzzy: bool,
     pub search_selected_tag: Option<String>,
+    pub control_center_width: f64,
 }
 
 /// Metadata for a single note file in the list.
@@ -99,6 +100,7 @@ pub struct AppPayload {
     pub search_mode: String,
     pub search_is_fuzzy: bool,
     pub search_selected_tag: Option<String>,
+    pub control_center_width: f64,
     pub available_locales: Vec<LocaleInfo>,
     pub available_themes: Vec<ThemeInfo>,
     pub translations: HashMap<String, String>,
