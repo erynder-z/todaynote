@@ -32,7 +32,7 @@
 
 <style>
   .note-control-center {
-    width: 260px;
+    width: 22rem;
     height: 100%;
     flex-shrink: 0;
     padding: 3rem 1.5rem;
