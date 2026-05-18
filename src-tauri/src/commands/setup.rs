@@ -11,7 +11,22 @@ use tauri::State;
 /// Initializes the application and returns the complete initial state for the frontend.
 #[tauri::command]
 pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, String> {
-    let config = AppConfig::load();
+    let config = {
+        let config = state.config()?;
+        // Clone config to release lock early
+        AppConfig {
+            notes_folder: config.notes_folder.clone(),
+            locale: config.locale.clone(),
+            theme: config.theme.clone(),
+            remember_app_layout: config.remember_app_layout,
+            notes_list_layout: config.notes_list_layout.clone(),
+            remember_settings: config.remember_settings,
+            search_mode: config.search_mode.clone(),
+            search_is_fuzzy: config.search_is_fuzzy,
+            search_selected_tag: config.search_selected_tag.clone(),
+            control_center_width: config.control_center_width,
+        }
+    };
     get_initial_state(config, state)
 }
 

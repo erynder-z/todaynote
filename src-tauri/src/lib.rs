@@ -16,7 +16,7 @@ use commands::search::{
 use commands::settings::{
     get_config, set_control_center_width, set_locale, set_notes_folder, set_notes_list_layout,
     set_remember_app_layout, set_remember_settings, set_search_is_fuzzy, set_search_mode,
-    set_search_selected_tag, switch_notes_folder,
+    set_search_selected_tag, switch_notes_folder, update_config,
 };
 use commands::setup::initialize_app;
 use commands::tags::{add_note_tag, get_all_tags, get_tag_suggestions, remove_note_tag};
@@ -62,6 +62,7 @@ pub fn run() {
             note_manager: Mutex::new(note_manager),
             tag_manager: Mutex::new(TagManager::new()),
             note_session: Mutex::new(NoteSession::new()),
+            config: Mutex::new(config),
         })
         .invoke_handler(tauri::generate_handler![
             add_note_tag,
@@ -102,6 +103,7 @@ pub fn run() {
             set_search_selected_tag,
             set_theme,
             switch_notes_folder,
+            update_config,
             validate_folder
         ])
         .setup(|app| {

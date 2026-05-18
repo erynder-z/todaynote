@@ -1,7 +1,6 @@
 //! Tauri commands for theme management and visual customization.
 
 use crate::models::app_state::AppState;
-use crate::models::config::AppConfig;
 use include_dir::{include_dir, Dir};
 use std::collections::HashMap;
 use tauri::State;
@@ -32,12 +31,15 @@ pub fn get_theme_colors(theme: String) -> HashMap<String, String> {
 /// Updates the current application theme.
 #[tauri::command]
 pub async fn set_theme(theme: String, state: State<'_, AppState>) -> Result<(), String> {
-    let mut config = AppConfig::load();
-    config.theme = theme.clone();
-    config.save();
+    let (notes_folder, locale) = {
+        let mut config = state.config()?;
+        config.theme = theme.clone();
+        config.save();
+        (config.notes_folder.clone(), config.locale.clone())
+    };
 
     let mut note_manager = state.note_manager()?;
-    note_manager.update_config(config.notes_folder, config.locale);
+    note_manager.update_config(notes_folder, locale);
 
     Ok(())
 }

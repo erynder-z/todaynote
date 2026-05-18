@@ -1,5 +1,6 @@
 //! Application-wide state management for the Tauri backend.
 
+use crate::models::config::AppConfig;
 use crate::models::note_session::NoteSession;
 use crate::services::note_manager::NoteManager;
 use crate::services::tag_manager::TagManager;
@@ -16,9 +17,18 @@ pub struct AppState {
     pub tag_manager: Mutex<TagManager>,
     /// Transient state for the currently active editing session.
     pub note_session: Mutex<NoteSession>,
+    /// Persistent application configuration.
+    pub config: Mutex<AppConfig>,
 }
 
 impl AppState {
+    /// Safely locks the configuration, returning a descriptive error if the lock is poisoned.
+    pub fn config(&self) -> Result<MutexGuard<'_, AppConfig>, String> {
+        self.config
+            .lock()
+            .map_err(|_| "Configuration is currently unavailable (poisoned lock)".to_string())
+    }
+
     /// Safely locks the note manager, returning a descriptive error if the lock is poisoned.
     pub fn note_manager(&self) -> Result<MutexGuard<'_, NoteManager>, String> {
         self.note_manager

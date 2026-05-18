@@ -24,6 +24,11 @@ export class SettingsStore {
 	controlCenterWidth = $state(22);
 
 	/**
+	 * Private promise chain to ensure saves happen sequentially.
+	 */
+	#saveQueue = Promise.resolve(true);
+
+	/**
 	 * Loads initial configuration from the backend and initializes UI stores.
 	 */
 	async load() {
@@ -65,84 +70,83 @@ export class SettingsStore {
 
 	/**
 	 * Updates the configuration in the backend and reflects changes in the UI.
+	 * All saves are queued and processed sequentially.
 	 */
-	async save(newSettings: AppSettings) {
-		try {
-			if (newSettings.notesFolder !== undefined) {
-				await invoke("set_notes_folder", { path: newSettings.notesFolder });
-				this.notesFolder = newSettings.notesFolder;
-			}
-			if (newSettings.locale) {
-				await invoke("set_locale", { locale: newSettings.locale });
-				this.locale = newSettings.locale;
-				await updateTranslations(newSettings.locale);
+	async save(updates: Partial<AppSettings>) {
+		this.#saveQueue = this.#saveQueue.then(async () => {
+			try {
+				// Determine the next state by merging updates with current state
+				const next: AppSettings = {
+					notesFolder: updates.notesFolder ?? this.notesFolder,
+					locale: updates.locale ?? this.locale,
+					theme: updates.theme ?? this.theme,
+					rememberAppLayout:
+						updates.rememberAppLayout ?? this.rememberAppLayout,
+					notesListLayout: updates.notesListLayout ?? this.notesListLayout,
+					rememberSettings: updates.rememberSettings ?? this.rememberSettings,
+					searchMode: updates.searchMode ?? this.searchMode,
+					searchIsFuzzy: updates.searchIsFuzzy ?? this.searchIsFuzzy,
+					searchSelectedTag:
+						updates.searchSelectedTag !== undefined
+							? updates.searchSelectedTag
+							: this.searchSelectedTag,
+					controlCenterWidth:
+						updates.controlCenterWidth ?? this.controlCenterWidth,
+				};
 
-				if (sessionState.todayNotePath) {
-					const updatedContent = await readNoteContent(
-						sessionState.todayNotePath,
-					);
-					if (updatedContent) this.updateNoteContent(updatedContent);
+				await invoke("update_config", { newConfig: next });
+
+				// Handle UI-specific side effects
+				if (updates.locale && updates.locale !== this.locale) {
+					await updateTranslations(updates.locale);
+
+					if (sessionState.todayNotePath) {
+						const updatedContent = await readNoteContent(
+							sessionState.todayNotePath,
+						);
+						if (updatedContent) this.updateNoteContent(updatedContent);
+					}
 				}
-			}
-			if (newSettings.theme) {
-				await invoke("set_theme", { theme: newSettings.theme });
-				this.theme = newSettings.theme;
-				await updateTheme(newSettings.theme);
-			}
-			if (newSettings.rememberAppLayout !== undefined) {
-				await invoke("set_remember_app_layout", {
-					remember: newSettings.rememberAppLayout,
-				});
-				this.rememberAppLayout = newSettings.rememberAppLayout;
-			}
 
-			// Transient settings handling
-			if (newSettings.notesListLayout) {
-				await this.setNotesListLayout(newSettings.notesListLayout);
-			}
+				if (updates.theme && updates.theme !== this.theme) {
+					await updateTheme(updates.theme);
+				}
 
-			if (newSettings.rememberSettings !== undefined) {
-				await invoke("set_remember_settings", {
-					remember: newSettings.rememberSettings,
-				});
-				this.rememberSettings = newSettings.rememberSettings;
+				// Update local state variables
+				this.notesFolder = next.notesFolder;
+				this.locale = next.locale;
+				this.theme = next.theme;
+				this.rememberAppLayout = next.rememberAppLayout;
+				this.notesListLayout = next.notesListLayout;
+				this.rememberSettings = next.rememberSettings;
+				this.searchMode = next.searchMode;
+				this.searchIsFuzzy = next.searchIsFuzzy;
+				this.searchSelectedTag = next.searchSelectedTag;
+				this.controlCenterWidth = next.controlCenterWidth;
 
-				// If turning OFF, reset extra settings to defaults immediately in backend/store
-				if (!newSettings.rememberSettings) {
+				// If turning OFF "Remember Settings", reset those specific fields to defaults
+				if (updates.rememberSettings === false) {
 					await this.resetToDefaults();
 				}
-			}
 
-			if (newSettings.searchMode) {
-				await this.setSearchMode(newSettings.searchMode);
+				return true;
+			} catch (error) {
+				console.error("Error saving settings:", error);
+				return false;
 			}
+		});
 
-			if (newSettings.searchIsFuzzy !== undefined) {
-				await this.setSearchIsFuzzy(newSettings.searchIsFuzzy);
-			}
-
-			if (newSettings.searchSelectedTag !== undefined) {
-				await this.setSearchSelectedTag(newSettings.searchSelectedTag);
-			}
-
-			if (newSettings.controlCenterWidth !== undefined) {
-				await this.setControlCenterWidth(newSettings.controlCenterWidth);
-			}
-
-			return true;
-		} catch (error) {
-			console.error("Error saving settings:", error);
-			return false;
-		}
+		return this.#saveQueue;
 	}
 
 	/**
 	 * Granular setter for control center width that handles conditional persistence.
 	 */
 	async setControlCenterWidth(width: number) {
-		this.controlCenterWidth = width;
 		if (this.rememberAppLayout) {
-			await invoke("set_control_center_width", { width });
+			await this.save({ controlCenterWidth: width });
+		} else {
+			this.controlCenterWidth = width;
 		}
 	}
 
@@ -150,9 +154,10 @@ export class SettingsStore {
 	 * Granular setter for layout that handles conditional persistence.
 	 */
 	async setNotesListLayout(layout: "list" | "masonry") {
-		this.notesListLayout = layout;
 		if (this.rememberSettings) {
-			await invoke("set_notes_list_layout", { layout });
+			await this.save({ notesListLayout: layout });
+		} else {
+			this.notesListLayout = layout;
 		}
 	}
 
@@ -160,9 +165,10 @@ export class SettingsStore {
 	 * Granular setter for search mode that handles conditional persistence.
 	 */
 	async setSearchMode(mode: "notes" | "threads" | "tags") {
-		this.searchMode = mode;
 		if (this.rememberSettings) {
-			await invoke("set_search_mode", { mode });
+			await this.save({ searchMode: mode });
+		} else {
+			this.searchMode = mode;
 		}
 	}
 
@@ -170,9 +176,10 @@ export class SettingsStore {
 	 * Granular setter for fuzzy search that handles conditional persistence.
 	 */
 	async setSearchIsFuzzy(isFuzzy: boolean) {
-		this.searchIsFuzzy = isFuzzy;
 		if (this.rememberSettings) {
-			await invoke("set_search_is_fuzzy", { is_fuzzy: isFuzzy });
+			await this.save({ searchIsFuzzy: isFuzzy });
+		} else {
+			this.searchIsFuzzy = isFuzzy;
 		}
 	}
 
@@ -180,9 +187,10 @@ export class SettingsStore {
 	 * Granular setter for selected tag that handles conditional persistence.
 	 */
 	async setSearchSelectedTag(tag: string | null) {
-		this.searchSelectedTag = tag;
 		if (this.rememberSettings) {
-			await invoke("set_search_selected_tag", { tag });
+			await this.save({ searchSelectedTag: tag });
+		} else {
+			this.searchSelectedTag = tag;
 		}
 	}
 
@@ -190,17 +198,12 @@ export class SettingsStore {
 	 * Resets remembered settings to their default values.
 	 */
 	async resetToDefaults() {
-		this.notesListLayout = "list";
-		this.searchMode = "notes";
-		this.searchIsFuzzy = true;
-		this.searchSelectedTag = null;
-
-		// We reset backend values to defaults regardless of rememberSettings,
-		// because this is called when disabling the feature.
-		await invoke("set_notes_list_layout", { layout: "list" });
-		await invoke("set_search_mode", { mode: "notes" });
-		await invoke("set_search_is_fuzzy", { is_fuzzy: true });
-		await invoke("set_search_selected_tag", { tag: null });
+		await this.save({
+			notesListLayout: "list",
+			searchMode: "notes",
+			searchIsFuzzy: true,
+			searchSelectedTag: null,
+		});
 	}
 
 	/**
