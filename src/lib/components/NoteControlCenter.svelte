@@ -11,7 +11,7 @@
     noteContent,
     threads,
     onSelect,
-    width = 352,
+    width = 22, // rem
   } = $props<{
     noteContent: NoteContentResponse | null;
     threads: NoteThread[];
@@ -20,7 +20,7 @@
   }>();
 </script>
 
-<div class="note-control-center" style="width: {width}px">
+<div class="note-control-center" style="width: {width}rem">
   <div class="sidebar-thread">
     <NoteDate {noteContent} />
   </div>

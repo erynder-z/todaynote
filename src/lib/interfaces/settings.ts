@@ -2,7 +2,7 @@ export interface AppSettings {
 	notesFolder: string;
 	locale: string;
 	theme: string;
-	rememberWindowSize: boolean;
+	rememberAppLayout: boolean;
 	notesListLayout: "list" | "masonry";
 	rememberSettings: boolean;
 	searchMode: "notes" | "threads" | "tags";

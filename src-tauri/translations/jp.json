@@ -35,7 +35,7 @@
 	"settings.folder.validation.invalid": "無効なフォルダ: {{error}}",
 	"settings.language": "言語",
 	"settings.theme": "テーマ",
-	"settings.remember_window_size": "ウィンドウサイズを記憶する",
+	"settings.remember_app_layout": "アプリのレイアウトを記憶する",
 	"settings.remember_settings": "コンポーネント設定を記憶する",
 	"settings.save": "設定を保存",
 	"folder.select": "フォルダを選択",

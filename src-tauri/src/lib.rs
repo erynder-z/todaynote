@@ -15,7 +15,7 @@ use commands::search::{
 };
 use commands::settings::{
     get_config, set_control_center_width, set_locale, set_notes_folder, set_notes_list_layout,
-    set_remember_settings, set_remember_window_size, set_search_is_fuzzy, set_search_mode,
+    set_remember_app_layout, set_remember_settings, set_search_is_fuzzy, set_search_mode,
     set_search_selected_tag, switch_notes_folder,
 };
 use commands::setup::initialize_app;
@@ -46,7 +46,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init());
 
-    if config.remember_window_size {
+    if config.remember_app_layout {
         builder = builder.plugin(
             tauri_plugin_window_state::Builder::default()
                 .with_state_flags(
@@ -95,8 +95,8 @@ pub fn run() {
             set_locale,
             set_notes_folder,
             set_notes_list_layout,
+            set_remember_app_layout,
             set_remember_settings,
-            set_remember_window_size,
             set_search_mode,
             set_search_is_fuzzy,
             set_search_selected_tag,
@@ -106,7 +106,7 @@ pub fn run() {
         ])
         .setup(|app| {
             let config = AppConfig::load();
-            if !config.remember_window_size {
+            if !config.remember_app_layout {
                 let _ = utils::window::setup_main_window(app.handle());
             }
 

@@ -67,12 +67,15 @@
   const handleMouseMove = (e: MouseEvent) => {
     if (!isResizing) return;
 
-    const minWidth = 250;
-    const maxWidth = 600;
-    const newWidth = window.innerWidth - e.clientX;
+    const fontSize = parseFloat(
+      getComputedStyle(document.documentElement).fontSize,
+    );
+    const minWidthRem = 15;
+    const maxWidthRem = 40;
+    const newWidthRem = (window.innerWidth - e.clientX) / fontSize;
 
-    if (newWidth >= minWidth && newWidth <= maxWidth) {
-      settings.controlCenterWidth = newWidth;
+    if (newWidthRem >= minWidthRem && newWidthRem <= maxWidthRem) {
+      settings.controlCenterWidth = newWidthRem;
     }
   };
 </script>

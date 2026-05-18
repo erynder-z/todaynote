@@ -57,13 +57,17 @@ export const syncSettingsState = (state: AppPayload) => {
 	settings.notesFolder = state.notesFolder || "";
 	settings.locale = state.locale;
 	settings.theme = state.theme;
-	settings.rememberWindowSize = state.rememberWindowSize;
+	settings.rememberAppLayout = state.rememberAppLayout;
 	settings.notesListLayout = state.notesListLayout;
 	settings.rememberSettings = state.rememberSettings;
 	settings.searchMode = state.searchMode as "notes" | "threads" | "tags";
 	settings.searchIsFuzzy = state.searchIsFuzzy;
 	settings.searchSelectedTag = state.searchSelectedTag;
-	settings.controlCenterWidth = state.controlCenterWidth;
+
+	// Migration check: if the width is > 100, it's likely an old pixel value.
+	// We convert it to rem (assuming 16px base) to prevent the sidebar from filling the screen.
+	const width = state.controlCenterWidth;
+	settings.controlCenterWidth = width > 100 ? width / 16 : width;
 };
 
 /**

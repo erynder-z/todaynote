@@ -35,7 +35,7 @@
 	"settings.folder.validation.invalid": "Invalid folder: {{error}}",
 	"settings.language": "Language",
 	"settings.theme": "Theme",
-	"settings.remember_window_size": "Remember Window Size",
+	"settings.remember_app_layout": "Remember App Layout",
 	"settings.remember_settings": "Remember Component Settings",
 	"settings.save": "Save Settings",
 	"folder.select": "Select Folder",

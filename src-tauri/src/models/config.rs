@@ -16,8 +16,8 @@ pub struct AppConfig {
     pub locale: String,
     /// Currently active UI theme.
     pub theme: String,
-    /// Whether to restore window dimensions across sessions.
-    pub remember_window_size: bool,
+    /// Whether to restore window dimensions and layout across sessions.
+    pub remember_app_layout: bool,
     /// Layout style for the notes list ("list" or "masonry").
     pub notes_list_layout: String,
     /// Whether to remember component settings (search mode, layout, etc.).
@@ -40,13 +40,13 @@ impl Default for AppConfig {
             notes_folder,
             locale: "en".to_string(),
             theme: "blind-spot".to_string(),
-            remember_window_size: true,
+            remember_app_layout: true,
             notes_list_layout: "list".to_string(),
             remember_settings: true,
             search_mode: "notes".to_string(),
             search_is_fuzzy: true,
             search_selected_tag: None,
-            control_center_width: 352.0, // Default 22rem * 16px
+            control_center_width: 22.0, // Default 22rem
         }
     }
 }

@@ -14,15 +14,8 @@
     const target = e.target as HTMLInputElement;
     const remember = target.checked;
     await settings.save({
-      notesFolder: settings.notesFolder,
-      locale: settings.locale,
-      theme: settings.theme,
-      rememberWindowSize: settings.rememberWindowSize,
-      notesListLayout: settings.notesListLayout,
+      ...settings,
       rememberSettings: remember,
-      searchMode: settings.searchMode,
-      searchIsFuzzy: settings.searchIsFuzzy,
-      searchSelectedTag: settings.searchSelectedTag,
     });
   };
 </script>

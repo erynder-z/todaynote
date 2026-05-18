@@ -28,7 +28,7 @@ pub fn get_initial_state(
         notes_folder,
         locale: config.locale.clone(),
         theme: config.theme.clone(),
-        remember_window_size: config.remember_window_size,
+        remember_app_layout: config.remember_app_layout,
         notes_list_layout: config.notes_list_layout.clone(),
         remember_settings: config.remember_settings,
         search_mode: config.search_mode.clone(),

@@ -15,7 +15,7 @@ pub async fn get_config() -> Result<ConfigResponse, String> {
         notes_folder: config.notes_folder.to_string_lossy().into_owned(),
         locale: config.locale,
         theme: config.theme,
-        remember_window_size: config.remember_window_size,
+        remember_app_layout: config.remember_app_layout,
         notes_list_layout: config.notes_list_layout,
         remember_settings: config.remember_settings,
         search_mode: config.search_mode,
@@ -79,11 +79,11 @@ pub async fn set_notes_list_layout(layout: String) -> Result<(), String> {
     Ok(())
 }
 
-/// Sets whether the application should remember the window size.
+/// Sets whether the application should remember the app layout.
 #[tauri::command]
-pub async fn set_remember_window_size(remember: bool) -> Result<(), String> {
+pub async fn set_remember_app_layout(remember: bool) -> Result<(), String> {
     let mut config = AppConfig::load();
-    config.remember_window_size = remember;
+    config.remember_app_layout = remember;
     config.save();
     Ok(())
 }

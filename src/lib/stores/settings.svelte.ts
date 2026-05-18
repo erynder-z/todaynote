@@ -15,13 +15,13 @@ export class SettingsStore {
 	notesFolder = $state("");
 	locale = $state("en");
 	theme = $state("blind-spot");
-	rememberWindowSize = $state(true);
+	rememberAppLayout = $state(true);
 	notesListLayout = $state<"list" | "masonry">("list");
 	rememberSettings = $state(true);
 	searchMode = $state<"notes" | "threads" | "tags">("notes");
 	searchIsFuzzy = $state(true);
 	searchSelectedTag = $state<string | null>(null);
-	controlCenterWidth = $state(352);
+	controlCenterWidth = $state(22);
 
 	/**
 	 * Loads initial configuration from the backend and initializes UI stores.
@@ -32,13 +32,16 @@ export class SettingsStore {
 			this.notesFolder = config.notesFolder;
 			this.locale = config.locale;
 			this.theme = config.theme;
-			this.rememberWindowSize = config.rememberWindowSize;
+			this.rememberAppLayout = config.rememberAppLayout;
 			this.notesListLayout = config.notesListLayout;
 			this.rememberSettings = config.rememberSettings;
 			this.searchMode = config.searchMode;
 			this.searchIsFuzzy = config.searchIsFuzzy;
 			this.searchSelectedTag = config.searchSelectedTag;
-			this.controlCenterWidth = config.controlCenterWidth;
+
+			// Migration check for old pixel values
+			const width = config.controlCenterWidth;
+			this.controlCenterWidth = width > 100 ? width / 16 : width;
 
 			await updateTranslations(this.locale);
 			await updateTheme(this.theme);
@@ -49,13 +52,13 @@ export class SettingsStore {
 				notesFolder: "",
 				locale: "en",
 				theme: "blind-spot",
-				rememberWindowSize: true,
+				rememberAppLayout: true,
 				notesListLayout: "list",
 				rememberSettings: true,
 				searchMode: "notes",
 				searchIsFuzzy: true,
 				searchSelectedTag: null,
-				controlCenterWidth: 352,
+				controlCenterWidth: 22,
 			};
 		}
 	}
@@ -86,11 +89,11 @@ export class SettingsStore {
 				this.theme = newSettings.theme;
 				await updateTheme(newSettings.theme);
 			}
-			if (newSettings.rememberWindowSize !== undefined) {
-				await invoke("set_remember_window_size", {
-					remember: newSettings.rememberWindowSize,
+			if (newSettings.rememberAppLayout !== undefined) {
+				await invoke("set_remember_app_layout", {
+					remember: newSettings.rememberAppLayout,
 				});
-				this.rememberWindowSize = newSettings.rememberWindowSize;
+				this.rememberAppLayout = newSettings.rememberAppLayout;
 			}
 
 			// Transient settings handling
@@ -138,7 +141,7 @@ export class SettingsStore {
 	 */
 	async setControlCenterWidth(width: number) {
 		this.controlCenterWidth = width;
-		if (this.rememberWindowSize) {
+		if (this.rememberAppLayout) {
 			await invoke("set_control_center_width", { width });
 		}
 	}

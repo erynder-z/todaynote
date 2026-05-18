@@ -16,7 +16,7 @@ export interface AppPayload {
 	notesFolder: string | null;
 	locale: string;
 	theme: string;
-	rememberWindowSize: boolean;
+	rememberAppLayout: boolean;
 	notesListLayout: "list" | "masonry";
 	rememberSettings: boolean;
 	searchMode: "notes" | "threads" | "tags";
