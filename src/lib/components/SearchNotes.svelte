@@ -35,6 +35,7 @@
     SearchResult[] | ThreadSearchResult[] | TagSearchResult[]
   >([]);
   let isSearching = $state(false);
+  let searchId = 0;
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   const nav = new ListNavigator(
@@ -92,37 +93,43 @@
    * Debounced via onInput to prevent excessive API calls.
    */
   const performSearch = async () => {
+    const id = ++searchId;
+
     if (
-      query.trim().length === 0 &&
+      !query.trim() &&
       settings.searchMode === 'notes' &&
       !settings.searchSelectedTag
     ) {
       results = [];
+      isSearching = false;
       nav.reset();
       return;
     }
 
     isSearching = true;
     try {
-      if (settings.searchMode === 'notes') {
-        results = await searchNotes(query, settings.searchIsFuzzy);
-      } else if (settings.searchMode === 'threads') {
-        results = await searchThreads(query, settings.searchIsFuzzy);
-      } else if (settings.searchSelectedTag) {
-        results = await searchNotesByTag(
-          settings.searchSelectedTag,
-          query,
-          settings.searchIsFuzzy,
-        );
-      } else {
-        results = await searchTags(query, settings.searchIsFuzzy);
-      }
+      const { searchMode, searchIsFuzzy, searchSelectedTag } = settings;
+
+      const searchActions = {
+        notes: () => searchNotes(query, searchIsFuzzy),
+        threads: () => searchThreads(query, searchIsFuzzy),
+        tags: () =>
+          searchSelectedTag
+            ? searchNotesByTag(searchSelectedTag, query, searchIsFuzzy)
+            : searchTags(query, searchIsFuzzy),
+      };
+
+      const data = await searchActions[searchMode]();
+
+      if (id === searchId) results = data;
     } catch (error) {
       console.error('Search error:', error);
-      results = [];
+      if (id === searchId) results = [];
     } finally {
-      isSearching = false;
-      nav.reset();
+      if (id === searchId) {
+        isSearching = false;
+        nav.reset();
+      }
     }
   };
 
