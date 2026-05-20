@@ -176,10 +176,13 @@ pub async fn create_todays_note(state: State<'_, AppState>) -> Result<(), String
     }
 
     let translations = crate::commands::i18n::get_translations(note_manager.locale.clone());
-    let note_header = translations
-        .get("note.header")
-        .map(|s| s.as_str())
-        .unwrap_or("Note");
+    let config = state.config()?;
+    let note_header = config.default_thread_name.as_deref().unwrap_or_else(|| {
+        translations
+            .get("note.header")
+            .map(|s| s.as_str())
+            .unwrap_or("Note")
+    });
 
     let created_path = note_manager.create_todays_note(note_header)?;
 

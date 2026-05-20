@@ -38,6 +38,7 @@
 	"settings.remember_app_layout": "Remember App Layout",
 	"settings.remember_settings": "Remember Component Settings",
 	"settings.save": "Save Settings",
+	"settings.default_thread_name.title": "Default Thread Name",
 	"folder.select": "Select Folder",
 	"notes.empty": "No notes found",
 	"notes.list.title": "Your Notes",

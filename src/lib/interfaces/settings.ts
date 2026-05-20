@@ -9,6 +9,7 @@ export interface AppSettings {
 	searchIsFuzzy: boolean;
 	searchSelectedTag: string | null;
 	controlCenterWidth: number;
+	defaultThreadName: string | null;
 }
 
 export interface ThemeInfo {

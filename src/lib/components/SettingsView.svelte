@@ -2,6 +2,8 @@
   /**
    * Centralized settings view that aggregates folder, language, theme, and window size configurations.
    */
+
+  import DefaultThreadNameSelector from './DefaultThreadNameSelector.svelte';
   import FolderSelector from './FolderSelector.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
   import RememberSettingsSelector from './RememberSettingsSelector.svelte';
@@ -12,6 +14,8 @@
 
 <div class="settings-view">
   <FolderSelector />
+  <div class="divider"></div>
+  <DefaultThreadNameSelector />
   <div class="divider"></div>
   <LanguageSelector />
   <div class="divider"></div>

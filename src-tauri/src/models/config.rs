@@ -30,6 +30,8 @@ pub struct AppConfig {
     pub search_selected_tag: Option<String>,
     /// Width of the NoteControlCenter sidebar in pixels.
     pub control_center_width: f64,
+    /// Custom default name for the initial thread in a new daily note.
+    pub default_thread_name: Option<String>,
 }
 
 impl Default for AppConfig {
@@ -47,6 +49,7 @@ impl Default for AppConfig {
             search_is_fuzzy: true,
             search_selected_tag: None,
             control_center_width: 22.0, // Default 22rem
+            default_thread_name: None,
         }
     }
 }

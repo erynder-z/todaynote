@@ -22,6 +22,7 @@ export class SettingsStore {
 	searchIsFuzzy = $state(true);
 	searchSelectedTag = $state<string | null>(null);
 	controlCenterWidth = $state(22);
+	defaultThreadName = $state<string | null>(null);
 
 	/**
 	 * Private promise chain to ensure saves happen sequentially.
@@ -43,6 +44,7 @@ export class SettingsStore {
 			this.searchMode = config.searchMode;
 			this.searchIsFuzzy = config.searchIsFuzzy;
 			this.searchSelectedTag = config.searchSelectedTag;
+			this.defaultThreadName = config.defaultThreadName;
 
 			// Migration check for old pixel values
 			const width = config.controlCenterWidth;
@@ -64,6 +66,7 @@ export class SettingsStore {
 				searchIsFuzzy: true,
 				searchSelectedTag: null,
 				controlCenterWidth: 22,
+				defaultThreadName: null,
 			};
 		}
 	}
@@ -92,6 +95,10 @@ export class SettingsStore {
 							: this.searchSelectedTag,
 					controlCenterWidth:
 						updates.controlCenterWidth ?? this.controlCenterWidth,
+					defaultThreadName:
+						updates.defaultThreadName !== undefined
+							? updates.defaultThreadName
+							: this.defaultThreadName,
 				};
 
 				await invoke("update_config", { newConfig: next });
@@ -123,6 +130,7 @@ export class SettingsStore {
 				this.searchIsFuzzy = next.searchIsFuzzy;
 				this.searchSelectedTag = next.searchSelectedTag;
 				this.controlCenterWidth = next.controlCenterWidth;
+				this.defaultThreadName = next.defaultThreadName;
 
 				// If turning OFF "Remember Settings", reset those specific fields to defaults
 				if (updates.rememberSettings === false) {

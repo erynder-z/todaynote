@@ -22,6 +22,7 @@ export interface AppPayload {
 	searchMode: "notes" | "threads" | "tags";
 	searchIsFuzzy: boolean;
 	searchSelectedTag: string | null;
+	defaultThreadName: string | null;
 	availableLocales: LocaleInfo[];
 	availableThemes: ThemeInfo[];
 	translations: Record<string, string>;

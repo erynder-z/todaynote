@@ -22,6 +22,7 @@ pub async fn get_config(state: State<'_, AppState>) -> Result<ConfigResponse, St
         search_is_fuzzy: config.search_is_fuzzy,
         search_selected_tag: config.search_selected_tag.clone(),
         control_center_width: config.control_center_width,
+        default_thread_name: config.default_thread_name.clone(),
     })
 }
 
@@ -47,6 +48,7 @@ pub async fn update_config(
         config.search_is_fuzzy = new_config.search_is_fuzzy;
         config.search_selected_tag = new_config.search_selected_tag;
         config.control_center_width = new_config.control_center_width;
+        config.default_thread_name = new_config.default_thread_name;
 
         config.save();
         (folder_changed, locale_changed)
@@ -199,6 +201,7 @@ pub async fn switch_notes_folder(
             search_is_fuzzy: config.search_is_fuzzy,
             search_selected_tag: config.search_selected_tag.clone(),
             control_center_width: config.control_center_width,
+            default_thread_name: config.default_thread_name.clone(),
         }
     };
 

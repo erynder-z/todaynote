@@ -25,6 +25,7 @@ pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, St
             search_is_fuzzy: config.search_is_fuzzy,
             search_selected_tag: config.search_selected_tag.clone(),
             control_center_width: config.control_center_width,
+            default_thread_name: config.default_thread_name.clone(),
         }
     };
     get_initial_state(config, state)
@@ -48,8 +49,9 @@ pub fn get_initial_state(
         remember_settings: config.remember_settings,
         search_mode: config.search_mode.clone(),
         search_is_fuzzy: config.search_is_fuzzy,
-        search_selected_tag: config.search_selected_tag.clone(),
+        search_selected_tag: config.search_selected_tag,
         control_center_width: config.control_center_width,
+        default_thread_name: config.default_thread_name,
         available_locales,
         available_themes,
         translations,
@@ -116,10 +118,13 @@ fn load_today_note(
     let file_path = note_manager.get_today_note_path();
     let path_str = file_path.to_string_lossy().into_owned();
 
-    let note_header = translations
-        .get("note.header")
-        .map(|s| s.as_str())
-        .unwrap_or("Note");
+    let config = state.config()?;
+    let note_header = config.default_thread_name.as_deref().unwrap_or_else(|| {
+        translations
+            .get("note.header")
+            .map(|s| s.as_str())
+            .unwrap_or("Note")
+    });
 
     if let Ok(created_path) = note_manager.create_todays_note(note_header) {
         if let Ok(content) = note_manager.read_note_content(&created_path) {

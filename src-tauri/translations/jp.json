@@ -38,6 +38,7 @@
 	"settings.remember_app_layout": "アプリのレイアウトを記憶する",
 	"settings.remember_settings": "コンポーネント設定を記憶する",
 	"settings.save": "設定を保存",
+	"settings.default_thread_name.title": "デフォルトのスレッド名",
 	"folder.select": "フォルダを選択",
 	"notes.empty": "ノートが見つかりません",
 	"notes.list.title": "ノートリスト",

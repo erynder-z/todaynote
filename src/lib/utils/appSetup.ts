@@ -63,9 +63,8 @@ export const syncSettingsState = (state: AppPayload) => {
 	settings.searchMode = state.searchMode as "notes" | "threads" | "tags";
 	settings.searchIsFuzzy = state.searchIsFuzzy;
 	settings.searchSelectedTag = state.searchSelectedTag;
+	settings.defaultThreadName = state.defaultThreadName;
 
-	// Migration check: if the width is > 100, it's likely an old pixel value.
-	// We convert it to rem (assuming 16px base) to prevent the sidebar from filling the screen.
 	const width = state.controlCenterWidth;
 	settings.controlCenterWidth = width > 100 ? width / 16 : width;
 };

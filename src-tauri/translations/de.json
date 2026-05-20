@@ -38,6 +38,7 @@
 	"settings.remember_app_layout": "App-Layout merken",
 	"settings.remember_settings": "Komponenteneinstellungen merken",
 	"settings.save": "Einstellungen speichern",
+	"settings.default_thread_name.title": "Standard-Thread-Name",
 	"folder.select": "Ordner auswählen",
 	"notes.empty": "Keine Notizen gefunden",
 	"notes.list.title": "Deine Notizen",
