@@ -306,3 +306,73 @@ pub async fn detect_threads(content: String) -> Result<Vec<NoteThread>, String> 
 
     Ok(threads)
 }
+
+/// Renames the first top-level heading in a markdown string if it differs from the new name.
+fn rename_primary_thread(content: &str, new_name: &str) -> Option<String> {
+    let (content_start, _) = extract_frontmatter(content);
+    let lines: Vec<&str> = content.split('\n').collect();
+
+    for i in content_start..lines.len() {
+        if lines[i].starts_with("# ") {
+            let current_name = lines[i][2..].trim();
+            if current_name != new_name {
+                let mut owned_lines: Vec<String> =
+                    lines.into_iter().map(|s| s.to_string()).collect();
+                owned_lines[i] = format!("# {}", new_name);
+                return Some(owned_lines.join("\n"));
+            }
+            break; // Only rename the first thread
+        }
+    }
+    None
+}
+
+/// Updates the active note session if the modified file is currently open.
+fn update_session_if_active(
+    state: &State<'_, AppState>,
+    path: &PathBuf,
+    new_content: String,
+) -> Result<(), String> {
+    let mut session = state.note_session()?;
+    if session.path.as_ref() == Some(path) {
+        session.load(path.clone(), new_content);
+    }
+    Ok(())
+}
+
+/// Renames the first top-level heading in all notes to the specified name.
+///
+/// This is used to batch-apply a new default thread name to existing notes.
+#[tauri::command]
+pub async fn apply_default_thread_name(
+    new_name: String,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    let notes_folder = state.note_manager()?.notes_folder.clone();
+
+    if !notes_folder.exists() {
+        return Ok(());
+    }
+
+    let entries = fs::read_dir(&notes_folder)
+        .map_err(|e| format!("Failed to read notes directory: {}", e))?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Error reading directory entry: {}", e))?;
+        let path = entry.path();
+
+        if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("md") {
+            let content = fs::read_to_string(&path)
+                .map_err(|e| format!("Failed to read file {:?}: {}", path, e))?;
+
+            if let Some(new_content) = rename_primary_thread(&content, &new_name) {
+                fs::write(&path, &new_content)
+                    .map_err(|e| format!("Failed to write file {:?}: {}", path, e))?;
+
+                update_session_if_active(&state, &path, new_content)?;
+            }
+        }
+    }
+
+    Ok(())
+}

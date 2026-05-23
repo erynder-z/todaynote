@@ -6,9 +6,10 @@ mod utils;
 use commands::folder::validate_folder;
 use commands::i18n::get_translations;
 use commands::notes::{
-    check_todays_note_exists, create_todays_note, delete_note_line, detect_threads, ensure_thread,
-    get_last_available_note_path, get_note_path_by_offset, get_today_note_path, insert_note_line,
-    list_notes, read_note_content, save_note_content, update_note_line,
+    apply_default_thread_name, check_todays_note_exists, create_todays_note, delete_note_line,
+    detect_threads, ensure_thread, get_last_available_note_path, get_note_path_by_offset,
+    get_today_note_path, insert_note_line, list_notes, read_note_content, save_note_content,
+    update_note_line,
 };
 use commands::search::{
     aggregate_thread, search_notes, search_notes_by_tag, search_tags, search_threads,
@@ -67,6 +68,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             add_note_tag,
             remove_note_tag,
+            apply_default_thread_name,
             check_todays_note_exists,
             create_todays_note,
             detect_threads,
