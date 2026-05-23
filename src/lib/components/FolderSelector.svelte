@@ -62,6 +62,16 @@
   <label for="folder-select">{$t('settings.folder.title')}</label>
   <div class="button-container">
     <button onclick={handleSelectFolder} class="btn-primary">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="1.25rem"
+        viewBox="0 -960 960 960"
+        width="1.25rem"
+        fill="currentColor"
+        ><path
+          d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z"
+        /></svg
+      >
       {$t('settings.folder.select')}
     </button>
 
@@ -70,7 +80,7 @@
       class="btn-success"
       disabled={!isUseFolderButtonEnabled}
     >
-      {$t('settings.save')}
+      {$t('settings.apply')}
     </button>
   </div>
 
@@ -131,7 +141,11 @@
 
   .btn-primary,
   .btn-success {
-    padding: 0.65rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
     border: none;
     border-radius: 0.5rem;
     font-size: 0.95rem;

@@ -37,7 +37,7 @@
 	"settings.theme": "Theme",
 	"settings.remember_app_layout": "Remember App Layout",
 	"settings.remember_settings": "Remember Component Settings",
-	"settings.save": "Save Settings",
+	"settings.apply": "Apply",
 	"settings.default_thread_name.title": "Default Thread Name",
 	"settings.default_thread_name.apply_to_all": "Apply to all existing notes",
 	"settings.default_thread_name.confirm_title": "Apply to all notes?",

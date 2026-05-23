@@ -37,7 +37,7 @@
 	"settings.theme": "Farbschema",
 	"settings.remember_app_layout": "App-Layout merken",
 	"settings.remember_settings": "Komponenteneinstellungen merken",
-	"settings.save": "Einstellungen speichern",
+	"settings.apply": "Übernehmen",
 	"settings.default_thread_name.title": "Standard-Thread-Name",
 	"settings.default_thread_name.apply_to_all": "Auf alle vorhandenen Notizen anwenden",
 	"settings.default_thread_name.confirm_title": "Auf alle Notizen anwenden?",

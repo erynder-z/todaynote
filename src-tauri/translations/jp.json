@@ -37,7 +37,7 @@
 	"settings.theme": "テーマ",
 	"settings.remember_app_layout": "アプリのレイアウトを記憶する",
 	"settings.remember_settings": "コンポーネント設定を記憶する",
-	"settings.save": "設定を保存",
+	"settings.apply": " 適用",
 	"settings.default_thread_name.title": "デフォルトのスレッド名",
 	"settings.default_thread_name.apply_to_all": "既存のすべてのノートに適用する",
 	"settings.default_thread_name.confirm_title": "すべてのノートに適用しますか？",
