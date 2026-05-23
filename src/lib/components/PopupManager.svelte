@@ -19,7 +19,7 @@
 </script>
 
 {#if sessionState.activePopup === 'folderSelector'}
-  <Modal title={$t('settings.title')} size="md">
+  <Modal title={$t('settings.title')} size="xl">
     <SettingsView />
   </Modal>
 {:else if sessionState.activePopup === 'noteBrowser'}
