@@ -164,12 +164,17 @@ export class SettingsStore {
 	 * Resets remembered settings to their default values.
 	 */
 	async resetToDefaults() {
-		await this.save({
-			notesListLayout: "list",
-			searchMode: "notes",
-			searchIsFuzzy: true,
-			searchSelectedTag: null,
-		});
+		try {
+			await invoke("reset_config_to_defaults");
+
+			const initialState: AppPayload = await invoke("initialize_app");
+			syncFullAppState(initialState);
+
+			return true;
+		} catch (error) {
+			console.error("Error resetting settings to defaults:", error);
+			return false;
+		}
 	}
 
 	/**

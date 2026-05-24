@@ -122,6 +122,29 @@ pub async fn set_remember_app_layout(
     Ok(())
 }
 
+/// Resets the application configuration to its default values.
+///
+/// Critical settings like `notes_folder` and `locale` are preserved to avoid
+/// breaking the user's basic setup.
+#[tauri::command]
+pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), String> {
+    let mut config = state.config()?;
+    let default_config = AppConfig::default();
+
+    config.theme = default_config.theme;
+    config.remember_app_layout = default_config.remember_app_layout;
+    config.notes_list_layout = default_config.notes_list_layout;
+    config.remember_settings = default_config.remember_settings;
+    config.search_mode = default_config.search_mode;
+    config.search_is_fuzzy = default_config.search_is_fuzzy;
+    config.search_selected_tag = default_config.search_selected_tag;
+    config.control_center_width = default_config.control_center_width;
+    config.default_thread_name = default_config.default_thread_name;
+
+    config.save();
+    Ok(())
+}
+
 /// Updates the notes folder and re-initializes the note manager.
 #[tauri::command]
 pub async fn set_notes_folder(path: String, state: State<'_, AppState>) -> Result<(), String> {
