@@ -27,6 +27,7 @@ export interface NoteThread {
 }
 
 export interface NoteContentResponse {
+	path: string;
 	content: string;
 	metadata: NoteMetadata;
 	threads: NoteThread[];

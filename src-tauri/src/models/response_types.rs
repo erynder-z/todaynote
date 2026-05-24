@@ -150,6 +150,7 @@ pub struct NoteMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NoteContentResponse {
+    pub path: String,
     pub content: String,
     pub metadata: NoteMetadata,
     pub threads: Vec<NoteThread>,
@@ -162,6 +163,12 @@ impl NoteContentResponse {
         note_manager: &NoteManager,
         tag_manager: &TagManager,
     ) -> Self {
+        let path = session
+            .path
+            .as_ref()
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_default();
+
         let filename = session
             .path
             .as_ref()
@@ -211,6 +218,7 @@ impl NoteContentResponse {
                 raw: raw_metadata,
             },
             threads,
+            path,
         }
     }
 }

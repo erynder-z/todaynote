@@ -132,6 +132,18 @@ pub async fn get_last_available_note_path(
     Ok(None)
 }
 
+/// Reads the content of the most recent note that is not today's note.
+#[tauri::command]
+pub async fn read_last_available_note(
+    state: State<'_, AppState>,
+) -> Result<Option<NoteContentResponse>, String> {
+    if let Some(path) = get_last_available_note_path(state.clone()).await? {
+        Ok(Some(read_note_content(path, state).await?))
+    } else {
+        Ok(None)
+    }
+}
+
 /// Returns the absolute path to a note file offset from today.
 ///
 /// - offset = 0: today
@@ -146,6 +158,16 @@ pub async fn get_note_path_by_offset(
     note_manager.ensure_notes_folder_exists()?;
     let file_path = crate::utils::date::get_note_path_by_offset(&note_manager.notes_folder, offset);
     Ok(file_path.to_string_lossy().into_owned())
+}
+
+/// Reads the content of a note file offset from today.
+#[tauri::command]
+pub async fn read_note_by_offset(
+    offset: i32,
+    state: State<'_, AppState>,
+) -> Result<NoteContentResponse, String> {
+    let path = get_note_path_by_offset(offset, state.clone()).await?;
+    read_note_content(path, state).await
 }
 
 /// Checks if today's daily note file already exists.

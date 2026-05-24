@@ -8,7 +8,8 @@ use commands::i18n::get_translations;
 use commands::notes::{
     apply_default_thread_name, check_todays_note_exists, delete_note_line, detect_threads,
     ensure_thread, get_last_available_note_path, get_note_path_by_offset, insert_note_line,
-    list_notes, read_note_content, save_note_content, update_note_line,
+    list_notes, read_last_available_note, read_note_by_offset, read_note_content,
+    save_note_content, update_note_line,
 };
 use commands::search::{
     aggregate_thread, search_notes, search_notes_by_tag, search_tags, search_threads,
@@ -72,6 +73,8 @@ pub fn run() {
             detect_threads,
             get_last_available_note_path,
             get_note_path_by_offset,
+            read_last_available_note,
+            read_note_by_offset,
             read_note_content,
             save_note_content,
             update_note_line,
