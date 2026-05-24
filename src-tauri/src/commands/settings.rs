@@ -12,12 +12,13 @@ use tauri::State;
 pub async fn update_config(
     new_config: ConfigResponse,
     state: State<'_, AppState>,
-) -> Result<(), String> {
-    let (folder_changed, locale_changed) = {
+) -> Result<AppPayload, String> {
+    let (folder_changed, locale_changed, theme_changed) = {
         let mut config = state.config()?;
 
         let folder_changed = config.notes_folder != PathBuf::from(&new_config.notes_folder);
         let locale_changed = config.locale != new_config.locale;
+        let theme_changed = config.theme != new_config.theme;
 
         config.notes_folder = PathBuf::from(new_config.notes_folder);
         config.locale = new_config.locale;
@@ -33,16 +34,34 @@ pub async fn update_config(
         config.shortcuts = new_config.shortcuts;
 
         config.save();
-        (folder_changed, locale_changed)
+        (folder_changed, locale_changed, theme_changed)
     };
 
-    if folder_changed || locale_changed {
+    if folder_changed || locale_changed || theme_changed {
         let config = state.config()?;
         let mut note_manager = state.note_manager()?;
         note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
     }
 
-    Ok(())
+    let config = {
+        let config = state.config()?;
+        AppConfig {
+            notes_folder: config.notes_folder.clone(),
+            locale: config.locale.clone(),
+            theme: config.theme.clone(),
+            remember_app_layout: config.remember_app_layout,
+            notes_list_layout: config.notes_list_layout.clone(),
+            remember_settings: config.remember_settings,
+            search_mode: config.search_mode.clone(),
+            search_is_fuzzy: config.search_is_fuzzy,
+            search_selected_tag: config.search_selected_tag.clone(),
+            control_center_width: config.control_center_width,
+            default_thread_name: config.default_thread_name.clone(),
+            shortcuts: config.shortcuts.clone(),
+        }
+    };
+
+    setup::get_initial_state(config, state)
 }
 
 /// Sets whether the width of the NoteControlCenter sidebar.

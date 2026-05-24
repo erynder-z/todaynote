@@ -5,9 +5,6 @@ import type { NoteContentResponse } from "$lib/interfaces/notes";
 import type { AppSettings } from "$lib/interfaces/settings";
 import type { ShortcutAction } from "$lib/types/input";
 import { syncFullAppState } from "$lib/utils/appSetup";
-import { readNoteContent } from "$lib/utils/notes";
-import { updateTranslations } from "../utils/i18n";
-import { updateTheme } from "../utils/theme";
 import { sessionState } from "./sessionState.svelte";
 
 /**
@@ -36,7 +33,7 @@ export class SettingsStore {
 	 * Updates the configuration in the backend and reflects changes in the UI.
 	 * All saves are queued and processed sequentially.
 	 */
-	async save(updates: Partial<AppSettings>) {
+	async save(updates: Partial<AppSettings>): Promise<boolean> {
 		this.#saveQueue = this.#saveQueue.then(async () => {
 			try {
 				// Determine the next state by merging updates with current state
@@ -63,42 +60,14 @@ export class SettingsStore {
 					shortcuts: updates.shortcuts ?? this.shortcuts,
 				};
 
-				await invoke("update_config", { newConfig: next });
+				const updatedState: AppPayload = await invoke("update_config", {
+					newConfig: next,
+				});
 
-				// Handle UI-specific side effects
-				if (updates.locale && updates.locale !== this.locale) {
-					await updateTranslations(updates.locale);
-
-					if (sessionState.todayNotePath) {
-						const updatedContent = await readNoteContent(
-							sessionState.todayNotePath,
-						);
-						if (updatedContent) this.updateNoteContent(updatedContent);
-					}
-				}
-
-				if (updates.theme && updates.theme !== this.theme) {
-					await updateTheme(updates.theme);
-				}
-
-				// Update local state variables
-				this.notesFolder = next.notesFolder;
-				this.locale = next.locale;
-				this.theme = next.theme;
-				this.rememberAppLayout = next.rememberAppLayout;
-				this.notesListLayout = next.notesListLayout;
-				this.rememberSettings = next.rememberSettings;
-				this.searchMode = next.searchMode;
-				this.searchIsFuzzy = next.searchIsFuzzy;
-				this.searchSelectedTag = next.searchSelectedTag;
-				this.controlCenterWidth = next.controlCenterWidth;
-				this.defaultThreadName = next.defaultThreadName;
-				this.shortcuts = next.shortcuts;
+				syncFullAppState(updatedState);
 
 				// If turning OFF "Remember Settings", reset those specific fields to defaults
-				if (updates.rememberSettings === false) {
-					await this.resetToDefaults();
-				}
+				if (updates.rememberSettings === false) await this.resetToDefaults();
 
 				return true;
 			} catch (error) {
@@ -113,56 +82,55 @@ export class SettingsStore {
 	/**
 	 * Granular setter for control center width that handles conditional persistence.
 	 */
-	async setControlCenterWidth(width: number) {
-		if (this.rememberAppLayout) {
-			await this.save({ controlCenterWidth: width });
-		} else {
-			this.controlCenterWidth = width;
-		}
+	async setControlCenterWidth(width: number): Promise<boolean> {
+		if (this.rememberAppLayout)
+			return await this.save({ controlCenterWidth: width });
+
+		this.controlCenterWidth = width;
+		return true;
 	}
 
 	/**
 	 * Granular setter for layout that handles conditional persistence.
 	 */
-	async setNotesListLayout(layout: "list" | "masonry") {
-		if (this.rememberSettings) {
-			await this.save({ notesListLayout: layout });
-		} else {
-			this.notesListLayout = layout;
-		}
+	async setNotesListLayout(layout: "list" | "masonry"): Promise<boolean> {
+		if (this.rememberSettings)
+			return await this.save({ notesListLayout: layout });
+
+		this.notesListLayout = layout;
+		return true;
 	}
 
 	/**
 	 * Granular setter for search mode that handles conditional persistence.
 	 */
-	async setSearchMode(mode: "notes" | "threads" | "tags") {
-		if (this.rememberSettings) {
-			await this.save({ searchMode: mode });
-		} else {
-			this.searchMode = mode;
-		}
+	async setSearchMode(mode: "notes" | "threads" | "tags"): Promise<boolean> {
+		if (this.rememberSettings) return await this.save({ searchMode: mode });
+
+		this.searchMode = mode;
+		return true;
 	}
 
 	/**
 	 * Granular setter for fuzzy search that handles conditional persistence.
 	 */
-	async setSearchIsFuzzy(isFuzzy: boolean) {
-		if (this.rememberSettings) {
-			await this.save({ searchIsFuzzy: isFuzzy });
-		} else {
-			this.searchIsFuzzy = isFuzzy;
-		}
+	async setSearchIsFuzzy(isFuzzy: boolean): Promise<boolean> {
+		if (this.rememberSettings)
+			return await this.save({ searchIsFuzzy: isFuzzy });
+
+		this.searchIsFuzzy = isFuzzy;
+		return true;
 	}
 
 	/**
 	 * Granular setter for selected tag that handles conditional persistence.
 	 */
-	async setSearchSelectedTag(tag: string | null) {
-		if (this.rememberSettings) {
-			await this.save({ searchSelectedTag: tag });
-		} else {
-			this.searchSelectedTag = tag;
-		}
+	async setSearchSelectedTag(tag: string | null): Promise<boolean> {
+		if (this.rememberSettings)
+			return await this.save({ searchSelectedTag: tag });
+
+		this.searchSelectedTag = tag;
+		return true;
 	}
 
 	/**

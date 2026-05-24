@@ -14,6 +14,7 @@ export const initializeApp = async () => {
 		const initialState: AppPayload = await invoke("initialize_app");
 		syncFullAppState(initialState);
 
+		// Small delay to ensure Svelte has finished rendering before showing the window
 		setTimeout(async () => {
 			await invoke("show_window");
 		}, 100);

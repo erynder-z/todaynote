@@ -29,6 +29,7 @@ pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, St
             shortcuts: config.shortcuts.clone(),
         }
     };
+
     get_initial_state(config, state)
 }
 
