@@ -3,10 +3,11 @@
    * Modal that displays all available keyboard shortcuts.
    */
   import { KeyboardShortcut, t } from '$lib';
-  import { defaultShortcuts } from '$lib/config/shortcuts';
+  import { settings } from '$lib/stores/settings.svelte';
+  import type { ShortcutAction } from '$lib/types/input';
 
   // Global shortcuts (exclude context-specific ones)
-  const globalActions = [
+  const globalActions: ShortcutAction[] = [
     'toggleSearch',
     'toggleNoteBrowser',
     'toggleSettings',
@@ -18,11 +19,9 @@
     'navigateLastAvailable',
     'navigateToday',
   ];
-  const shortcuts = globalActions.map(
-    (action) => defaultShortcuts[action as keyof typeof defaultShortcuts],
-  );
-  const fuzzyShortcut = defaultShortcuts.toggleFuzzy;
-  const searchModeShortcut = defaultShortcuts.toggleSearchMode;
+  const shortcuts = globalActions.map((action) => settings.shortcuts[action]);
+  const fuzzyShortcut = settings.shortcuts.toggleFuzzy;
+  const searchModeShortcut = settings.shortcuts.toggleSearchMode;
 </script>
 
 <div class="shortcut-list">

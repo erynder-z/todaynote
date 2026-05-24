@@ -1,4 +1,6 @@
+import type { ShortcutAction } from "../types/input";
 import type { PopupType } from "../types/ui";
+import type { ShortcutConfig } from "./input";
 import type { LocaleInfo } from "./locale";
 import type { NoteContentResponse, ThreadAggregationResult } from "./notes";
 import type { ThemeInfo } from "./settings";
@@ -31,4 +33,5 @@ export interface AppPayload {
 	todayNoteContent: NoteContentResponse | null;
 	isMac: boolean;
 	controlCenterWidth: number;
+	shortcuts: Partial<Record<ShortcutAction, ShortcutConfig>>;
 }

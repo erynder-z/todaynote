@@ -3,8 +3,9 @@
    * Reusable footer component for modal dialogs.
    * Displays keyboard shortcuts and optional item count.
    */
-  import { defaultShortcuts } from '$lib/config/shortcuts';
+
   import type { ShortcutHint } from '$lib/interfaces/ui';
+  import { settings } from '$lib/stores/settings.svelte';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
   let {
@@ -23,12 +24,12 @@
     {#each shortcuts as shortcut}
       <div class="shortcut-item">
         <span>{shortcut.label}</span>
-        {#if shortcut.action && defaultShortcuts[shortcut.action]}
-          {@const config = defaultShortcuts[shortcut.action]}
+        {#if shortcut.action && settings.shortcuts[shortcut.action]}
+          {@const config = settings.shortcuts[shortcut.action]}
           <KeyboardShortcut
-            key={config.key}
-            primary={config.primary}
-            secondary={config.secondary}
+            key={config?.key}
+            primary={config?.primary}
+            secondary={config?.secondary}
           />
         {:else if shortcut.key}
           <KeyboardShortcut

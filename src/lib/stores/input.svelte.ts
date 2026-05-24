@@ -1,7 +1,10 @@
-import { defaultShortcuts } from "$lib/config/shortcuts";
-import type { ShortcutRegistration } from "$lib/interfaces/input";
+import type {
+	ShortcutConfig,
+	ShortcutRegistration,
+} from "$lib/interfaces/input";
 import type { ShortcutAction, ShortcutCallback } from "$lib/types/input";
 import { sessionState } from "./sessionState.svelte";
+import { settings } from "./settings.svelte";
 
 /**
  * Centralized Input Manager for handling global keyboard shortcuts and tracking key states.
@@ -62,14 +65,8 @@ class InputManager {
 	 * Registers a shortcut action based on the central configuration.
 	 */
 	registerAction(action: ShortcutAction, callback: ShortcutCallback) {
-		const config = defaultShortcuts[action];
-		if (!config) {
-			console.warn(`No shortcut configuration found for action: ${action}`);
-			return () => {};
-		}
-
 		const registration: ShortcutRegistration = {
-			...config,
+			action,
 			callback,
 		};
 
@@ -111,7 +108,14 @@ class InputManager {
 			target?.isContentEditable;
 
 		for (let i = this.shortcuts.length - 1; i >= 0; i--) {
-			const shortcut = this.shortcuts[i];
+			const registration = this.shortcuts[i];
+
+			// Resolve config from action if provided, otherwise use manual config
+			const shortcut = registration.action
+				? settings.shortcuts[registration.action]
+				: (registration as ShortcutConfig);
+
+			if (!shortcut) continue;
 
 			// Map abstract modifiers to required physical states for exact matching.
 			// This ensures that if a modifier is NOT specified, it MUST NOT be pressed.
@@ -138,7 +142,7 @@ class InputManager {
 			const keys =
 				shortcut.key === ","
 					? [","]
-					: shortcut.key.split(",").map((k) => k.trim());
+					: (shortcut.key || "").split(",").map((k) => k.trim());
 
 			const matchesKey = keys.some((k) => {
 				const lowerK = k.toLowerCase();
@@ -163,7 +167,7 @@ class InputManager {
 						continue;
 				}
 
-				const result = shortcut.callback(e);
+				const result = registration.callback(e);
 				if (result !== false) {
 					e.preventDefault();
 					e.stopPropagation();

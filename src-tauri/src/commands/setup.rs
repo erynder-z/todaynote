@@ -26,6 +26,7 @@ pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, St
             search_selected_tag: config.search_selected_tag.clone(),
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
+            shortcuts: config.shortcuts.clone(),
         }
     };
     get_initial_state(config, state)
@@ -52,6 +53,7 @@ pub fn get_initial_state(
         search_selected_tag: config.search_selected_tag,
         control_center_width: config.control_center_width,
         default_thread_name: config.default_thread_name,
+        shortcuts: config.shortcuts,
         available_locales,
         available_themes,
         translations,

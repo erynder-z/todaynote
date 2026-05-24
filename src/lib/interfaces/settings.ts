@@ -1,3 +1,6 @@
+import type { ShortcutAction } from "../types/input";
+import type { ShortcutConfig } from "./input";
+
 export interface AppSettings {
 	notesFolder: string;
 	locale: string;
@@ -10,6 +13,7 @@ export interface AppSettings {
 	searchSelectedTag: string | null;
 	controlCenterWidth: number;
 	defaultThreadName: string | null;
+	shortcuts: Partial<Record<ShortcutAction, ShortcutConfig>>;
 }
 
 export interface ThemeInfo {

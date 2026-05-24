@@ -1,5 +1,6 @@
 //! Serializable data structures for frontend communication.
 
+use crate::models::config::ShortcutConfig;
 use crate::models::note_session::{NoteSession, NoteThread};
 use crate::services::note_manager::NoteManager;
 use crate::services::tag_manager::TagManager;
@@ -21,6 +22,7 @@ pub struct ConfigResponse {
     pub search_selected_tag: Option<String>,
     pub control_center_width: f64,
     pub default_thread_name: Option<String>,
+    pub shortcuts: HashMap<String, ShortcutConfig>,
 }
 
 /// Metadata for a single note file in the list.
@@ -103,6 +105,7 @@ pub struct AppPayload {
     pub search_selected_tag: Option<String>,
     pub control_center_width: f64,
     pub default_thread_name: Option<String>,
+    pub shortcuts: HashMap<String, ShortcutConfig>,
     pub available_locales: Vec<LocaleInfo>,
     pub available_themes: Vec<ThemeInfo>,
     pub translations: HashMap<String, String>,

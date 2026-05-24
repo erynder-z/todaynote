@@ -1,7 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { AppPayload } from "$lib/interfaces/appState";
+import type { ShortcutConfig } from "$lib/interfaces/input";
 import type { NoteContentResponse } from "$lib/interfaces/notes";
 import type { AppSettings } from "$lib/interfaces/settings";
+import type { ShortcutAction } from "$lib/types/input";
 import { syncFullAppState } from "$lib/utils/appSetup";
 import { readNoteContent } from "$lib/utils/notes";
 import { updateTranslations } from "../utils/i18n";
@@ -23,6 +25,7 @@ export class SettingsStore {
 	searchSelectedTag = $state<string | null>(null);
 	controlCenterWidth = $state(22);
 	defaultThreadName = $state<string | null>(null);
+	shortcuts = $state<Partial<Record<ShortcutAction, ShortcutConfig>>>({});
 
 	/**
 	 * Private promise chain to ensure saves happen sequentially.
@@ -57,6 +60,7 @@ export class SettingsStore {
 						updates.defaultThreadName !== undefined
 							? updates.defaultThreadName
 							: this.defaultThreadName,
+					shortcuts: updates.shortcuts ?? this.shortcuts,
 				};
 
 				await invoke("update_config", { newConfig: next });
@@ -89,6 +93,7 @@ export class SettingsStore {
 				this.searchSelectedTag = next.searchSelectedTag;
 				this.controlCenterWidth = next.controlCenterWidth;
 				this.defaultThreadName = next.defaultThreadName;
+				this.shortcuts = next.shortcuts;
 
 				// If turning OFF "Remember Settings", reset those specific fields to defaults
 				if (updates.rememberSettings === false) {

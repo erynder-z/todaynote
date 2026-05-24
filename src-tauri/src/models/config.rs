@@ -2,7 +2,19 @@
 
 use crate::utils;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
+
+/// Configuration for a keyboard shortcut.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ShortcutConfig {
+    pub key: String,
+    pub primary: bool,
+    pub secondary: bool,
+    pub shift: bool,
+    pub description: String,
+}
 
 /// Persistent configuration for the todaynote application.
 ///
@@ -32,12 +44,147 @@ pub struct AppConfig {
     pub control_center_width: f64,
     /// Custom default name for the initial thread in a new daily note.
     pub default_thread_name: Option<String>,
+    /// Global keyboard shortcuts configuration.
+    pub shortcuts: HashMap<String, ShortcutConfig>,
 }
 
 impl Default for AppConfig {
     fn default() -> Self {
         let home_dir = utils::app_data::get_home_dir();
         let notes_folder = home_dir.join("notes");
+
+        let mut shortcuts = HashMap::new();
+        shortcuts.insert(
+            "toggleSearch".to_string(),
+            ShortcutConfig {
+                key: "k".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle search".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleNoteBrowser".to_string(),
+            ShortcutConfig {
+                key: "l".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle note browser".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleSettings".to_string(),
+            ShortcutConfig {
+                key: ",".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle settings".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleNoteBrowserLayout".to_string(),
+            ShortcutConfig {
+                key: "l".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Toggle note browser layout".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "manageTags".to_string(),
+            ShortcutConfig {
+                key: "t".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Manage tags".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "closePopup".to_string(),
+            ShortcutConfig {
+                key: "Escape".to_string(),
+                primary: false,
+                secondary: false,
+                shift: false,
+                description: "Close popup".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "focusLastLine".to_string(),
+            ShortcutConfig {
+                key: "0".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Focus last line".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "jumpByNumber".to_string(),
+            ShortcutConfig {
+                key: "1,2,3,4,5,6,7,8,9,b,c,d,g,h,i,j,k,n,p,r".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Jump to thread".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleFuzzy".to_string(),
+            ShortcutConfig {
+                key: "f".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Toggle fuzzy search".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleSearchMode".to_string(),
+            ShortcutConfig {
+                key: "m".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Toggle search mode".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "navigateYesterday".to_string(),
+            ShortcutConfig {
+                key: "e".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Go to yesterday's note".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "navigateLastAvailable".to_string(),
+            ShortcutConfig {
+                key: "a".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Go to last available note".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "navigateToday".to_string(),
+            ShortcutConfig {
+                key: "o".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Go to today's note".to_string(),
+            },
+        );
+
         Self {
             notes_folder,
             locale: "en".to_string(),
@@ -50,6 +197,7 @@ impl Default for AppConfig {
             search_selected_tag: None,
             control_center_width: 22.0, // Default 22rem
             default_thread_name: None,
+            shortcuts,
         }
     }
 }

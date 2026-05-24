@@ -30,6 +30,7 @@ pub async fn update_config(
         config.search_selected_tag = new_config.search_selected_tag;
         config.control_center_width = new_config.control_center_width;
         config.default_thread_name = new_config.default_thread_name;
+        config.shortcuts = new_config.shortcuts;
 
         config.save();
         (folder_changed, locale_changed)
@@ -140,6 +141,7 @@ pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), 
     config.search_selected_tag = default_config.search_selected_tag;
     config.control_center_width = default_config.control_center_width;
     config.default_thread_name = default_config.default_thread_name;
+    config.shortcuts = default_config.shortcuts;
 
     config.save();
     Ok(())
@@ -206,6 +208,7 @@ pub async fn switch_notes_folder(
             search_selected_tag: config.search_selected_tag.clone(),
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
+            shortcuts: config.shortcuts.clone(),
         }
     };
 
