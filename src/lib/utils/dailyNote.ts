@@ -54,19 +54,6 @@ export const navigateToLastAvailable = async () => {
 };
 
 /**
- * Retrieves the absolute path to the current daily note file from the backend.
- */
-export const getTodayNotePath = async () => {
-	try {
-		const path = (await invoke("get_today_note_path")) as string;
-		return path;
-	} catch (error) {
-		console.error("Error getting today's note path:", error);
-		return null;
-	}
-};
-
-/**
  * Retrieves the absolute path to a note file offset from today.
  *
  * Positive offset goes forward in time, negative offset goes backward.
@@ -83,16 +70,5 @@ export const getNotePathByOffset = async (offset: number) => {
 	} catch (error) {
 		console.error(`Error getting note path for offset ${offset}:`, error);
 		return null;
-	}
-};
-
-/**
- * Creates a new daily note file for today if it doesn't already exist.
- */
-export const createTodaysNote = async () => {
-	try {
-		await invoke("create_todays_note");
-	} catch (error) {
-		console.error("Error creating today's note:", error);
 	}
 };

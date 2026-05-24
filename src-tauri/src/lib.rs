@@ -6,16 +6,15 @@ mod utils;
 use commands::folder::validate_folder;
 use commands::i18n::get_translations;
 use commands::notes::{
-    apply_default_thread_name, check_todays_note_exists, create_todays_note, delete_note_line,
-    detect_threads, ensure_thread, get_last_available_note_path, get_note_path_by_offset,
-    get_today_note_path, insert_note_line, list_notes, read_note_content, save_note_content,
-    update_note_line,
+    apply_default_thread_name, check_todays_note_exists, delete_note_line, detect_threads,
+    ensure_thread, get_last_available_note_path, get_note_path_by_offset, insert_note_line,
+    list_notes, read_note_content, save_note_content, update_note_line,
 };
 use commands::search::{
     aggregate_thread, search_notes, search_notes_by_tag, search_tags, search_threads,
 };
 use commands::settings::{
-    get_config, set_control_center_width, set_locale, set_notes_folder, set_notes_list_layout,
+    set_control_center_width, set_locale, set_notes_folder, set_notes_list_layout,
     set_remember_app_layout, set_remember_settings, set_search_is_fuzzy, set_search_mode,
     set_search_selected_tag, switch_notes_folder, update_config,
 };
@@ -70,11 +69,9 @@ pub fn run() {
             remove_note_tag,
             apply_default_thread_name,
             check_todays_note_exists,
-            create_todays_note,
             detect_threads,
             get_last_available_note_path,
             get_note_path_by_offset,
-            get_today_note_path,
             read_note_content,
             save_note_content,
             update_note_line,
@@ -88,7 +85,6 @@ pub fn run() {
             search_tags,
             search_notes_by_tag,
             aggregate_thread,
-            get_config,
             get_translations,
             get_theme_colors,
             get_all_tags,

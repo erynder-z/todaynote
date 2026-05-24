@@ -113,15 +113,6 @@ pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Resul
     Ok(())
 }
 
-/// Returns the absolute path to today's daily note.
-#[tauri::command]
-pub async fn get_today_note_path(state: State<'_, AppState>) -> Result<String, String> {
-    let note_manager = state.note_manager()?;
-    note_manager.ensure_notes_folder_exists()?;
-    let file_path = note_manager.get_today_note_path();
-    Ok(file_path.to_string_lossy().into_owned())
-}
-
 /// Returns the absolute path to the most recent note that is not today's note.
 #[tauri::command]
 pub async fn get_last_available_note_path(
@@ -162,37 +153,6 @@ pub async fn get_note_path_by_offset(
 pub async fn check_todays_note_exists(state: State<'_, AppState>) -> Result<bool, String> {
     let note_manager = state.note_manager()?;
     Ok(note_manager.todays_note_exists())
-}
-
-/// Creates a new daily note for today if it doesn't already exist.
-///
-/// Automatically initializes the note with a localized header.
-#[tauri::command]
-pub async fn create_todays_note(state: State<'_, AppState>) -> Result<(), String> {
-    let note_manager = state.note_manager()?;
-
-    if note_manager.todays_note_exists() {
-        return Ok(());
-    }
-
-    let translations = crate::commands::i18n::get_translations(note_manager.locale.clone());
-    let config = state.config()?;
-    let note_header = config.default_thread_name.as_deref().unwrap_or_else(|| {
-        translations
-            .get("note.header")
-            .map(|s| s.as_str())
-            .unwrap_or("Note")
-    });
-
-    let created_path = note_manager.create_todays_note(note_header)?;
-
-    // Load into session so auto-save works immediately
-    if let Ok(content) = note_manager.read_note_content(&created_path) {
-        let mut session = state.note_session()?;
-        session.load(created_path, content);
-    }
-
-    Ok(())
 }
 
 /// Reads the content of a note file from the specified path.

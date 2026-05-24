@@ -7,25 +7,6 @@ use crate::models::response_types::{AppPayload, ConfigResponse};
 use std::path::PathBuf;
 use tauri::State;
 
-/// Loads the current application configuration.
-#[tauri::command]
-pub async fn get_config(state: State<'_, AppState>) -> Result<ConfigResponse, String> {
-    let config = state.config()?;
-    Ok(ConfigResponse {
-        notes_folder: config.notes_folder.to_string_lossy().into_owned(),
-        locale: config.locale.clone(),
-        theme: config.theme.clone(),
-        remember_app_layout: config.remember_app_layout,
-        notes_list_layout: config.notes_list_layout.clone(),
-        remember_settings: config.remember_settings,
-        search_mode: config.search_mode.clone(),
-        search_is_fuzzy: config.search_is_fuzzy,
-        search_selected_tag: config.search_selected_tag.clone(),
-        control_center_width: config.control_center_width,
-        default_thread_name: config.default_thread_name.clone(),
-    })
-}
-
 /// Updates the entire application configuration and handles side effects.
 #[tauri::command]
 pub async fn update_config(

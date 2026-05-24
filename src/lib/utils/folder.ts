@@ -20,19 +20,6 @@ export const selectFolder = async () => {
 };
 
 /**
- * Commands the backend to create a new note file with a unique name.
- */
-export const createNewNote = async () => {
-	try {
-		const filePath = (await invoke("create_new_note")) as string;
-		return filePath;
-	} catch (error) {
-		console.error("Error creating new note:", error);
-		return null;
-	}
-};
-
-/**
  * Fetches a list of notes available in the currently configured notes folder.
  * If a limit is provided, only the most recent N notes are processed.
  */

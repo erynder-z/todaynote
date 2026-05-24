@@ -30,48 +30,6 @@ export class SettingsStore {
 	#saveQueue = Promise.resolve(true);
 
 	/**
-	 * Loads initial configuration from the backend and initializes UI stores.
-	 */
-	async load() {
-		try {
-			const config: AppSettings = await invoke("get_config");
-			this.notesFolder = config.notesFolder;
-			this.locale = config.locale;
-			this.theme = config.theme;
-			this.rememberAppLayout = config.rememberAppLayout;
-			this.notesListLayout = config.notesListLayout;
-			this.rememberSettings = config.rememberSettings;
-			this.searchMode = config.searchMode;
-			this.searchIsFuzzy = config.searchIsFuzzy;
-			this.searchSelectedTag = config.searchSelectedTag;
-			this.defaultThreadName = config.defaultThreadName;
-
-			// Migration check for old pixel values
-			const width = config.controlCenterWidth;
-			this.controlCenterWidth = width > 100 ? width / 16 : width;
-
-			await updateTranslations(this.locale);
-			await updateTheme(this.theme);
-			return config;
-		} catch (error) {
-			console.error("Error loading settings:", error);
-			return {
-				notesFolder: "",
-				locale: "en",
-				theme: "blind-spot",
-				rememberAppLayout: true,
-				notesListLayout: "list",
-				rememberSettings: true,
-				searchMode: "notes",
-				searchIsFuzzy: true,
-				searchSelectedTag: null,
-				controlCenterWidth: 22,
-				defaultThreadName: null,
-			};
-		}
-	}
-
-	/**
 	 * Updates the configuration in the backend and reflects changes in the UI.
 	 * All saves are queued and processed sequentially.
 	 */
