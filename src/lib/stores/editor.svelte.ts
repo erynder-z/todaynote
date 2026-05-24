@@ -13,6 +13,7 @@ export class EditorStore {
 	hasChanges = $state<boolean>(false);
 	pendingExternalUpdate = $state<boolean>(false);
 	private autoSaveTimeout: ReturnType<typeof setTimeout> | null = null;
+	private threadRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
 	threads = $state<NoteThread[]>([]);
 
 	// Callback for thread jumps
@@ -62,7 +63,15 @@ export class EditorStore {
 
 		this.hasChanges = true;
 		this.scheduleAutoSave();
-		this.refreshThreads();
+		this.scheduleThreadRefresh();
+	}
+
+	private scheduleThreadRefresh() {
+		if (this.threadRefreshTimeout) clearTimeout(this.threadRefreshTimeout);
+
+		this.threadRefreshTimeout = setTimeout(() => {
+			untrack(() => this.refreshThreads());
+		}, 250);
 	}
 
 	private refreshThreads() {
@@ -94,7 +103,11 @@ export class EditorStore {
 	 */
 	async flush() {
 		if (this.notePath && this.hasChanges) {
-			await saveNoteContent(this.notePath, this.content);
+			const updated = await saveNoteContent(this.notePath, this.content);
+			if (updated) {
+				this.threads = updated.threads;
+				this.noteContent = updated;
+			}
 			this.hasChanges = false;
 		}
 	}

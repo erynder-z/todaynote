@@ -50,7 +50,7 @@ pub async fn save_note_content(
     path: String,
     content: String,
     state: State<'_, AppState>,
-) -> Result<(), String> {
+) -> Result<NoteContentResponse, String> {
     let path_buf = PathBuf::from(&path);
     let full_content = reconstruct_full_content(&path_buf, &content)?;
 
@@ -58,7 +58,16 @@ pub async fn save_note_content(
     let mut session = state.note_session()?;
     session.load(path_buf.clone(), full_content.clone());
 
-    fs::write(path_buf, full_content).map_err(|e| format!("Failed to save note: {}", e))
+    fs::write(path_buf, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+
+    let note_manager = state.note_manager()?;
+    let tag_manager = state.tag_manager()?;
+
+    Ok(NoteContentResponse::from_session(
+        &session,
+        &*note_manager,
+        &*tag_manager,
+    ))
 }
 
 /// Updates the content of a specific line in the current note session.

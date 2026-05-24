@@ -121,13 +121,19 @@ export const readNoteContent = async (path: string) => {
 /**
  * Saves the entire markdown content of a note to the specified path.
  */
-export const saveNoteContent = async (path: string, content: string) => {
+export const saveNoteContent = async (
+	path: string,
+	content: string,
+): Promise<NoteContentResponse | null> => {
 	try {
-		await invoke("save_note_content", { path, content });
-		return true;
+		const result = (await invoke("save_note_content", {
+			path,
+			content,
+		})) as NoteContentResponse;
+		return result;
 	} catch (error) {
 		console.error(`Error saving note content to ${path}:`, error);
-		return false;
+		return null;
 	}
 };
 
