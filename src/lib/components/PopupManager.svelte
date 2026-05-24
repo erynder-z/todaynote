@@ -34,7 +34,10 @@
     <SearchNotes />
   </Modal>
 {:else if sessionState.activePopup === 'tagManager'}
-  <Modal title={$t('tag.manager.title')} size="sm">
+  <Modal
+    title={$t('tag.manager.title')}
+    size={settings.notesListLayout === 'masonry' ? 'xl' : 'md'}
+  >
     <TagManagerModal />
   </Modal>
 {:else if sessionState.activePopup === 'shortcuts'}

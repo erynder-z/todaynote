@@ -7,9 +7,13 @@
   import { inputManager } from '../stores/input.svelte';
   import { ListNavigator } from '../stores/listNav.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
+  import { settings } from '../stores/settings.svelte';
   import { t } from '../utils/i18n';
   import { addNoteTag, getTagSuggestions, removeNoteTag } from '../utils/notes';
+  import { useShortcuts } from '../utils/shortcuts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
+  import LayoutToolbar from './LayoutToolbar.svelte';
+  import MasonryLayout from './MasonryLayout.svelte';
   import ModalFooter from './ModalFooter.svelte';
 
   let newTag = $state('');
@@ -18,6 +22,14 @@
     sessionState.todayNoteContent?.metadata.tags || [],
   );
   let navigationTags = $derived([...currentTags, ...suggestedTags]);
+
+  useShortcuts({
+    toggleNoteBrowserLayout: () => {
+      const nextLayout =
+        settings.notesListLayout === 'list' ? 'masonry' : 'list';
+      setLayout(nextLayout);
+    },
+  });
 
   /**
    * Fetches suggestions from the backend.
@@ -63,6 +75,9 @@
     (i) => handleToggleTag(navigationTags[i]),
   );
 
+  let masonryLayout: { handleKey: (e: KeyboardEvent) => boolean } | null =
+    $state(null);
+
   /**
    * Handles keyboard events for navigation and actions.
    */
@@ -83,6 +98,10 @@
       }
     }
 
+    if (settings.notesListLayout === 'masonry' && masonryLayout) {
+      if (masonryLayout.handleKey(e)) return;
+    }
+
     // Try handling list navigation first
     if (nav.handleKey(e)) return;
 
@@ -98,25 +117,29 @@
     }
   };
 
+  const setLayout = (layout: 'list' | 'masonry') => {
+    settings.setNotesListLayout(layout);
+  };
+
   $effect(() => {
     updateSuggestions();
   });
+
+  $effect(() => {
+    if (nav.index !== -1 && nav.lastInputSource === 'keyboard') {
+      const selected = document.querySelector(
+        '.item-card.selected, .suggestion-item.selected',
+      );
+      selected?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  });
 </script>
 
-{#snippet tagItem(tag: string)}
+{#snippet tagSnippet(tag: string)}
   {@const isAdded = currentTags.includes(tag)}
   {@const globalIndex = navigationTags.indexOf(tag)}
   {@const shortcutLabel = tagSuggestionShortcuts.labels[globalIndex]}
-  <button
-    class="suggestion-item"
-    class:selected={globalIndex === nav.index}
-    class:is-added={isAdded}
-    onclick={() => handleToggleTag(tag)}
-    onmouseenter={() => {
-      if (nav.shouldIgnoreMouseEnter()) return;
-      nav.setIndex(globalIndex, 'mouse');
-    }}
-  >
+  <div class="tag-content-wrapper" class:is-added={isAdded}>
     <span class="hashtag">#</span>
     <span class="tag-label">{tag}</span>
 
@@ -129,6 +152,23 @@
     {#if isAdded}
       <span class="status-badge">{$t('tag.remove')}</span>
     {/if}
+  </div>
+{/snippet}
+
+{#snippet tagItem(tag: string)}
+  {@const isAdded = currentTags.includes(tag)}
+  {@const globalIndex = navigationTags.indexOf(tag)}
+  <button
+    class="suggestion-item"
+    class:selected={globalIndex === nav.index}
+    class:is-added={isAdded}
+    onclick={() => handleToggleTag(tag)}
+    onmouseenter={() => {
+      if (nav.shouldIgnoreMouseEnter()) return;
+      nav.setIndex(globalIndex, 'mouse');
+    }}
+  >
+    {@render tagSnippet(tag)}
   </button>
 {/snippet}
 
@@ -138,8 +178,8 @@
       <div class="tag-icon">
         <svg
           viewBox="0 0 24 24"
-          width="18"
-          height="18"
+          width="1.25rem"
+          height="1.25rem"
           stroke="currentColor"
           stroke-width="2"
           fill="none"
@@ -164,11 +204,21 @@
     </div>
   </header>
 
+  <LayoutToolbar onLayoutChange={setLayout} />
+
   <main class="results-area" onmouseleave={() => (nav.index = -1)}>
     {#if currentTags.length === 0 && suggestedTags.length === 0 && !newTag}
       <div class="status-view empty">
         <p class="muted">{$t('tag.suggestions')}</p>
       </div>
+    {:else if settings.notesListLayout === 'masonry'}
+      <MasonryLayout
+        bind:this={masonryLayout}
+        items={navigationTags}
+        {nav}
+        onSelect={handleToggleTag}
+        itemSnippet={tagSnippet}
+      />
     {:else}
       <div class="results-list">
         {#if currentTags.length > 0}
@@ -198,8 +248,14 @@
 
   <ModalFooter
     shortcuts={[
-      { label: $t('search.footer.navigate'), key: '↑↓' },
+      ...(settings.notesListLayout === 'masonry'
+        ? [{ label: $t('browser.navigate'), key: '↑↓←→' }]
+        : [{ label: $t('search.footer.navigate'), key: '↑↓' }]),
       { label: $t('shortcuts.tags.toggle'), key: 'Enter' },
+      {
+        label: $t('shortcuts.action.toggle_note_browser_layout'),
+        action: 'toggleNoteBrowserLayout',
+      },
       { label: $t('search.footer.close'), key: 'Esc' },
     ]}
   />
@@ -288,16 +344,14 @@
   .suggestion-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0;
     text-align: left;
     background: none;
     border: none;
     border-bottom: 1px solid var(--border);
     color: var(--text-main);
     cursor: pointer;
-    font-size: 0.95rem;
     transition: background-color 0.1s cubic-bezier(0.2, 0, 0, 1);
   }
 
@@ -313,9 +367,23 @@
     background-color: color-mix(in srgb, var(--remove), transparent 85%);
   }
 
+  .tag-content-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
   .tag-label {
     flex: 1;
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    color: var(--text-main);
   }
 
   .hashtag {
@@ -323,7 +391,8 @@
     font-weight: 600;
   }
 
-  .suggestion-item.selected .tag-label {
+  .suggestion-item.selected .tag-label,
+  :global(.item-card.selected) .tag-label {
     color: var(--accent);
   }
 
@@ -340,7 +409,8 @@
     color: var(--text-muted);
   }
 
-  .suggestion-item.selected .shortcut-hint {
+  .suggestion-item.selected .shortcut-hint,
+  :global(.item-card.selected) .shortcut-hint {
     border-color: var(--accent);
     color: var(--accent);
   }
