@@ -227,21 +227,23 @@
     />
 
     <main class="main-content">
-      <LayoutToolbar onLayoutChange={setLayout} />
-
-      <SearchInput
-        bind:query
-        isFuzzy={settings.searchIsFuzzy}
-        searchMode={settings.searchMode}
-        selectedTag={settings.searchSelectedTag}
-        {onInput}
-        onClearTag={clearTagFilter}
-        onClearQuery={() => {
-          query = '';
-          performSearch();
-        }}
-        onToggleFuzzy={() => settings.setSearchIsFuzzy(!settings.searchIsFuzzy)}
-      />
+      <div class="toolbar">
+        <SearchInput
+          bind:query
+          isFuzzy={settings.searchIsFuzzy}
+          searchMode={settings.searchMode}
+          selectedTag={settings.searchSelectedTag}
+          {onInput}
+          onClearTag={clearTagFilter}
+          onClearQuery={() => {
+            query = '';
+            performSearch();
+          }}
+          onToggleFuzzy={() =>
+            settings.setSearchIsFuzzy(!settings.searchIsFuzzy)}
+        />
+        <LayoutToolbar onLayoutChange={setLayout} />
+      </div>
 
       <div class="results-area" class:loading={isSearching}>
         {#if results.length > 0}
@@ -321,6 +323,15 @@
     flex-direction: column;
     background-color: var(--bg-main);
     overflow: hidden;
+  }
+
+  .toolbar {
+    padding: 1rem 2rem;
+    background-color: var(--bg-surface);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
   }
 
   .results-area {

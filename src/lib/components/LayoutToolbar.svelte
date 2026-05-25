@@ -52,15 +52,12 @@
   .layout-toolbar {
     display: flex;
     justify-content: flex-end;
-    padding: 0.75rem 1.5rem;
-    border-bottom: 1px solid var(--border);
     background-color: var(--bg-surface);
   }
 
   .toggle-group {
     display: flex;
     background-color: var(--bg-base);
-    border: 1px solid var(--border);
     border-radius: 0.5rem;
     padding: 2px;
   }

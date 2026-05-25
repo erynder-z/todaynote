@@ -169,7 +169,9 @@
 <!-- svelte-ignore a11y_autofocus -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="notes-container" onkeydown={handleKeyDown} tabindex="-1" autofocus>
-  <LayoutToolbar onLayoutChange={setLayout} />
+  <div class="toolbar-container">
+    <LayoutToolbar onLayoutChange={setLayout} />
+  </div>
 
   <main class="results-area" class:loading={isLoading}>
     {#if isLoading}
@@ -243,8 +245,15 @@
     height: 100%;
     background-color: var(--bg-main);
     overflow: hidden;
-    border: 1px solid var(--border);
     outline: none;
+  }
+
+  .toolbar-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-surface);
   }
 
   .results-area {
@@ -264,8 +273,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 3rem;
-    gap: 1rem;
+    padding: 1.5rem;
+    gap: 0.5rem;
     color: var(--text-muted);
   }
 
@@ -293,7 +302,7 @@
   .load-more-container {
     display: flex;
     justify-content: center;
-    padding: 2rem;
+    padding: 1rem;
     background: linear-gradient(to bottom, transparent, var(--bg-main) 50%);
   }
 
@@ -373,14 +382,14 @@
     display: flex;
     align-items: center;
     margin-bottom: 0.75rem;
-    padding: 1.25rem 1.25rem 0.25rem 1.25rem;
+    padding: 0.75rem 1.25rem 0.25rem;
   }
 
   .note-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     padding: 0 1.25rem;
   }
 
@@ -408,7 +417,7 @@
 
   .note-footer {
     margin-top: auto;
-    padding: 0.75rem 1.25rem 1.25rem 1.25rem;
+    padding: 0.5rem 1.25rem 1.25rem;
     border-top: 1px solid color-mix(in srgb, var(--border), transparent 50%);
   }
 

@@ -173,7 +173,7 @@
 {/snippet}
 
 <div class="tag-manager-container">
-  <header class="tag-header">
+  <div class="tag-header">
     <div class="input-wrapper">
       <div class="tag-icon">
         <svg
@@ -202,9 +202,8 @@
         autofocus
       />
     </div>
-  </header>
-
-  <LayoutToolbar onLayoutChange={setLayout} />
+    <LayoutToolbar onLayoutChange={setLayout} />
+  </div>
 
   <main class="results-area" onmouseleave={() => (nav.index = -1)}>
     {#if currentTags.length === 0 && suggestedTags.length === 0 && !newTag}
@@ -274,8 +273,12 @@
 
   .tag-header {
     padding: 1rem;
-    border-bottom: 1px solid var(--border);
     background-color: var(--bg-surface);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 2rem;
   }
 
   .input-wrapper {
@@ -283,9 +286,10 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background-color: var(--bg-main);
-    border: 1px solid var(--border);
-    border-radius: 0.5rem;
+    width: 100%;
+    height: fit-content;
+    background-color: color-mix(in srgb, var(--accent), transparent 80%);
+    border-radius: 0.25rem;
     padding: 0 0.75rem;
     transition:
       border-color 0.15s cubic-bezier(0.2, 0, 0, 1),
@@ -293,7 +297,7 @@
   }
 
   .input-wrapper:focus-within {
-    border-color: var(--accent);
+    background-color: color-mix(in srgb, var(--accent), transparent 55%);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent), transparent 80%);
   }
 
@@ -336,7 +340,7 @@
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05rem;
-    padding: 0.75rem 1rem 0.25rem 1rem;
+    padding: 0.5rem;
     background-color: var(--bg-surface);
     border-bottom: 1px solid var(--border);
   }
@@ -401,9 +405,8 @@
     align-items: center;
     gap: 0.2rem;
     background-color: var(--bg-main);
-    border: 1px solid var(--border);
     padding: 0.1rem 0.3rem;
-    border-radius: 3px;
+    border-radius: 0.15rem;
     font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--text-muted);

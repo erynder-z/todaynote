@@ -96,9 +96,9 @@
       <button onclick={close} class="close-button" aria-label="Close"
         ><svg
           xmlns="http://www.w3.org/2000/svg"
-          height="1.25rem"
+          height="1.2rem"
           viewBox="0 -960 960 960"
-          width="1.25rem"
+          width="1.2rem"
           fill="currentColor"
           ><path
             d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"
@@ -129,7 +129,6 @@
 
   .popup {
     background-color: var(--bg-base);
-    padding: 2rem;
     max-width: 90dvw;
     height: 85dvh;
     color: var(--text-main);
@@ -139,8 +138,8 @@
     justify-content: space-between;
     transition: width 0.3s cubic-bezier(0.2, 0, 0, 1);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
   }
 
   /* Size Variants */
@@ -173,20 +172,20 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    padding: 0.5rem;
   }
 
   h2 {
     margin: 0;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     text-align: center;
     font-weight: 800;
+    margin: auto;
   }
 
   .close-button {
     background: none;
     border: none;
-    font-size: 2rem;
     cursor: pointer;
     color: var(--text-muted);
     transition: color 0.15s cubic-bezier(0.2, 0, 0, 1);

@@ -76,8 +76,7 @@
 
 <style>
   .main-header {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--border);
+    width: 100%;
   }
 
   .search-input-container {
@@ -85,17 +84,15 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
+    background-color: color-mix(in srgb, var(--accent), transparent 80%);
+    border-radius: 0.5rem;
     padding: 0 1rem;
     height: 3rem;
     transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .search-input-container:focus-within {
-    border-color: var(--accent);
-    background-color: var(--bg-main);
+    background-color: color-mix(in srgb, var(--accent), transparent 55%);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 

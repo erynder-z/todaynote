@@ -53,20 +53,18 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 1rem;
+    gap: 0.375rem;
+    padding: 0.25rem 1rem;
     background-color: var(--bg-surface);
-    border-top: 1px solid var(--border);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-main);
   }
 
   .shortcuts {
     display: flex;
-    gap: 2rem;
-    align-items: flex-start;
+    gap: 1.5rem;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: space-between;
   }
 
   .shortcut-item {
