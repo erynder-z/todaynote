@@ -30,38 +30,37 @@ export class SettingsStore {
 	#saveQueue = Promise.resolve(true);
 
 	/**
+	 * Returns a plain object representing the current settings state.
+	 */
+	serialize(): AppSettings {
+		return {
+			notesFolder: this.notesFolder,
+			locale: this.locale,
+			theme: this.theme,
+			rememberAppLayout: this.rememberAppLayout,
+			notesListLayout: this.notesListLayout,
+			rememberSettings: this.rememberSettings,
+			searchMode: this.searchMode,
+			searchIsFuzzy: this.searchIsFuzzy,
+			searchSelectedTag: this.searchSelectedTag,
+			controlCenterWidth: this.controlCenterWidth,
+			defaultThreadName: this.defaultThreadName,
+			shortcuts: this.shortcuts,
+		};
+	}
+
+	/**
 	 * Updates the configuration in the backend and reflects changes in the UI.
 	 * All saves are queued and processed sequentially.
+	 * Updates local state optimistically.
 	 */
 	async save(updates: Partial<AppSettings>): Promise<boolean> {
+		Object.assign(this, updates);
+
 		this.#saveQueue = this.#saveQueue.then(async () => {
 			try {
-				// Determine the next state by merging updates with current state
-				const next: AppSettings = {
-					notesFolder: updates.notesFolder ?? this.notesFolder,
-					locale: updates.locale ?? this.locale,
-					theme: updates.theme ?? this.theme,
-					rememberAppLayout:
-						updates.rememberAppLayout ?? this.rememberAppLayout,
-					notesListLayout: updates.notesListLayout ?? this.notesListLayout,
-					rememberSettings: updates.rememberSettings ?? this.rememberSettings,
-					searchMode: updates.searchMode ?? this.searchMode,
-					searchIsFuzzy: updates.searchIsFuzzy ?? this.searchIsFuzzy,
-					searchSelectedTag:
-						updates.searchSelectedTag !== undefined
-							? updates.searchSelectedTag
-							: this.searchSelectedTag,
-					controlCenterWidth:
-						updates.controlCenterWidth ?? this.controlCenterWidth,
-					defaultThreadName:
-						updates.defaultThreadName !== undefined
-							? updates.defaultThreadName
-							: this.defaultThreadName,
-					shortcuts: updates.shortcuts ?? this.shortcuts,
-				};
-
 				const updatedState: AppPayload = await invoke("update_config", {
-					newConfig: next,
+					newConfig: this.serialize(),
 				});
 
 				syncFullAppState(updatedState);
