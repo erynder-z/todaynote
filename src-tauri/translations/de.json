@@ -84,5 +84,6 @@
 	"shortcuts.action.toggle_search_mode": "Suchmodus umschalten",
 	"browser.navigate": "Navigation",
 	"welcome.no_folder": "Bitte wähle einen Ordner für deine Notizen aus!",
-	"welcome.loading_notes": "Erstelle deine heutige Notiz..."
+	"welcome.loading_notes": "Erstelle deine heutige Notiz...",
+	"about.title": "Über TodayNote"
 }

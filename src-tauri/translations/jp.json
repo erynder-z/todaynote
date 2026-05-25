@@ -84,5 +84,6 @@
 	"shortcuts.action.toggle_search_mode": "検索モードを切り替える",
 	"browser.navigate": "選択を移動",
 	"welcome.no_folder": "フォルダを選んでください",
-	"welcome.loading_notes": "今日のノートを作成しています"
+	"welcome.loading_notes": "今日のノートを作成しています",
+	"about.title": "TodayNoteについて"
 }

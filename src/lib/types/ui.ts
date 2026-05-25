@@ -5,6 +5,7 @@ export type PopupType =
 	| "tagManager"
 	| "shortcuts"
 	| "threadAggregation"
+	| "about"
 	| null;
 
 export type ToastType = "info" | "success" | "warning" | "error";

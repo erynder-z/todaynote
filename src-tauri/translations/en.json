@@ -84,5 +84,6 @@
 	"shortcuts.action.toggle_search_mode": "Toggle Search Mode",
 	"browser.navigate": "Navigate",
 	"welcome.no_folder": "Please select a folder!",
-	"welcome.loading_notes": "Preparing your daily note..."
+	"welcome.loading_notes": "Preparing your daily note...",
+	"about.title": "About TodayList"
 }

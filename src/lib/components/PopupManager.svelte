@@ -8,6 +8,7 @@
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';
   import { t } from '../utils/i18n';
+  import AboutView from './AboutView.svelte';
   import Modal from './Modal.svelte';
   import NoteBrowser from './NoteBrowser.svelte';
   import SearchNotes from './SearchNotes.svelte';
@@ -49,6 +50,10 @@
 {:else if sessionState.activePopup === 'threadAggregation'}
   <Modal title={sessionState.aggregatedThread?.threadName} size="xl">
     <ThreadAggregationView />
+  </Modal>
+{:else if sessionState.activePopup === 'about'}
+  <Modal title="About TodayNote" size="md">
+    <AboutView />
   </Modal>
 {/if}
 
