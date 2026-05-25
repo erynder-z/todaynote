@@ -268,7 +268,6 @@
             ? [{ label: $t('browser.navigate'), key: '↑↓←→' }]
             : [{ label: $t('browser.navigate'), key: '↑↓' }]),
           { label: $t('search.footer.open'), key: 'Enter' },
-          { label: $t('search.footer.clear'), key: 'Delete' },
           {
             label: $t('shortcuts.search.toggle_fuzzy'),
             action: 'toggleFuzzy',
