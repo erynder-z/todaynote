@@ -26,17 +26,19 @@
   <Modal
     title={$t('notes.list.title')}
     size={settings.notesListLayout === 'masonry' ? 'xl' : 'md'}
+    showLayoutToggle={true}
   >
     <NoteBrowser />
   </Modal>
 {:else if sessionState.activePopup === 'search'}
-  <Modal title={$t('search.title')} size="xl">
+  <Modal title={$t('search.title')} size="xl" showLayoutToggle={true}>
     <SearchNotes />
   </Modal>
 {:else if sessionState.activePopup === 'tagManager'}
   <Modal
     title={$t('tag.manager.title')}
     size={settings.notesListLayout === 'masonry' ? 'xl' : 'md'}
+    showLayoutToggle={true}
   >
     <TagManagerModal />
   </Modal>

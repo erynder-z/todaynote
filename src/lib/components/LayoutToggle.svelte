@@ -1,15 +1,15 @@
 <script lang="ts">
   /**
-   * Layout toggle toolbar for switching between list and masonry views.
+   * Layout toggle for switching between list and masonry views.
    */
 
-  import type { LayoutToolbarProps } from '$lib/interfaces/ui';
+  import type { LayoutToggleProps } from '$lib/interfaces/ui';
   import { settings } from '../stores/settings.svelte';
 
-  let { onLayoutChange }: LayoutToolbarProps = $props();
+  let { onLayoutChange }: LayoutToggleProps = $props();
 </script>
 
-<div class="layout-toolbar">
+<div class="layout-toggle">
   <div class="toggle-group">
     <button
       class="toggle-btn"
@@ -49,24 +49,24 @@
 </div>
 
 <style>
-  .layout-toolbar {
+  .layout-toggle {
     display: flex;
-    justify-content: flex-end;
-    background-color: var(--bg-surface);
+    align-items: center;
   }
 
   .toggle-group {
     display: flex;
-    background-color: var(--bg-base);
+    background-color: var(--bg-surface);
     border-radius: 0.5rem;
     padding: 2px;
+    border: 1px solid var(--border);
   }
 
   .toggle-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.4rem;
+    padding: 0.3rem;
     background: none;
     border: none;
     border-radius: 0.35rem;

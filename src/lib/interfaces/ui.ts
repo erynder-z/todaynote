@@ -7,7 +7,7 @@ import type {
 	ThreadSearchResult,
 } from "./notes";
 
-export interface LayoutToolbarProps {
+export interface LayoutToggleProps {
 	onLayoutChange: (layout: "list" | "masonry") => void;
 }
 

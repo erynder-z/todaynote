@@ -4,7 +4,7 @@ export { default as EditorView } from "./components/EditorView.svelte";
 export { default as FolderSelector } from "./components/FolderSelector.svelte";
 export { default as KeyboardShortcut } from "./components/KeyboardShortcut.svelte";
 export { default as LanguageSelector } from "./components/LanguageSelector.svelte";
-export { default as LayoutToolbar } from "./components/LayoutToolbar.svelte";
+export { default as LayoutToggle } from "./components/LayoutToggle.svelte";
 export { default as ListLayout } from "./components/ListLayout.svelte";
 export { default as MainView } from "./components/MainView.svelte";
 export { default as MasonryLayout } from "./components/MasonryLayout.svelte";

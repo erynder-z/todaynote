@@ -23,7 +23,6 @@
   import { toast } from '../stores/toast.svelte';
   import { t } from '../utils/i18n';
   import { useShortcuts } from '../utils/shortcuts';
-  import LayoutToolbar from './LayoutToolbar.svelte';
   import ModalFooter from './ModalFooter.svelte';
   import SearchInput from './SearchInput.svelte';
   import SearchResultsContainer from './SearchResultsContainer.svelte';
@@ -82,10 +81,6 @@
     query = '';
     results = [];
     performSearch();
-  };
-
-  const setLayout = (layout: 'list' | 'masonry') => {
-    settings.setNotesListLayout(layout);
   };
 
   /**
@@ -242,7 +237,6 @@
           onToggleFuzzy={() =>
             settings.setSearchIsFuzzy(!settings.searchIsFuzzy)}
         />
-        <LayoutToolbar onLayoutChange={setLayout} />
       </div>
 
       <div class="results-area" class:loading={isSearching}>
@@ -331,7 +325,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 2rem;
   }
 
   .results-area {

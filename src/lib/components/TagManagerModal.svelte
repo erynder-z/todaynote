@@ -12,7 +12,6 @@
   import { addNoteTag, getTagSuggestions, removeNoteTag } from '../utils/notes';
   import { useShortcuts } from '../utils/shortcuts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
-  import LayoutToolbar from './LayoutToolbar.svelte';
   import MasonryLayout from './MasonryLayout.svelte';
   import ModalFooter from './ModalFooter.svelte';
 
@@ -27,7 +26,7 @@
     toggleNoteBrowserLayout: () => {
       const nextLayout =
         settings.notesListLayout === 'list' ? 'masonry' : 'list';
-      setLayout(nextLayout);
+      settings.setNotesListLayout(nextLayout);
     },
   });
 
@@ -117,10 +116,6 @@
     }
   };
 
-  const setLayout = (layout: 'list' | 'masonry') => {
-    settings.setNotesListLayout(layout);
-  };
-
   $effect(() => {
     updateSuggestions();
   });
@@ -202,7 +197,6 @@
         autofocus
       />
     </div>
-    <LayoutToolbar onLayoutChange={setLayout} />
   </div>
 
   <main class="results-area" onmouseleave={() => (nav.index = -1)}>
@@ -278,7 +272,6 @@
     justify-content: center;
     align-items: center;
     width: 100%;
-    gap: 2rem;
   }
 
   .input-wrapper {

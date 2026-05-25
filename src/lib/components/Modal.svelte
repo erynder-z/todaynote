@@ -7,16 +7,20 @@
   import type { ModalSize } from '$lib/types/ui';
   import { focusTrap } from '../actions/focusTrap';
   import { sessionState } from '../stores/sessionState.svelte';
+  import { settings } from '../stores/settings.svelte';
   import { useShortcuts } from '../utils/shortcuts';
+  import LayoutToggle from './LayoutToggle.svelte';
 
   let {
     title,
     children,
     size = 'md',
+    showLayoutToggle = false,
   } = $props<{
     title?: string;
     children: Component;
     size?: ModalSize;
+    showLayoutToggle?: boolean;
   }>();
 
   /**
@@ -24,6 +28,13 @@
    */
   const close = () => {
     sessionState.activePopup = null;
+  };
+
+  /**
+   * Updates the notes list layout in the settings.
+   */
+  const setLayout = (layout: 'list' | 'masonry') => {
+    settings.setNotesListLayout(layout);
   };
 
   useShortcuts({
@@ -92,19 +103,26 @@
     onclick={(e) => e.stopPropagation()}
   >
     <div class="popup-header">
+      <div class="header-left">
+        {#if showLayoutToggle}
+          <LayoutToggle onLayoutChange={setLayout} />
+        {/if}
+      </div>
       {#if title}<h2>{title}</h2>{/if}
-      <button onclick={close} class="close-button" aria-label="Close"
-        ><svg
-          xmlns="http://www.w3.org/2000/svg"
-          height="1.2rem"
-          viewBox="0 -960 960 960"
-          width="1.2rem"
-          fill="currentColor"
-          ><path
-            d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"
-          /></svg
-        ></button
-      >
+      <div class="header-right">
+        <button onclick={close} class="close-button" aria-label="Close"
+          ><svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="1.2rem"
+            viewBox="0 -960 960 960"
+            width="1.2rem"
+            fill="currentColor"
+            ><path
+              d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"
+            /></svg
+          ></button
+        >
+      </div>
     </div>
     <div class="popup-content">
       {@render children()}
@@ -169,18 +187,30 @@
   }
 
   .popup-header {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    padding: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-left {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .header-right {
+    display: flex;
+    justify-content: flex-end;
   }
 
   h2 {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     text-align: center;
     font-weight: 800;
-    margin: auto;
+    color: var(--text-main);
   }
 
   .close-button {

@@ -11,7 +11,6 @@
   import { toast } from '../stores/toast.svelte';
   import { t } from '../utils/i18n';
   import { useShortcuts } from '../utils/shortcuts';
-  import LayoutToolbar from './LayoutToolbar.svelte';
   import ListLayout from './ListLayout.svelte';
   import MasonryLayout from './MasonryLayout.svelte';
   import ModalFooter from './ModalFooter.svelte';
@@ -25,7 +24,7 @@
     toggleNoteBrowserLayout: () => {
       const nextLayout =
         settings.notesListLayout === 'list' ? 'masonry' : 'list';
-      setLayout(nextLayout);
+      settings.setNotesListLayout(nextLayout);
     },
   });
 
@@ -93,10 +92,6 @@
       selected?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   });
-
-  const setLayout = (layout: 'list' | 'masonry') => {
-    settings.setNotesListLayout(layout);
-  };
 </script>
 
 {#snippet listSnippet(note: FormattedNote, i: number)}
@@ -169,10 +164,6 @@
 <!-- svelte-ignore a11y_autofocus -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="notes-container" onkeydown={handleKeyDown} tabindex="-1" autofocus>
-  <div class="toolbar-container">
-    <LayoutToolbar onLayoutChange={setLayout} />
-  </div>
-
   <main class="results-area" class:loading={isLoading}>
     {#if isLoading}
       <div class="status-view">
@@ -246,14 +237,6 @@
     background-color: var(--bg-main);
     overflow: hidden;
     outline: none;
-  }
-
-  .toolbar-container {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0.5rem 1rem;
-    background-color: var(--bg-surface);
   }
 
   .results-area {
