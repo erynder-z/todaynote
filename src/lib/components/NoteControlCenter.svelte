@@ -2,6 +2,7 @@
   /**
    * Control Center sidebar containing date, tags, and thread shortcuts.
    */
+  import { t } from '$lib/utils/i18n';
   import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
   import NoteDate from './NoteDate.svelte';
   import NoteTags from './NoteTags.svelte';
@@ -26,12 +27,12 @@
   </div>
 
   <div class="sidebar-thread">
-    <h3 class="sidebar-title">Tags</h3>
+    <h3 class="sidebar-title">{$t('search.tags')}</h3>
     <NoteTags {noteContent} />
   </div>
 
   <div class="sidebar-thread">
-    <h3 class="sidebar-title">Threads</h3>
+    <h3 class="sidebar-title">{$t('search.threads')}</h3>
     <NoteThreadShortcuts {threads} {onSelect} />
   </div>
 </div>
