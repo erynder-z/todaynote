@@ -8,6 +8,7 @@
   import DefaultThreadNameSelector from './DefaultThreadNameSelector.svelte';
   import FolderSelector from './FolderSelector.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
+  import PurgeEmptyNotesSelector from './PurgeEmptyNotesSelector.svelte';
   import RememberSettingsSelector from './RememberSettingsSelector.svelte';
   import ShortcutSelector from './ShortcutSelector.svelte';
   import ThemeSelector from './ThemeSelector.svelte';
@@ -35,6 +36,7 @@
     WindowSizeSelector,
     RememberSettingsSelector,
     ShortcutSelector,
+    PurgeEmptyNotesSelector,
     AboutSelector,
   ];
 

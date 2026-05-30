@@ -224,6 +224,13 @@ pub async fn list_notes(
     note_manager.list_notes(limit)
 }
 
+/// Deletes all notes that have no content (only frontmatter and headings).
+#[tauri::command]
+pub async fn purge_empty_notes(state: State<'_, AppState>) -> Result<usize, String> {
+    let note_manager = state.note_manager()?;
+    note_manager.purge_empty_notes()
+}
+
 /// Gathers comprehensive statistics across all notes in the configured folder.
 #[tauri::command]
 pub async fn get_statistics(state: State<'_, AppState>) -> Result<AppStatistics, String> {

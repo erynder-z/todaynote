@@ -203,6 +203,57 @@ impl NoteManager {
         fs::read_to_string(path).map_err(|e| format!("Failed to read note content: {}", e))
     }
 
+    /// Deletes all notes that have no content (only frontmatter and headings).
+    pub fn purge_empty_notes(&self) -> Result<usize, String> {
+        let all_files = self.get_sorted_note_files()?;
+        let mut purged_count = 0;
+
+        for file_name in all_files {
+            let path = self.notes_folder.join(&file_name);
+            if let Ok(content) = fs::read_to_string(&path) {
+                if self.is_note_empty(&content) {
+                    fs::remove_file(&path)
+                        .map_err(|e| format!("Failed to delete empty note {}: {}", file_name, e))?;
+                    purged_count += 1;
+                }
+            }
+        }
+        Ok(purged_count)
+    }
+
+    /// Determines if a note is considered "empty" (no tags and no content beyond headings).
+    fn is_note_empty(&self, content: &str) -> bool {
+        // If it has tags, it's not empty
+        let tags = crate::utils::tag_parser::parse_tags_from_content(content);
+        if !tags.is_empty() {
+            return false;
+        }
+
+        let lines: Vec<&str> = content.lines().collect();
+        let mut start_idx = 0;
+
+        // Skip frontmatter
+        if lines.first().map(|l| l.trim()) == Some("---") {
+            for (i, line) in lines.iter().enumerate().skip(1) {
+                if line.trim() == "---" {
+                    start_idx = i + 1;
+                    break;
+                }
+            }
+        }
+
+        // Check if there is any content other than headings and whitespace
+        for line in lines.iter().skip(start_idx) {
+            let trimmed = line.trim();
+            if trimmed.is_empty() || trimmed.starts_with("# ") {
+                continue;
+            }
+            return false;
+        }
+
+        true
+    }
+
     /// Gathers comprehensive statistics across all notes in the configured folder.
     pub fn get_statistics(&self) -> Result<AppStatistics, String> {
         let all_files = self.get_sorted_note_files()?;
