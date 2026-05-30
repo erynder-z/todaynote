@@ -11,6 +11,7 @@
     'toggleSearch',
     'toggleNoteBrowser',
     'toggleSettings',
+    'toggleStatistics',
     'manageTags',
     'closePopup',
     'focusLastLine',
@@ -100,6 +101,7 @@
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    padding: 2rem;
     color: var(--text-main);
   }
 

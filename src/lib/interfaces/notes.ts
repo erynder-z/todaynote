@@ -62,3 +62,39 @@ export interface ThreadAggregationItem {
 	formattedDate: string;
 	content: string;
 }
+
+export interface AppStatistics {
+	totalNotes: number;
+	totalTags: number;
+	totalThreads: number;
+	totalCharacters: number;
+	totalWords: number;
+	currentStreak: number;
+	bestStreak: number;
+	topTags: TagStat[];
+	topThreads: ThreadStat[];
+	dailyStats: DailyStat[];
+	weekdayDistribution: number[];
+	insights: InsightResponse[];
+}
+
+export interface InsightResponse {
+	key: string;
+	params: Record<string, string>;
+}
+
+export interface TagStat {
+	name: string;
+	count: number;
+}
+
+export interface ThreadStat {
+	name: string;
+	count: number;
+}
+
+export interface DailyStat {
+	date: string;
+	characterCount: number;
+	wordCount: number;
+}

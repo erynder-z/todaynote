@@ -7,8 +7,8 @@ use commands::folder::validate_folder;
 use commands::i18n::get_translations;
 use commands::notes::{
     apply_default_thread_name, check_todays_note_exists, delete_note_line, detect_threads,
-    ensure_thread, get_last_available_note_path, get_note_path_by_offset, insert_note_line,
-    list_notes, read_last_available_note, read_note_by_offset, read_note_content,
+    ensure_thread, get_last_available_note_path, get_note_path_by_offset, get_statistics,
+    insert_note_line, list_notes, read_last_available_note, read_note_by_offset, read_note_content,
     save_note_content, update_note_line,
 };
 use commands::search::{
@@ -92,6 +92,7 @@ pub fn run() {
             get_theme_colors,
             get_all_tags,
             get_tag_suggestions,
+            get_statistics,
             list_notes,
             reset_config_to_defaults,
             set_control_center_width,

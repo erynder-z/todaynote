@@ -126,6 +126,57 @@ pub struct FolderValidation {
     pub error: Option<String>,
 }
 
+/// Statistics about the note collection.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppStatistics {
+    pub total_notes: usize,
+    pub total_tags: usize,
+    pub total_threads: usize,
+    pub total_characters: usize,
+    pub total_words: usize,
+    pub current_streak: usize,
+    pub best_streak: usize,
+    pub top_tags: Vec<TagStat>,
+    pub top_threads: Vec<ThreadStat>,
+    pub daily_stats: Vec<DailyStat>,
+    pub weekday_distribution: Vec<usize>, // 0=Mon, 6=Sun
+    pub insights: Vec<InsightResponse>,
+}
+
+/// A structured insight with a translation key and parameters.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InsightResponse {
+    pub key: String,
+    pub params: HashMap<String, String>,
+}
+
+/// A tag with its usage count.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TagStat {
+    pub name: String,
+    pub count: usize,
+}
+
+/// A thread with its usage count.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThreadStat {
+    pub name: String,
+    pub count: usize,
+}
+
+/// Statistics for a single day/note.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DailyStat {
+    pub date: String,
+    pub character_count: usize,
+    pub word_count: usize,
+}
+
 /// Metadata for an available locale.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LocaleInfo {

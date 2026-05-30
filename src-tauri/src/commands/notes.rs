@@ -4,7 +4,7 @@
 
 use crate::models::app_state::AppState;
 use crate::models::note_session::NoteThread;
-use crate::models::response_types::{NoteContentResponse, NoteListResponse};
+use crate::models::response_types::{AppStatistics, NoteContentResponse, NoteListResponse};
 use std::fs;
 use std::path::PathBuf;
 use tauri::State;
@@ -222,6 +222,13 @@ pub async fn list_notes(
 ) -> Result<NoteListResponse, String> {
     let note_manager = state.note_manager()?;
     note_manager.list_notes(limit)
+}
+
+/// Gathers comprehensive statistics across all notes in the configured folder.
+#[tauri::command]
+pub async fn get_statistics(state: State<'_, AppState>) -> Result<AppStatistics, String> {
+    let note_manager = state.note_manager()?;
+    note_manager.get_statistics()
 }
 
 /// Finds or creates a thread by name and returns its content-relative line index.

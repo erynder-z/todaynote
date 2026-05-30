@@ -14,6 +14,7 @@
   import SearchNotes from './SearchNotes.svelte';
   import SettingsView from './SettingsView.svelte';
   import ShortcutListModal from './ShortcutListModal.svelte';
+  import StatisticsView from './StatisticsView.svelte';
   import TagManagerModal from './TagManagerModal.svelte';
   import ThreadAggregationView from './ThreadAggregationView.svelte';
   import Toast from './Toast.svelte';
@@ -54,6 +55,10 @@
 {:else if sessionState.activePopup === 'about'}
   <Modal title="About TodayNote" size="md">
     <AboutView />
+  </Modal>
+{:else if sessionState.activePopup === 'statistics'}
+  <Modal title={$t('statistics.title')} size="lg">
+    <StatisticsView />
   </Modal>
 {/if}
 

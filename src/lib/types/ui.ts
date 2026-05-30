@@ -6,6 +6,7 @@ export type PopupType =
 	| "shortcuts"
 	| "threadAggregation"
 	| "about"
+	| "statistics"
 	| null;
 
 export type ToastType = "info" | "success" | "warning" | "error";

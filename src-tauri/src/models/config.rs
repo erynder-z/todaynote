@@ -85,6 +85,16 @@ impl Default for AppConfig {
             },
         );
         shortcuts.insert(
+            "toggleStatistics".to_string(),
+            ShortcutConfig {
+                key: "x".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle statistics".to_string(),
+            },
+        );
+        shortcuts.insert(
             "toggleNoteBrowserLayout".to_string(),
             ShortcutConfig {
                 key: "l".to_string(),
