@@ -9,8 +9,9 @@
     ThreadSearchResult,
   } from '$lib/interfaces/notes';
   import type { SearchResultsContainerProps } from '$lib/interfaces/ui';
+  import { formatNoteName } from '$lib/utils/notes';
   import { settings } from '../stores/settings.svelte';
-  import { t } from '../utils/i18n';
+  import { locale, t } from '../utils/i18n';
   import ListLayout from './ListLayout.svelte';
   import MasonryLayout from './MasonryLayout.svelte';
 
@@ -91,7 +92,7 @@
 {#snippet noteListSnippet(result: SearchResult)}
   <div class="list-note-item">
     <div class="result-meta">
-      <span class="date">{result.formattedName}</span>
+      <span class="date">{formatNoteName(result.filename, $locale)}</span>
       <span class="ln">L{result.lineNumber + 1}</span>
     </div>
     <div class="result-content">
@@ -105,7 +106,7 @@
 {#snippet noteMasonrySnippet(result: SearchResult)}
   <div class="masonry-note-item">
     <div class="card-header">
-      <span class="note-name">{result.formattedName}</span>
+      <span class="note-name">{formatNoteName(result.filename, $locale)}</span>
       <span class="ln">L{result.lineNumber + 1}</span>
     </div>
     <div class="card-content">

@@ -1,15 +1,21 @@
 <script lang="ts">
   /**
    * Component for displaying a note's formatted date.
-   * Extracts the localized date from the provided note content.
+   * Extracts and formats the localized date from the provided note content.
    */
   import type { NoteContentResponse } from '$lib/interfaces/notes';
+  import { locale } from '$lib/utils/i18n';
+  import { formatNoteName } from '$lib/utils/notes';
 
   let { noteContent } = $props<{
     noteContent: NoteContentResponse | null;
   }>();
 
-  let date = $derived(noteContent?.metadata.formattedDate);
+  let date = $derived(
+    noteContent?.path
+      ? formatNoteName(noteContent.path.split(/[/\\]/).pop() || '', $locale)
+      : '',
+  );
 </script>
 
 {#if date}

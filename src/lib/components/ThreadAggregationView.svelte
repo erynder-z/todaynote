@@ -4,7 +4,8 @@
    * Shows each content block with a date hint that links back to the source note.
    */
   import { sessionState, settings, t, toast } from '$lib';
-  import { readNoteContent } from '$lib/utils/notes';
+  import { locale } from '$lib/utils/i18n';
+  import { formatNoteName, readNoteContent } from '$lib/utils/notes';
   import MilkdownEditor from './MilkdownEditor.svelte';
 
   let aggregation = $derived(sessionState.aggregatedThread);
@@ -47,7 +48,7 @@
                   d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T784-120H200Zm392-520-56-56 224-224H600v-80h280v280h-80v-168L592-640Z"
                 /></svg
               >
-              {item.formattedDate}
+              {formatNoteName(item.filename, $locale)}
             </button>
           </header>
           <div class="item-body">

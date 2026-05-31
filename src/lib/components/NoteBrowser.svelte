@@ -4,12 +4,12 @@
    */
   import type { FormattedNote } from '$lib/interfaces/notes';
   import { listNotes } from '$lib/utils/folder';
-  import { readNoteContent } from '$lib/utils/notes';
+  import { formatNoteName, readNoteContent } from '$lib/utils/notes';
   import { ListNavigator } from '../stores/listNav.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';
   import { toast } from '../stores/toast.svelte';
-  import { t } from '../utils/i18n';
+  import { locale, t } from '../utils/i18n';
   import { useShortcuts } from '../utils/shortcuts';
   import ListLayout from './ListLayout.svelte';
   import MasonryLayout from './MasonryLayout.svelte';
@@ -96,7 +96,7 @@
 
 {#snippet listSnippet(note: FormattedNote, i: number)}
   <div class="result-content">
-    <span class="note-name">{note.formattedName}</span>
+    <span class="note-name">{formatNoteName(note.filename, $locale)}</span>
     {#if note.tags && note.tags.length > 0}
       <div class="list-tags">
         {#each note.tags as tag}
@@ -109,7 +109,7 @@
 
 {#snippet masonrySnippet(note: FormattedNote, i: number)}
   <div class="card-header">
-    <span class="note-name">{note.formattedName}</span>
+    <span class="note-name">{formatNoteName(note.filename, $locale)}</span>
   </div>
 
   {#if note.tags && note.tags.length > 0}

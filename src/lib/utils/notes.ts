@@ -208,3 +208,29 @@ export const detectThreads = async (content: string): Promise<NoteThread[]> => {
 		return [];
 	}
 };
+
+/**
+ * Formats a note's filename into a human-readable, localized string.
+ */
+export const formatNoteName = (
+	filename: string,
+	currentLocale: string,
+): string => {
+	const withoutExt = filename.replace(/\.md$/, "");
+
+	const datePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+	const match = withoutExt.match(datePattern);
+	if (!match) return withoutExt;
+
+	const year = Number.parseInt(match[1], 10);
+	const month = Number.parseInt(match[2], 10) - 1;
+	const day = Number.parseInt(match[3], 10);
+	const dateObj = new Date(year, month, day);
+
+	return dateObj.toLocaleDateString(currentLocale, {
+		weekday: "long",
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
+};
