@@ -7,6 +7,7 @@ export type ShortcutAction =
 	| "toggleNoteBrowser"
 	| "toggleSettings"
 	| "toggleStatistics"
+	| "toggleSidebar"
 	| "toggleNoteBrowserLayout"
 	| "manageTags"
 	| "closePopup"

@@ -64,6 +64,7 @@ export const syncSettingsState = (state: AppPayload) => {
 	settings.searchMode = state.searchMode;
 	settings.searchIsFuzzy = state.searchIsFuzzy;
 	settings.searchSelectedTag = state.searchSelectedTag;
+	settings.sidebarOpen = state.sidebarOpen;
 	settings.defaultThreadName = state.defaultThreadName;
 	settings.shortcuts = state.shortcuts;
 
@@ -79,5 +80,9 @@ export const syncSessionState = (state: AppPayload) => {
 	if (state.notesFolder) {
 		sessionState.todayNotePath = state.todayNotePath;
 		sessionState.todayNoteContent = state.todayNoteContent;
+
+		// Initialize sidebar state from settings if in horizontal layout
+		if (typeof window !== "undefined" && window.innerWidth > 1024)
+			sessionState.sidebarOpen = state.sidebarOpen;
 	}
 };

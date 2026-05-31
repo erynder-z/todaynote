@@ -29,6 +29,7 @@ pub async fn update_config(
         config.search_mode = new_config.search_mode;
         config.search_is_fuzzy = new_config.search_is_fuzzy;
         config.search_selected_tag = new_config.search_selected_tag;
+        config.sidebar_open = new_config.sidebar_open;
         config.control_center_width = new_config.control_center_width;
         config.default_thread_name = new_config.default_thread_name;
         config.shortcuts = new_config.shortcuts;
@@ -55,6 +56,7 @@ pub async fn update_config(
             search_mode: config.search_mode.clone(),
             search_is_fuzzy: config.search_is_fuzzy,
             search_selected_tag: config.search_selected_tag.clone(),
+            sidebar_open: config.sidebar_open,
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
             shortcuts: config.shortcuts.clone(),
@@ -64,7 +66,16 @@ pub async fn update_config(
     setup::get_initial_state(config, state)
 }
 
-/// Sets whether the width of the NoteControlCenter sidebar.
+/// Sets the visibility of the sidebar.
+#[tauri::command]
+pub async fn set_sidebar_open(open: bool, state: State<'_, AppState>) -> Result<(), String> {
+    let mut config = state.config()?;
+    config.sidebar_open = open;
+    config.save();
+    Ok(())
+}
+
+/// Sets whether the width of the sidebar.
 #[tauri::command]
 pub async fn set_control_center_width(
     width: f64,
@@ -158,6 +169,7 @@ pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), 
     config.search_mode = default_config.search_mode;
     config.search_is_fuzzy = default_config.search_is_fuzzy;
     config.search_selected_tag = default_config.search_selected_tag;
+    config.sidebar_open = default_config.sidebar_open;
     config.control_center_width = default_config.control_center_width;
     config.default_thread_name = default_config.default_thread_name;
     config.shortcuts = default_config.shortcuts;
@@ -225,6 +237,7 @@ pub async fn switch_notes_folder(
             search_mode: config.search_mode.clone(),
             search_is_fuzzy: config.search_is_fuzzy,
             search_selected_tag: config.search_selected_tag.clone(),
+            sidebar_open: config.sidebar_open,
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
             shortcuts: config.shortcuts.clone(),

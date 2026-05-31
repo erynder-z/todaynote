@@ -40,7 +40,9 @@ pub struct AppConfig {
     pub search_is_fuzzy: bool,
     /// Last selected tag in search.
     pub search_selected_tag: Option<String>,
-    /// Width of the NoteControlCenter sidebar in pixels.
+    /// Whether the sidebar is currently open.
+    pub sidebar_open: bool,
+    /// Width of the sidebar in pixels.
     pub control_center_width: f64,
     /// Custom default name for the initial thread in a new daily note.
     pub default_thread_name: Option<String>,
@@ -92,6 +94,16 @@ impl Default for AppConfig {
                 secondary: false,
                 shift: false,
                 description: "Toggle statistics".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleSidebar".to_string(),
+            ShortcutConfig {
+                key: "b".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Toggle sidebar".to_string(),
             },
         );
         shortcuts.insert(
@@ -205,6 +217,7 @@ impl Default for AppConfig {
             search_mode: "notes".to_string(),
             search_is_fuzzy: true,
             search_selected_tag: None,
+            sidebar_open: true,
             control_center_width: 22.0, // Default 22rem
             default_thread_name: None,
             shortcuts,

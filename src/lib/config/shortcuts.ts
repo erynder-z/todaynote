@@ -9,7 +9,6 @@ export const tagSuggestionShortcuts = {
 		"Digit7",
 		"Digit8",
 		"Digit9",
-		"KeyB",
 		"KeyC",
 		"KeyD",
 		"KeyG",
@@ -20,6 +19,7 @@ export const tagSuggestionShortcuts = {
 		"KeyN",
 		"KeyP",
 		"KeyR",
+		"KeyS",
 	],
-	labels: "123456789BCDGHIKNPR".split(""),
+	labels: "123456789CDGHIKNPRS".split(""),
 };

@@ -8,5 +8,5 @@ export const sessionState = $state<SessionState>({
 	aggregatedThread: null,
 	activePopup: null,
 	isMac: false,
-	sidebarOpen: false,
+	sidebarOpen: typeof window !== "undefined" ? window.innerWidth > 1024 : false,
 });

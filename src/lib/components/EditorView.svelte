@@ -2,12 +2,14 @@
   /**
    * View component that combines the note editor with the note sidebar.
    */
+
+  import { fade } from 'svelte/transition';
   import type { NoteContentResponse } from '$lib/interfaces/notes';
-  import { settings } from '../index';
+  import { settings, t } from '../index';
   import { EditorStore } from '../stores/editor.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
-  import NoteControlCenter from './NoteControlCenter.svelte';
   import NoteEditor from './NoteEditor.svelte';
+  import Sidebar from './Sidebar.svelte';
 
   let { noteContent = $bindable(), notePath } = $props<{
     noteContent: NoteContentResponse | null;
@@ -20,9 +22,33 @@
    * Indicates whether the sidebar is currently being resized.
    */
   let isResizing = $state(false);
+  let windowWidth = $state(
+    typeof window !== 'undefined' ? window.innerWidth : 1200,
+  );
+  let isVertical = $derived(windowWidth <= 1024);
 
   $effect(() => {
     editor.sync(noteContent, notePath);
+  });
+
+  /**
+   * Automatically close/open sidebar based on window width to handle responsive layout changes.
+   * Also persists manual changes when in desktop layout.
+   */
+  $effect(() => {
+    // This effect handles the responsive transitions
+    if (isVertical) {
+      sessionState.sidebarOpen = false;
+    } else {
+      // Restore the user's desktop preference when returning to normal layout
+      sessionState.sidebarOpen = settings.sidebarOpen;
+    }
+  });
+
+  $effect(() => {
+    // This effect persists manual toggles in horizontal layout
+    const currentStatus = sessionState.sidebarOpen;
+    if (!isVertical) settings.setSidebarOpen(currentStatus);
   });
 
   /**
@@ -38,7 +64,7 @@
     if (editor.jumpToThread) editor.jumpToThread(name);
 
     // Close sidebar in vertical layout after jumping
-    sessionState.sidebarOpen = false;
+    if (window.innerWidth <= 1024) sessionState.sidebarOpen = false;
   };
 
   /**
@@ -80,9 +106,33 @@
   };
 </script>
 
-<svelte:window onmousemove={handleMouseMove} onmouseup={stopResizing} />
+<svelte:window
+  bind:innerWidth={windowWidth}
+  onmousemove={handleMouseMove}
+  onmouseup={stopResizing}
+/>
 
 <div class="note-container">
+  {#if !sessionState.sidebarOpen}
+    <button
+      transition:fade={{ duration: 200 }}
+      class="sidebar-open-btn desktop-only"
+      onclick={() => (sessionState.sidebarOpen = true)}
+      title={$t('navigation.toggle_sidebar')}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="1rem"
+        viewBox="0 -960 960 960"
+        width="1rem"
+        fill="currentColor"
+        ><path
+          d="M440-280v-400L240-480l200 200Zm80 160h80v-720h-80v720Z"
+        /></svg
+      >
+    </button>
+  {/if}
+
   <div class="note-layout">
     <div class="editor-main">
       <NoteEditor bind:noteContent {notePath} {editor} />
@@ -93,6 +143,7 @@
     <div
       class="resizer"
       class:resizing={isResizing}
+      class:visible={sessionState.sidebarOpen}
       onmousedown={startResizing}
     ></div>
 
@@ -106,7 +157,7 @@
     {/if}
 
     <div class="sidebar-wrapper" class:open={sessionState.sidebarOpen}>
-      <NoteControlCenter
+      <Sidebar
         {noteContent}
         threads={editor.threads}
         onSelect={handleJump}
@@ -123,6 +174,35 @@
     display: flex;
     flex-direction: column;
     background-color: var(--bg-base);
+    position: relative;
+  }
+
+  .sidebar-open-btn {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 100;
+    background: none;
+    border: none;
+    color: var(--text-ui-muted);
+    padding: 0.75rem 0.25rem;
+    border-radius: 0.5rem 0 0 0.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    transition:
+      padding 0.2s,
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .sidebar-open-btn:hover {
+    background-color: color-mix(in srgb, var(--accent), transparent 85%);
+    color: var(--accent);
+    border-color: var(--accent);
   }
 
   .note-layout {
@@ -150,10 +230,19 @@
     height: 100%;
     cursor: col-resize;
     background-color: transparent;
-    transition: background-color 0.2s;
+    transition:
+      background-color 0.2s,
+      opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10;
     margin-left: -2px;
     margin-right: -2px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .resizer.visible {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .resizer:hover,
@@ -170,7 +259,8 @@
       padding: 1.5rem;
     }
 
-    .resizer {
+    .resizer,
+    .resizer.visible {
       display: none;
     }
 
@@ -187,6 +277,7 @@
     }
 
     .sidebar-wrapper.open {
+      display: block;
       transform: translateX(0);
     }
 
@@ -197,6 +288,10 @@
       background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(2px);
       z-index: 999;
+    }
+
+    .desktop-only {
+      display: none;
     }
   }
 </style>

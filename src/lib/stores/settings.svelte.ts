@@ -20,6 +20,7 @@ export class SettingsStore {
 	searchMode = $state<"notes" | "threads" | "tags">("notes");
 	searchIsFuzzy = $state(true);
 	searchSelectedTag = $state<string | null>(null);
+	sidebarOpen = $state(true);
 	controlCenterWidth = $state(22);
 	defaultThreadName = $state<string | null>(null);
 	shortcuts = $state<Partial<Record<ShortcutAction, ShortcutConfig>>>({});
@@ -43,6 +44,7 @@ export class SettingsStore {
 			searchMode: this.searchMode,
 			searchIsFuzzy: this.searchIsFuzzy,
 			searchSelectedTag: this.searchSelectedTag,
+			sidebarOpen: this.sidebarOpen,
 			controlCenterWidth: this.controlCenterWidth,
 			defaultThreadName: this.defaultThreadName,
 			shortcuts: this.shortcuts,
@@ -76,6 +78,16 @@ export class SettingsStore {
 		});
 
 		return this.#saveQueue;
+	}
+
+	/**
+	 * Granular setter for sidebar visibility that handles conditional persistence.
+	 */
+	async setSidebarOpen(open: boolean): Promise<boolean> {
+		if (this.rememberSettings) return await this.save({ sidebarOpen: open });
+
+		this.sidebarOpen = open;
+		return true;
 	}
 
 	/**

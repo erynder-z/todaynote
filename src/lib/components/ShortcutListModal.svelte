@@ -12,6 +12,7 @@
     'toggleNoteBrowser',
     'toggleSettings',
     'toggleStatistics',
+    'toggleSidebar',
     'manageTags',
     'closePopup',
     'focusLastLine',

@@ -11,6 +11,7 @@ export interface AppSettings {
 	searchMode: "notes" | "threads" | "tags";
 	searchIsFuzzy: boolean;
 	searchSelectedTag: string | null;
+	sidebarOpen: boolean;
 	controlCenterWidth: number;
 	defaultThreadName: string | null;
 	shortcuts: Partial<Record<ShortcutAction, ShortcutConfig>>;

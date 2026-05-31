@@ -95,7 +95,7 @@
     onclick={() => (sessionState.sidebarOpen = !sessionState.sidebarOpen)}
     class="nav-icon vertical-layout-only"
     class:active={sessionState.sidebarOpen}
-    title="Toggle Sidebar"
+    title={$t('navigation.toggle_sidebar')}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"

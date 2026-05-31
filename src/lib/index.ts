@@ -13,7 +13,6 @@ export { default as Modal } from "./components/Modal.svelte";
 export { default as ModalFooter } from "./components/ModalFooter.svelte";
 export { default as Navigation } from "./components/Navigation.svelte";
 export { default as NoteBrowser } from "./components/NoteBrowser.svelte";
-export { default as NoteControlCenter } from "./components/NoteControlCenter.svelte";
 export { default as NoteDate } from "./components/NoteDate.svelte";
 export { default as NoteEditor } from "./components/NoteEditor.svelte";
 export { default as NoteTags } from "./components/NoteTags.svelte";
@@ -27,6 +26,7 @@ export { default as SearchStatusView } from "./components/SearchStatusView.svelt
 export { default as SettingsView } from "./components/SettingsView.svelte";
 export { default as ShortcutListModal } from "./components/ShortcutListModal.svelte";
 export { default as ShortcutSelector } from "./components/ShortcutSelector.svelte";
+export { default as Sidebar } from "./components/Sidebar.svelte";
 export { default as TagManagerModal } from "./components/TagManagerModal.svelte";
 export { default as ThreadAggregationView } from "./components/ThreadAggregationView.svelte";
 export * from "./stores/input.svelte";

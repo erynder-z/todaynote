@@ -17,7 +17,7 @@ use commands::search::{
 use commands::settings::{
     reset_config_to_defaults, set_control_center_width, set_locale, set_notes_folder,
     set_notes_list_layout, set_remember_app_layout, set_remember_settings, set_search_is_fuzzy,
-    set_search_mode, set_search_selected_tag, switch_notes_folder, update_config,
+    set_search_mode, set_search_selected_tag, set_sidebar_open, switch_notes_folder, update_config,
 };
 use commands::setup::initialize_app;
 use commands::tags::{add_note_tag, get_all_tags, get_tag_suggestions, remove_note_tag};
@@ -105,6 +105,7 @@ pub fn run() {
             set_search_mode,
             set_search_is_fuzzy,
             set_search_selected_tag,
+            set_sidebar_open,
             set_theme,
             switch_notes_folder,
             update_config,
