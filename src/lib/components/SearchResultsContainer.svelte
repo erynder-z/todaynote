@@ -121,7 +121,16 @@
   <div class="list-thread-tag-item">
     <div class="item-icon">
       {#if searchMode === 'tags'}
-        <span class="hash">#</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="1rem"
+          viewBox="0 -960 960 960"
+          width="1rem"
+          fill="currentColor"
+          ><path
+            d="m240-160 40-160H120l20-80h160l40-160H180l20-80h160l40-160h80l-40 160h160l40-160h80l-40 160h160l-20 80H660l-40 160h160l-20 80H600l-40 160h-80l40-160H360l-40 160h-80Zm140-240h160l40-160H420l-40 160Z"
+          /></svg
+        >
       {:else}
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -151,13 +160,22 @@
   <div class="masonry-thread-tag-item" class:tag-item={searchMode === 'tags'}>
     <div class="card-icon">
       {#if searchMode === 'tags'}
-        <span class="hash">#</span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="2rem"
+          viewBox="0 -960 960 960"
+          width="2rem"
+          fill="currentColor"
+          ><path
+            d="m240-160 40-160H120l20-80h160l40-160H180l20-80h160l40-160h80l-40 160h160l40-160h80l-40 160h160l-20 80H660l-40 160h160l-20 80H600l-40 160h-80l40-160H360l-40 160h-80Zm140-240h160l40-160H420l-40 160Z"
+          /></svg
+        >
       {:else}
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          height="1rem"
+          height="2rem"
           viewBox="0 -960 960 960"
-          width="1rem"
+          width="2rem"
           fill="currentColor"
           ><path
             d="M600-80v-100L320-320H120v-240h172l108-124v-196h240v240H468L360-516v126l240 120v-50h240v240H600Z"
@@ -252,6 +270,10 @@
     font-weight: 600;
     font-size: 0.8rem;
     color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
 
   .ln {
@@ -280,19 +302,20 @@
 
   .item-name {
     flex: 1;
+    min-width: 0;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
 
   .item-count {
     font-size: 0.75rem;
     color: var(--text-muted);
     font-family: var(--font-mono);
-  }
-
-  .hash {
-    font-weight: 800;
-    font-size: 1.1rem;
   }
 
   .masonry-note-item {
@@ -325,9 +348,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
   }
 
   .card-icon {
+    width: auto;
     color: var(--accent);
     opacity: 0.7;
     display: flex;

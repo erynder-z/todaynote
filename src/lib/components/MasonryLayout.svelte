@@ -24,7 +24,8 @@
    * Number of columns based on container width.
    */
   let columnCount = $derived.by(() => {
-    if (containerWidth > 1200) return 4;
+    if (containerWidth > 1200) return 5;
+    if (containerWidth > 1024) return 4;
     if (containerWidth > 768) return 3;
     if (containerWidth > 500) return 2;
     return 1;
