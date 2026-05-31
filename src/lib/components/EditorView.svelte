@@ -162,6 +162,7 @@
         threads={editor.threads}
         onSelect={handleJump}
         width={settings.controlCenterWidth}
+        {isResizing}
       />
     </div>
   </div>

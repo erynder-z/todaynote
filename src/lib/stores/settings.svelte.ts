@@ -177,9 +177,7 @@ export class SettingsStore {
 				path,
 			});
 
-			if (newState.notesFolder) {
-				syncFullAppState(newState);
-			}
+			if (newState.notesFolder) syncFullAppState(newState, true);
 
 			sessionState.activePopup = null;
 

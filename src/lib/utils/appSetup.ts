@@ -12,7 +12,7 @@ import { applyThemeColors, availableThemes, currentTheme } from "./theme";
 export const initializeApp = async () => {
 	try {
 		const initialState: AppPayload = await invoke("initialize_app");
-		syncFullAppState(initialState);
+		syncFullAppState(initialState, true);
 
 		// Small delay to ensure Svelte has finished rendering before showing the window
 		setTimeout(async () => {
@@ -26,11 +26,11 @@ export const initializeApp = async () => {
 /**
  * Synchronizes all frontend stores with the provided state.
  */
-export const syncFullAppState = (state: AppPayload) => {
+export const syncFullAppState = (state: AppPayload, syncSession = false) => {
 	syncI18nState(state);
 	syncThemeState(state);
 	syncSettingsState(state);
-	syncSessionState(state);
+	syncSessionState(state, syncSession);
 };
 
 /**
@@ -75,11 +75,13 @@ export const syncSettingsState = (state: AppPayload) => {
 /**
  * Synchronizes the application's runtime state (active note, etc.).
  */
-export const syncSessionState = (state: AppPayload) => {
+export const syncSessionState = (state: AppPayload, syncSession = false) => {
 	sessionState.isMac = state.isMac;
 	if (state.notesFolder) {
-		sessionState.todayNotePath = state.todayNotePath;
-		sessionState.todayNoteContent = state.todayNoteContent;
+		if (syncSession || !sessionState.todayNotePath) {
+			sessionState.todayNotePath = state.todayNotePath;
+			sessionState.todayNoteContent = state.todayNoteContent;
+		}
 
 		// Initialize sidebar state from settings if in horizontal layout
 		if (typeof window !== "undefined" && window.innerWidth > 1024)

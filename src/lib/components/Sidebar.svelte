@@ -16,11 +16,13 @@
     threads,
     onSelect,
     width = 22, // rem
+    isResizing = false,
   } = $props<{
     noteContent: NoteContentResponse | null;
     threads: NoteThread[];
     onSelect: (name: string) => void;
     width?: number;
+    isResizing?: boolean;
   }>();
 
   const toggleSidebar = () => {
@@ -35,6 +37,7 @@
 <div
   class="sidebar"
   class:closed={!sessionState.sidebarOpen}
+  class:resizing={isResizing}
   style="width: {sessionState.sidebarOpen
     ? width
     : 0}rem; --content-width: {width - 3}rem;"
@@ -140,6 +143,10 @@
         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       opacity: 1;
+    }
+
+    .sidebar.resizing {
+      transition: none !important;
     }
 
     .sidebar.closed {
