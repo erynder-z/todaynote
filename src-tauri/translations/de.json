@@ -119,5 +119,9 @@
 	"statistics.topTags": "Top Tags",
 	"statistics.topThreads": "Top Threads",
 	"statistics.recentActivity": "Letzte Aktivitäten",
-	"statistics.chars": "Zeichen"
+	"statistics.chars": "Zeichen",
+	"settings.thread_visual_style": "Thread-Visualisierungsstil",
+	"settings.thread_visual_identicon_dotmatrix": "Identicon (Dotmatrix)",
+	"settings.thread_visual_identicon_round": "Identicon (Rund)",
+	"settings.thread_visual_static_icon": "Statisches Icon"
 }

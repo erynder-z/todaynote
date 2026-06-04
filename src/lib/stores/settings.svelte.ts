@@ -23,6 +23,7 @@ export class SettingsStore {
 	sidebarOpen = $state(true);
 	controlCenterWidth = $state(22);
 	defaultThreadName = $state<string | null>(null);
+	identiconStyle = $state<"dotmatrix" | "round" | "none">("dotmatrix");
 	shortcuts = $state<Partial<Record<ShortcutAction, ShortcutConfig>>>({});
 
 	/**
@@ -47,6 +48,7 @@ export class SettingsStore {
 			sidebarOpen: this.sidebarOpen,
 			controlCenterWidth: this.controlCenterWidth,
 			defaultThreadName: this.defaultThreadName,
+			identiconStyle: this.identiconStyle,
 			shortcuts: this.shortcuts,
 		};
 	}

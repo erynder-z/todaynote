@@ -25,5 +25,15 @@
 	"--md-code-bg": "#e6e9ef",
 	"--md-code-inline-bg": "#dce0e8",
 	"--md-code-text": "#4c4f69",
-	"--text-selection": "#7287fd"
+	"--text-selection": "#7287fd",
+	"--identicon-1": "#d20f39",
+	"--identicon-2": "#fe640b",
+	"--identicon-3": "#df8e1d",
+	"--identicon-4": "#40a02b",
+	"--identicon-5": "#179299",
+	"--identicon-6": "#8839ef",
+	"--identicon-7": "#1e66f5",
+	"--identicon-8": "#ea76cb",
+	"--identicon-9": "#209fb5",
+	"--identicon-10": "#7287fd"
 }

@@ -7,6 +7,7 @@
   import AboutSelector from './AboutSelector.svelte';
   import DefaultThreadNameSelector from './DefaultThreadNameSelector.svelte';
   import FolderSelector from './FolderSelector.svelte';
+  import IdentIconStyleSelector from './IdentIconStyleSelector.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
   import PurgeEmptyNotesSelector from './PurgeEmptyNotesSelector.svelte';
   import RememberSettingsSelector from './RememberSettingsSelector.svelte';
@@ -33,6 +34,7 @@
     DefaultThreadNameSelector,
     LanguageSelector,
     ThemeSelector,
+    IdentIconStyleSelector,
     WindowSizeSelector,
     RememberSettingsSelector,
     ShortcutSelector,

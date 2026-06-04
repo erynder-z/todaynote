@@ -12,6 +12,7 @@
   import { formatNoteName } from '$lib/utils/notes';
   import { settings } from '../stores/settings.svelte';
   import { locale, t } from '../utils/i18n';
+  import IdentIcon from './IdentIcon.svelte';
   import ListLayout from './ListLayout.svelte';
   import MasonryLayout from './MasonryLayout.svelte';
 
@@ -132,7 +133,7 @@
           /></svg
         >
       {:else}
-        <svg
+        <!--  <svg
           xmlns="http://www.w3.org/2000/svg"
           height="1rem"
           viewBox="0 -960 960 960"
@@ -141,7 +142,8 @@
           ><path
             d="M600-80v-100L320-320H120v-240h172l108-124v-196h240v240H468L360-516v126l240 120v-50h240v240H600Z"
           /></svg
-        >
+        > -->
+        <IdentIcon title={item.name} size={32} />
       {/if}
     </div>
     <span class="item-name">{item.name}</span>
@@ -171,16 +173,7 @@
           /></svg
         >
       {:else}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          height="2rem"
-          viewBox="0 -960 960 960"
-          width="2rem"
-          fill="currentColor"
-          ><path
-            d="M600-80v-100L320-320H120v-240h172l108-124v-196h240v240H468L360-516v126l240 120v-50h240v240H600Z"
-          /></svg
-        >
+        <IdentIcon title={item.name} size={64} />
       {/if}
     </div>
     <span class="item-name">{item.name}</span>

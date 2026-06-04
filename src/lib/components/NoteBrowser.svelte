@@ -11,6 +11,7 @@
   import { toast } from '../stores/toast.svelte';
   import { locale, t } from '../utils/i18n';
   import { useShortcuts } from '../utils/shortcuts';
+  import IdentIcon from './IdentIcon.svelte';
   import ListLayout from './ListLayout.svelte';
   import MasonryLayout from './MasonryLayout.svelte';
   import ModalFooter from './ModalFooter.svelte';
@@ -124,16 +125,7 @@
     <div class="note-threads">
       {#each note.threads as thread}
         <div class="thread-item">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="1rem"
-            viewBox="0 -960 960 960"
-            width="1rem"
-            fill="currentColor"
-            ><path
-              d="m382-354 182-182-182-182 56-56 238 238-238 238-56-56Z"
-            /></svg
-          >
+          <IdentIcon title={thread} size={24} />
           <span>{thread}</span>
         </div>
       {/each}

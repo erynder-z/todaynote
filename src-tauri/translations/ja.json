@@ -118,5 +118,9 @@
 	"statistics.topTags": "よく使うタグ",
 	"statistics.topThreads": "よく使うスレッド",
 	"statistics.recentActivity": "最近の活動",
-	"statistics.chars": "文字"
+	"statistics.chars": "文字",
+	"settings.thread_visual_style": "スレッドのビジュアルスタイル",
+	"settings.thread_visual_identicon_dotmatrix": "Identicon（ドットマトリックス）",
+	"settings.thread_visual_identicon_round": "Identicon（丸型）",
+	"settings.thread_visual_static_icon": "静的アイコン"
 }
