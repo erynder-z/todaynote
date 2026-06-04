@@ -37,14 +37,15 @@
     '--identicon-7',
     '--identicon-8',
     '--identicon-9',
-    '--identicon-10'
+    '--identicon-10',
   ];
 
   // Generate color from theme-specific identicon palette
   const generateColor = (index: number): string => {
     const colorHash = hash + index * 997;
     const colorIndex =
-      ((colorHash % IDENTICON_COLOR_VARIABLES.length) + IDENTICON_COLOR_VARIABLES.length) %
+      ((colorHash % IDENTICON_COLOR_VARIABLES.length) +
+        IDENTICON_COLOR_VARIABLES.length) %
       IDENTICON_COLOR_VARIABLES.length;
     return `var(${IDENTICON_COLOR_VARIABLES[colorIndex]})`;
   };
@@ -87,7 +88,7 @@
 
   <circle cx="50" cy="50" r="50" fill="var(--local-bg, #202020)" />
 
-  <!-- Jazzicon-style shapes - overlapping colored rectangles that fill the entire space -->
+  <!-- Jazzicon-style (https://github.com/danfinlay/jazzicon) shapes - overlapping colored rectangles that fill the entire space -->
 
   <g clip-path="url(#circle-clip)">
     {#each shapes as shape}
