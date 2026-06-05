@@ -145,10 +145,10 @@
         /></svg
       >
       <span
-        >{$t('notes.list.wordCount', {
-          count: note.wordCount,
-        })}</span
-      >
+        >{note.hasCode
+          ? $t('notes.list.wordCountWithCode', { count: note.wordCount })
+          : $t('notes.list.wordCount', { count: note.wordCount })}
+      </span>
     </div>
   </div>
 {/snippet}

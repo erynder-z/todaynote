@@ -105,7 +105,8 @@ impl NoteManager {
             preview: self.extract_preview(&content),
             tags: crate::utils::tag_parser::parse_tags_from_content(&content),
             threads: self.extract_threads(&content, 5),
-            word_count: crate::utils::markdown::count_words(&content),
+            word_count: crate::utils::markdown::count_words(&content).0,
+            has_code: crate::utils::markdown::count_words(&content).1,
         })
     }
 

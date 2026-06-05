@@ -216,7 +216,7 @@ pub fn collect_note_statistics(
             total_notes += 1;
 
             let char_count = content.chars().count();
-            let word_count = crate::utils::markdown::count_words(&content);
+            let (word_count, _) = crate::utils::markdown::count_words(&content);
 
             total_characters += char_count;
             total_words += word_count;

@@ -45,7 +45,6 @@
 	"settings.purge_empty_notes.confirm_message": "Dies wird alle Notizen dauerhaft löschen, die keinen Inhalt enthalten. Dies  kann nicht rückgängig gemacht werden.",
 	"settings.purge_empty_notes.success": "{{count}} leere Notizen erfolgreich bereinigt.",
 	"settings.apply": "Anwenden",
-
 	"settings.default_thread_name.title": "Standard-Thread-Name",
 	"settings.default_thread_name.apply_to_all": "Auf alle vorhandenen Notizen anwenden",
 	"settings.default_thread_name.confirm_title": "Auf alle Notizen anwenden?",
@@ -62,6 +61,7 @@
 	"notes.list.empty": "Keine Notizen gefunden",
 	"notes.list.length": "{{count}} Notizen",
 	"notes.list.wordCount": "{{count}} Wörter",
+	"notes.list.wordCountWithCode": "{{count}} Wörter + etwas Code",
 	"notes.list.load_all": "Alle Notizen laden ({{count}} insgesamt)",
 	"note.header": "Notizen",
 	"tag.manager.title": "Tags verwalten",

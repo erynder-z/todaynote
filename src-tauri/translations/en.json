@@ -61,6 +61,7 @@
 	"notes.list.empty": "No notes found",
 	"notes.list.length": "{{count}} notes",
 	"notes.list.wordCount": "{{count}} words",
+	"notes.list.wordCountWithCode": "{{count}} words + some code",
 	"notes.list.load_all": "Load all notes ({{count}} total)",
 	"note.header": "Notes",
 	"tag.manager.title": "Tag manager ",

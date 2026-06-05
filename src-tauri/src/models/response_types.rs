@@ -36,6 +36,7 @@ pub struct FormattedNote {
     pub tags: Vec<String>,
     pub threads: Vec<String>,
     pub word_count: usize,
+    pub has_code: bool,
 }
 
 /// A paginated response for note listing.

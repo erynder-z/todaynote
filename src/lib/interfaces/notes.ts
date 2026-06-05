@@ -5,6 +5,7 @@ export interface FormattedNote {
 	tags: string[];
 	threads: string[];
 	wordCount: number;
+	hasCode: boolean;
 }
 
 export interface NoteListResponse {

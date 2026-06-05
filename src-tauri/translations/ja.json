@@ -61,6 +61,7 @@
 	"notes.list.empty": "ノートが見つかりませんでした",
 	"notes.list.length": "{{count}} 個のノート",
 	"notes.list.wordCount": "{{count}} 単語",
+	"notes.list.wordCountWithCode": "{{count}} 単語 +　コード",
 	"notes.list.load_all": "すべてのノートを読み込む (合計 {{count}})",
 	"note.header": "ノート",
 	"tag.manager.title": "タグマネジャー ",
