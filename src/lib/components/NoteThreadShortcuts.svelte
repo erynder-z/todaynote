@@ -4,6 +4,7 @@
    */
   import type { NoteThread } from '$lib/interfaces/notes';
   import { tagSuggestionShortcuts } from '../config/shortcuts';
+  import IdentIcon from './IdentIcon.svelte';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
   let { threads, onSelect } = $props<{
@@ -19,14 +20,19 @@
   <div class="threads-container">
     {#each visibleThreads as thread, i}
       <button class="thread-pill" onclick={() => onSelect(thread.name)}>
-        <span class="thread-name">{thread.name}</span>
-        <span class="shortcut-hint">
-          <KeyboardShortcut
-            primary
-            secondary
-            key={tagSuggestionShortcuts.labels[i]}
-          />
-        </span>
+        <div class="left-side">
+          <IdentIcon title={thread.name} size={16} />
+          <span class="thread-name">{thread.name}</span>
+        </div>
+        <div class="right-side">
+          <span class="shortcut-hint">
+            <KeyboardShortcut
+              primary
+              secondary
+              key={tagSuggestionShortcuts.labels[i]}
+            />
+          </span>
+        </div>
       </button>
     {/each}
   </div>
@@ -59,11 +65,18 @@
 
   .thread-pill:hover {
     background-color: color-mix(in srgb, var(--accent), transparent 90%);
-    color: var(--accent);
   }
 
-  .thread-name {
+  .thread-pill .left-side {
+    display: flex;
+    gap: 0.5rem;
     font-weight: 500;
+    overflow: hidden;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .thread-pill .thread-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -81,10 +94,5 @@
     gap: 0.1rem;
     opacity: 0.6;
     flex-shrink: 0;
-  }
-
-  .thread-pill:hover .shortcut-hint {
-    color: var(--text-main);
-    opacity: 1;
   }
 </style>

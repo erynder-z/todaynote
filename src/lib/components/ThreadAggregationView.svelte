@@ -6,6 +6,7 @@
   import { sessionState, settings, t, toast } from '$lib';
   import { locale } from '$lib/utils/i18n';
   import { formatNoteName, readNoteContent } from '$lib/utils/notes';
+  import IdentIcon from './IdentIcon.svelte';
   import MilkdownEditor from './MilkdownEditor.svelte';
 
   let aggregation = $derived(sessionState.aggregatedThread);
@@ -33,6 +34,7 @@
       {#each aggregation.items as item}
         <div class="aggregation-item">
           <header class="item-header">
+            <IdentIcon title={aggregation.threadName} size={24} />
             <button
               class="date-link"
               onclick={() => openOriginalNote(item.filename)}
@@ -68,17 +70,22 @@
   .aggregation-container {
     padding: 1rem;
     height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .items-list {
     display: flex;
     flex-direction: column;
-    gap: 3rem;
+    gap: 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
   }
 
   .aggregation-item {
     border-bottom: 1px solid var(--border);
-    padding-bottom: 2rem;
+    padding-bottom: 1rem;
   }
 
   .aggregation-item:last-child {
@@ -86,9 +93,11 @@
   }
 
   .item-header {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     display: flex;
     justify-content: flex-start;
+    align-items: center;
+    gap: 0.75rem;
   }
 
   .date-link {
@@ -114,9 +123,10 @@
 
   .item-body {
     background-color: var(--bg-surface);
-    border-radius: 0.75rem;
-    padding: 0 1.5rem;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
     border: 1px solid var(--border);
+    margin-top: 0.5rem;
   }
 
   /* Override Milkdown min-height for these small blocks */
@@ -128,7 +138,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 200px;
+    flex: 1;
     color: var(--text-muted);
     font-style: italic;
   }
