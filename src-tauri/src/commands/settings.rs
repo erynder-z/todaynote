@@ -32,6 +32,7 @@ pub async fn update_config(
         config.sidebar_open = new_config.sidebar_open;
         config.control_center_width = new_config.control_center_width;
         config.default_thread_name = new_config.default_thread_name;
+        config.identicon_style = new_config.identicon_style;
         config.shortcuts = new_config.shortcuts;
 
         config.save();
@@ -59,6 +60,7 @@ pub async fn update_config(
             sidebar_open: config.sidebar_open,
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
+            identicon_style: config.identicon_style.clone(),
             shortcuts: config.shortcuts.clone(),
         }
     };
@@ -172,6 +174,7 @@ pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), 
     config.sidebar_open = default_config.sidebar_open;
     config.control_center_width = default_config.control_center_width;
     config.default_thread_name = default_config.default_thread_name;
+    config.identicon_style = default_config.identicon_style;
     config.shortcuts = default_config.shortcuts;
 
     config.save();
@@ -226,7 +229,7 @@ pub async fn switch_notes_folder(
         config.notes_folder = new_path.clone();
         config.save();
 
-        // We return a clone to avoid holding the lock during get_initial_state
+        // Return a clone to avoid holding the lock during get_initial_state
         AppConfig {
             notes_folder: config.notes_folder.clone(),
             locale: config.locale.clone(),
@@ -240,6 +243,7 @@ pub async fn switch_notes_folder(
             sidebar_open: config.sidebar_open,
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
+            identicon_style: config.identicon_style.clone(),
             shortcuts: config.shortcuts.clone(),
         }
     };

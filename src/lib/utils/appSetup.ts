@@ -66,6 +66,7 @@ export const syncSettingsState = (state: AppPayload) => {
 	settings.searchSelectedTag = state.searchSelectedTag;
 	settings.sidebarOpen = state.sidebarOpen;
 	settings.defaultThreadName = state.defaultThreadName;
+	settings.identiconStyle = state.identiconStyle;
 	settings.shortcuts = state.shortcuts;
 
 	const width = state.controlCenterWidth;

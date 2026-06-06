@@ -46,6 +46,8 @@ pub struct AppConfig {
     pub control_center_width: f64,
     /// Custom default name for the initial thread in a new daily note.
     pub default_thread_name: Option<String>,
+    /// Visual style for thread identification icons ("dotmatrix", "round", or "none").
+    pub identicon_style: String,
     /// Global keyboard shortcuts configuration.
     pub shortcuts: HashMap<String, ShortcutConfig>,
 }
@@ -220,6 +222,7 @@ impl Default for AppConfig {
             sidebar_open: true,
             control_center_width: 22.0, // Default 22rem
             default_thread_name: None,
+            identicon_style: "dotmatrix".to_string(),
             shortcuts,
         }
     }

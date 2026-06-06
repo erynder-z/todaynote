@@ -26,6 +26,7 @@ export interface AppPayload {
 	searchSelectedTag: string | null;
 	sidebarOpen: boolean;
 	defaultThreadName: string | null;
+	identiconStyle: "dotmatrix" | "round" | "none";
 	availableLocales: LocaleInfo[];
 	availableThemes: ThemeInfo[];
 	translations: Record<string, string>;

@@ -147,6 +147,19 @@ export class SettingsStore {
 	}
 
 	/**
+	 * Granular setter for identicon style that handles conditional persistence.
+	 */
+	async set_identicon_style(
+		style: "dotmatrix" | "round" | "none",
+	): Promise<boolean> {
+		if (this.rememberSettings)
+			return await this.save({ identiconStyle: style });
+
+		this.identiconStyle = style;
+		return true;
+	}
+
+	/**
 	 * Resets remembered settings to their default values.
 	 */
 	async resetToDefaults() {

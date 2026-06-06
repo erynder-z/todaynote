@@ -14,7 +14,7 @@
   const handleStyleChange = async (e: Event) => {
     const target = e.target as HTMLSelectElement;
     const newStyle = target.value as 'dotmatrix' | 'round' | 'none';
-    await settings.save({ identiconStyle: newStyle });
+    await settings.set_identicon_style(newStyle);
   };
 </script>
 

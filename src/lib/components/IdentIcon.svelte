@@ -3,14 +3,19 @@
   import IdentIconDotmatrix from './IdentIcon_dotmatrix.svelte';
   import IdentIconRound from './IdentIcon_round.svelte';
 
-  export let title = '';
-  export let size = 32;
-  export let style: 'dotmatrix' | 'round' | 'none' = 'dotmatrix';
+  let {
+    title = '',
+    size = 32,
+    style = 'dotmatrix',
+  } = $props<{
+    title?: string;
+    size?: number;
+    style?: 'dotmatrix' | 'round' | 'none';
+  }>();
 
-  const effectiveStyle =
-    style === 'dotmatrix' && settings.identiconStyle !== 'dotmatrix'
-      ? settings.identiconStyle
-      : style;
+  let effectiveStyle = $derived(
+    style === 'dotmatrix' ? settings.identiconStyle : style,
+  );
 </script>
 
 {#if effectiveStyle === 'dotmatrix'}
