@@ -146,8 +146,16 @@
       >
       <span
         >{note.hasCode
-          ? $t('notes.list.wordCountWithCode', { count: note.wordCount })
-          : $t('notes.list.wordCount', { count: note.wordCount })}
+          ? note.wordCount >= 2
+            ? $t('notes.list.wordCountWithCode_multiple', {
+                count: note.wordCount,
+              })
+            : $t('notes.list.wordCountWithCode_single', {
+                count: note.wordCount,
+              })
+          : note.wordCount >= 2
+            ? $t('notes.list.wordCount_multiple', { count: note.wordCount })
+            : $t('notes.list.wordCount_single', { count: note.wordCount })}
       </span>
     </div>
   </div>
