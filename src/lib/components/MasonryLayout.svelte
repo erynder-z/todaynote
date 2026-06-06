@@ -48,20 +48,26 @@
    * Handles grid navigation with arrow keys.
    */
   export const handleKey = (e: KeyboardEvent) => {
-    if (['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+    const arrowKeys = ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'];
+    if (arrowKeys.includes(e.key)) {
       e.preventDefault();
 
       const currentIndex = nav.index === -1 ? 0 : nav.index;
       let nextIndex = currentIndex;
 
-      if (e.key === 'ArrowLeft') {
-        nextIndex = Math.max(0, currentIndex - 1);
-      } else if (e.key === 'ArrowRight') {
-        nextIndex = Math.min(items.length - 1, currentIndex + 1);
-      } else if (e.key === 'ArrowUp') {
-        nextIndex = Math.max(0, currentIndex - columnCount);
-      } else if (e.key === 'ArrowDown') {
-        nextIndex = Math.min(items.length - 1, currentIndex + columnCount);
+      switch (e.key) {
+        case 'ArrowLeft':
+          nextIndex = Math.max(0, currentIndex - 1);
+          break;
+        case 'ArrowRight':
+          nextIndex = Math.min(items.length - 1, currentIndex + 1);
+          break;
+        case 'ArrowUp':
+          nextIndex = Math.max(0, currentIndex - columnCount);
+          break;
+        case 'ArrowDown':
+          nextIndex = Math.min(items.length - 1, currentIndex + columnCount);
+          break;
       }
 
       nav.setIndex(nextIndex, 'keyboard');

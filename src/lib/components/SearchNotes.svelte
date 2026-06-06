@@ -191,12 +191,22 @@
    * Handles global keydown events for list navigation.
    */
   const handleKeydown = (e: KeyboardEvent) => {
-    if (results.length > 0) {
-      if (settings.notesListLayout === 'masonry' && masonryLayout) {
-        if (masonryLayout.handleKey(e)) return;
-      }
-      nav.handleKey(e);
-    }
+    if (results.length === 0) return;
+
+    if (shouldHandleMasonryKey(e)) return;
+    nav.handleKey(e);
+  };
+
+  /**
+   * Handles masonry layout key events if applicable
+   * Returns true if the event was handled, false otherwise
+   */
+  const shouldHandleMasonryKey = (e: KeyboardEvent) => {
+    return (
+      settings.notesListLayout === 'masonry' &&
+      masonryLayout &&
+      masonryLayout.handleKey(e)
+    );
   };
 
   $effect(() => {

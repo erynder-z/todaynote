@@ -23,11 +23,17 @@
 
   useShortcuts({
     toggleNoteBrowserLayout: () => {
-      const nextLayout =
-        settings.notesListLayout === 'list' ? 'masonry' : 'list';
+      const nextLayout = getNextLayout();
       settings.setNotesListLayout(nextLayout);
     },
   });
+
+  /**
+   * Returns the next layout to toggle to
+   */
+  const getNextLayout = () => {
+    return settings.notesListLayout === 'list' ? 'masonry' : 'list';
+  };
 
   /**
    * Fetches a list of notes with an optional limit from the backend.
@@ -74,6 +80,37 @@
 
   let masonryLayout: { handleKey: (e: KeyboardEvent) => boolean } | null =
     $state(null);
+
+  /**
+   * Returns the appropriate navigation label based on current layout
+   */
+  const getNavigationLabel = () => {
+    return settings.notesListLayout === 'masonry'
+      ? $t('browser.navigate')
+      : $t('search.footer.navigate');
+  };
+
+  /**
+   * Returns the appropriate navigation key based on current layout
+   */
+  const getNavigationKey = () => {
+    return settings.notesListLayout === 'masonry' ? '↑↓←→' : '↑↓';
+  };
+
+  /**
+   * Returns the appropriate word count translation based on note properties
+   */
+  const getWordCountText = (note: FormattedNote) => {
+    if (note.hasCode) {
+      return note.wordCount >= 2
+        ? $t('notes.list.wordCountWithCode_multiple', { count: note.wordCount })
+        : $t('notes.list.wordCountWithCode_single', { count: note.wordCount });
+    } else {
+      return note.wordCount >= 2
+        ? $t('notes.list.wordCount_multiple', { count: note.wordCount })
+        : $t('notes.list.wordCount_single', { count: note.wordCount });
+    }
+  };
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (settings.notesListLayout === 'masonry' && masonryLayout)
@@ -144,19 +181,7 @@
           d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0-33-23.5-56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h400v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Z"
         /></svg
       >
-      <span
-        >{note.hasCode
-          ? note.wordCount >= 2
-            ? $t('notes.list.wordCountWithCode_multiple', {
-                count: note.wordCount,
-              })
-            : $t('notes.list.wordCountWithCode_single', {
-                count: note.wordCount,
-              })
-          : note.wordCount >= 2
-            ? $t('notes.list.wordCount_multiple', { count: note.wordCount })
-            : $t('notes.list.wordCount_single', { count: note.wordCount })}
-      </span>
+      <span>{getWordCountText(note)}</span>
     </div>
   </div>
 {/snippet}
@@ -213,9 +238,7 @@
 
   <ModalFooter
     shortcuts={[
-      ...(settings.notesListLayout === 'masonry'
-        ? [{ label: $t('browser.navigate'), key: '↑↓←→' }]
-        : [{ label: $t('search.footer.navigate'), key: '↑↓' }]),
+      { label: getNavigationLabel(), key: getNavigationKey() },
       { label: $t('search.footer.open'), key: 'Enter' },
       {
         label: $t('shortcuts.action.toggle_note_browser_layout'),

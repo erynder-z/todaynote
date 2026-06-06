@@ -15,6 +15,25 @@
     onClearQuery,
     onToggleFuzzy,
   }: SearchInputProps = $props();
+
+  /**
+   * Returns the appropriate placeholder text based on search mode and selected tag
+   */
+  const getPlaceholderText = () => {
+    // Handle special case: if a tag is selected, always use general typing placeholder
+    if (selectedTag) return $t('search.start_typing');
+
+    switch (searchMode) {
+      case 'notes':
+        return $t('search.start_typing_notes');
+      case 'threads':
+        return $t('search.start_typing_threads');
+      case 'tags':
+        return $t('search.start_typing_tags');
+      default:
+        return $t('search.start_typing');
+    }
+  };
 </script>
 
 <header class="main-header">
@@ -45,11 +64,7 @@
       type="text"
       bind:value={query}
       oninput={onInput}
-      placeholder={searchMode === 'notes' || selectedTag
-        ? $t('search.start_typing')
-        : searchMode === 'threads'
-          ? $t('search.start_typing_threads')
-          : $t('search.start_typing_tags')}
+      placeholder={getPlaceholderText()}
       spellcheck="false"
       autofocus
     />
