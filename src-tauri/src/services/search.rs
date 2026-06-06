@@ -105,7 +105,7 @@ impl<'a> SearchService<'a> {
                 self.find_match(matcher, query_utf32, query_normalized, is_fuzzy, &stripped)
             {
                 let (excerpt, adjusted) =
-                    crate::utils::markdown::generate_excerpt(&stripped, &indices, 100);
+                    crate::utils::text::generate_excerpt(&stripped, &indices, 100);
                 results.push(SearchResult {
                     filename: filename.to_string(),
                     formatted_name: formatted_name.clone(),

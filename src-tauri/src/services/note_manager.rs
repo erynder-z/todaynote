@@ -105,8 +105,8 @@ impl NoteManager {
             preview: self.extract_preview(&content),
             tags: crate::utils::tag_parser::parse_tags_from_content(&content),
             threads: self.extract_threads(&content, 5),
-            word_count: crate::utils::markdown::count_words(&content).0,
-            has_code: crate::utils::markdown::count_words(&content).1,
+            word_count: crate::utils::text::count_words(&content).0,
+            has_code: crate::utils::text::count_words(&content).1,
         })
     }
 
@@ -168,7 +168,7 @@ impl NoteManager {
         }
 
         let joined = preview_text.join(" ");
-        let (preview, _) = crate::utils::markdown::generate_excerpt(&joined, &[], 150);
+        let (preview, _) = crate::utils::text::generate_excerpt(&joined, &[], 150);
         preview
     }
 
