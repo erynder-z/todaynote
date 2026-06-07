@@ -286,7 +286,6 @@
             label: $t('shortcuts.action.toggle_note_browser_layout'),
             action: 'toggleNoteBrowserLayout',
           },
-          { label: $t('search.footer.close'), key: 'Esc' },
         ]}
         count={results.length}
         countLabel={$t('search.results_count', { count: results.length })}

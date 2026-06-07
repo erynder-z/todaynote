@@ -260,7 +260,6 @@
         label: $t('shortcuts.action.toggle_note_browser_layout'),
         action: 'toggleNoteBrowserLayout',
       },
-      { label: $t('search.footer.close'), key: 'Esc' },
     ]}
   />
 </div>
