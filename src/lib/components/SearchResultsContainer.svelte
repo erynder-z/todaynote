@@ -133,7 +133,7 @@
           /></svg
         >
       {:else}
-        <IdentIcon title={item.name} size={32} />
+        <IdentIcon title={item.name} size={2} />
       {/if}
     </div>
     <span class="item-name">{item.name}</span>
@@ -163,7 +163,7 @@
           /></svg
         >
       {:else}
-        <IdentIcon title={item.name} size={64} />
+        <IdentIcon title={item.name} size={2.5} />
       {/if}
     </div>
     <span class="item-name">{item.name}</span>

@@ -34,7 +34,7 @@
       {#each aggregation.items as item}
         <div class="aggregation-item">
           <header class="item-header">
-            <IdentIcon title={aggregation.threadName} size={24} />
+            <IdentIcon title={aggregation.threadName} size={1.5} />
             <button
               class="date-link"
               onclick={() => openOriginalNote(item.filename)}

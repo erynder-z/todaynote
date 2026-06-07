@@ -162,7 +162,7 @@
     <div class="note-threads">
       {#each note.threads as thread}
         <div class="thread-item">
-          <IdentIcon title={thread} size={24} />
+          <IdentIcon title={thread} size={1} />
           <span>{thread}</span>
         </div>
       {/each}

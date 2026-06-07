@@ -21,7 +21,7 @@
     {#each visibleThreads as thread, i}
       <button class="thread-pill" onclick={() => onSelect(thread.name)}>
         <div class="left-side">
-          <IdentIcon title={thread.name} size={16} />
+          <IdentIcon title={thread.name} size={1} />
           <span class="thread-name">{thread.name}</span>
         </div>
         <div class="right-side">
