@@ -120,23 +120,13 @@
 
 {#snippet threadTagListSnippet(item: ThreadSearchResult | TagSearchResult)}
   <div class="list-thread-tag-item">
-    <div class="item-icon">
-      {#if searchMode === 'tags'}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          height="1rem"
-          viewBox="0 -960 960 960"
-          width="1rem"
-          fill="currentColor"
-          ><path
-            d="m240-160 40-160H120l20-80h160l40-160H180l20-80h160l40-160h80l-40 160h160l40-160h80l-40 160h160l-20 80H660l-40 160h160l-20 80H600l-40 160h-80l40-160H360l-40 160h-80Zm140-240h160l40-160H420l-40 160Z"
-          /></svg
-        >
-      {:else}
+    {#if searchMode === 'threads'}
+      <div class="item-icon">
         <IdentIcon title={item.name} size={2} />
-      {/if}
-    </div>
-    <span class="item-name">{item.name}</span>
+      </div>{/if}
+    <span class="item-name" class:tag-pill={searchMode === 'tags'}
+      >{item.name}</span
+    >
     <span class="item-count">
       {$t(
         item.noteCount === 1
@@ -151,22 +141,13 @@
 {#snippet threadTagMasonrySnippet(item: ThreadSearchResult | TagSearchResult)}
   <div class="masonry-thread-tag-item" class:tag-item={searchMode === 'tags'}>
     <div class="card-icon">
-      {#if searchMode === 'tags'}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          height="2rem"
-          viewBox="0 -960 960 960"
-          width="2rem"
-          fill="currentColor"
-          ><path
-            d="m240-160 40-160H120l20-80h160l40-160H180l20-80h160l40-160h80l-40 160h160l40-160h80l-40 160h160l-20 80H660l-40 160h160l-20 80H600l-40 160h-80l40-160H360l-40 160h-80Zm140-240h160l40-160H420l-40 160Z"
-          /></svg
-        >
-      {:else}
+      {#if searchMode === 'threads'}
         <IdentIcon title={item.name} size={2.5} />
       {/if}
     </div>
-    <span class="item-name">{item.name}</span>
+    <span class="item-name" class:tag-pill={searchMode === 'tags'}
+      >{item.name}</span
+    >
     <div class="item-count">
       {$t(
         item.noteCount === 1
@@ -284,7 +265,6 @@
   }
 
   .item-name {
-    flex: 1;
     min-width: 0;
     font-size: 1rem;
     font-weight: 600;
@@ -357,5 +337,20 @@
     padding: 0 2px;
     border-radius: 2px;
     border-bottom: 2px solid var(--accent);
+  }
+
+  .item-name.tag-pill {
+    font-size: 0.9rem;
+    padding: 0.3rem 0.8rem;
+    background-color: color-mix(in srgb, var(--accent), transparent 85%);
+    color: var(--accent);
+    border-radius: 1rem;
+    font-weight: 500;
+    display: inline-block;
+    white-space: nowrap;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
   }
 </style>

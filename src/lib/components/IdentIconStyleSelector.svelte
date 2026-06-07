@@ -41,14 +41,14 @@
       <span class="preview-label"
         >{$t('settings.thread_visual_identicon_dotmatrix')}</span
       >
-      <IdentIconDotmatrix title="Preview" size={1.5} />
+      <IdentIconDotmatrix title="Preview" size="1.5rem" />
     </div>
 
     <div class="preview-item">
       <span class="preview-label"
         >{$t('settings.thread_visual_identicon_round')}</span
       >
-      <IdentIconRound title="Preview" size={1.5} />
+      <IdentIconRound title="Preview" size="1.5rem" />
     </div>
 
     <div class="preview-item">

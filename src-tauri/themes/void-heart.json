@@ -2,7 +2,7 @@
 	"--bg-base": "#121212",
 	"--bg-surface": "#1c1c1c",
 	"--text-main": "#e0e0e0",
-	"--text-muted": "#999999",
+	"--text-muted": "#c0c0c0",
 	"--text-ui-muted": "#a8a8a8",
 	"--accent": "#c0c0c0",
 	"--accent-text": "#121212",

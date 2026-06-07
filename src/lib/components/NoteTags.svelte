@@ -101,8 +101,8 @@
 
   .tag-pill {
     font-size: 0.75rem;
-    background-color: var(--accent);
-    color: var(--accent-text);
+    background-color: color-mix(in srgb, var(--accent), transparent 85%);
+    color: var(--accent);
     padding-inline: 0.625rem;
     padding-block: 0.125rem;
     border-radius: 999rem;

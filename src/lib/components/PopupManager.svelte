@@ -33,7 +33,11 @@
     <NoteBrowser />
   </Modal>
 {:else if sessionState.activePopup === 'search'}
-  <Modal title={$t('search.title')} size="xl" showLayoutToggle={true}>
+  <Modal
+    title={$t('search.title')}
+    size={settings.notesListLayout === 'masonry' ? 'xl' : 'lg'}
+    showLayoutToggle={true}
+  >
     <SearchNotes />
   </Modal>
 {:else if sessionState.activePopup === 'tagManager'}

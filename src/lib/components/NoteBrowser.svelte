@@ -382,6 +382,10 @@
     color: var(--accent);
     border-radius: 1rem;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
 
   .card-header {

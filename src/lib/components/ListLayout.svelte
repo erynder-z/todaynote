@@ -60,6 +60,6 @@
   }
 
   .result-item.selected {
-    background-color: color-mix(in srgb, var(--accent), transparent 85%);
+    background-color: color-mix(in srgb, var(--accent), transparent 80%);
   }
 </style>

@@ -46,10 +46,10 @@
   .kbd-key {
     background-color: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0.25rem;
     padding: 0.1rem 0.4rem;
     font-size: 0.7rem;
-    color: var(--text-main);
+    color: var(--text-muted);
     font-weight: 600;
     min-width: 1.2rem;
     text-align: center;

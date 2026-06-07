@@ -132,8 +132,8 @@
     display: flex;
     flex-direction: column;
     padding: 0;
-    background: none;
-    border: 1px solid var(--border);
+    background-color: color-mix(in srgb, var(--bg-surface), transparent 45%);
+    border: none;
     border-radius: 0.5rem;
     text-align: left;
     cursor: pointer;
@@ -144,7 +144,7 @@
 
   .item-card.selected {
     border-color: var(--accent);
-    background-color: color-mix(in srgb, var(--accent), transparent 92%);
+    background-color: color-mix(in srgb, var(--accent), transparent 80%);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 </style>

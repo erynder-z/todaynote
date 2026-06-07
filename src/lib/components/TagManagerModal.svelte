@@ -64,9 +64,8 @@
    * Removes the last tag from the note if the input field is empty.
    */
   const removeLastActiveTag = () => {
-    if (!newTag && currentTags.length > 0) {
+    if (!newTag && currentTags.length > 0)
       handleToggleTag(currentTags[currentTags.length - 1]);
-    }
   };
 
   const nav = new ListNavigator(
@@ -111,9 +110,7 @@
     }
 
     // Handle backspace specifically for tag removal
-    if (e.key === 'Backspace') {
-      removeLastActiveTag();
-    }
+    if (e.key === 'Backspace') removeLastActiveTag();
   };
 
   $effect(() => {
@@ -134,9 +131,13 @@
   {@const isAdded = currentTags.includes(tag)}
   {@const globalIndex = navigationTags.indexOf(tag)}
   {@const shortcutLabel = tagSuggestionShortcuts.labels[globalIndex]}
-  <div class="tag-content-wrapper" class:is-added={isAdded}>
-    <span class="hashtag">#</span>
-    <span class="tag-label">{tag}</span>
+  {@const isMasonry = settings.notesListLayout === 'masonry'}
+  <div
+    class="tag-content-wrapper"
+    class:is-added={isAdded}
+    class:is-masonry={isMasonry}
+  >
+    <span class="tag-pill">{tag}</span>
 
     {#if shortcutLabel}
       <span class="shortcut-hint">
@@ -205,13 +206,23 @@
         <p class="muted">{$t('tag.suggestions')}</p>
       </div>
     {:else if settings.notesListLayout === 'masonry'}
-      <MasonryLayout
-        bind:this={masonryLayout}
-        items={navigationTags}
-        {nav}
-        onSelect={handleToggleTag}
-        itemSnippet={tagSnippet}
-      />
+      {#if navigationTags.length > 0}
+        <MasonryLayout
+          bind:this={masonryLayout}
+          items={navigationTags}
+          {nav}
+          onSelect={handleToggleTag}
+          itemSnippet={tagSnippet}
+        />
+      {:else if newTag}
+        <div class="status-view">
+          <p>{@html $t('tag.create_new', { tag: newTag })}</p>
+        </div>
+      {:else}
+        <div class="status-view empty">
+          <p class="muted">{$t('tag.suggestions')}</p>
+        </div>
+      {/if}
     {:else}
       <div class="results-list">
         {#if currentTags.length > 0}
@@ -367,30 +378,31 @@
   .tag-content-wrapper {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: space-between;
     width: 100%;
     padding: 0.75rem 1rem;
-    font-size: 0.95rem;
+    font-size: 1.25rem;
   }
 
-  .tag-label {
-    flex: 1;
+  .tag-content-wrapper.is-masonry {
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 4rem;
+  }
+
+  .tag-pill {
+    font-size: 0.9rem;
+    padding: 0.3rem 0.8rem;
+    background-color: color-mix(in srgb, var(--accent), transparent 85%);
+    color: var(--accent);
+    border-radius: 1rem;
     font-weight: 500;
+    display: inline-block;
+    white-space: nowrap;
+    max-width: 90%;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-    color: var(--text-main);
-  }
-
-  .hashtag {
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  .suggestion-item.selected .tag-label,
-  :global(.item-card.selected) .tag-label {
-    color: var(--accent);
+    vertical-align: middle;
   }
 
   .shortcut-hint {
@@ -428,6 +440,14 @@
     padding: 3rem;
     gap: 1rem;
     color: var(--text-muted);
+    text-align: center;
+  }
+
+  .status-view p {
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    margin: 0;
   }
 
   :global(.status-view kbd) {
