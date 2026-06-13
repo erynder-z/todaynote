@@ -1,5 +1,6 @@
 <script lang="ts">
   import { sessionState } from '$lib/stores/sessionState.svelte';
+  import { settings } from '$lib/stores/settings.svelte';
   import { t } from '$lib/utils/i18n';
   import { useShortcuts } from '$lib/utils/shortcuts';
 
@@ -7,11 +8,13 @@
    * Toggle to switch between navigation and action mode
    */
 
-  const toggleThreadMode = () => {
-    sessionState.threadShortcutsMode =
+  const toggleThreadMode = async () => {
+    const newMode =
       sessionState.threadShortcutsMode === 'navigation'
         ? 'actions'
         : 'navigation';
+    sessionState.threadShortcutsMode = newMode;
+    await settings.saveThreadShortcutsMode(newMode);
   };
 
   useShortcuts({

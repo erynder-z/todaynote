@@ -24,11 +24,13 @@ export class SettingsStore {
 	controlCenterWidth = $state(22);
 	defaultThreadName = $state<string | null>(null);
 	identiconStyle = $state<"dotmatrix" | "round" | "none">("dotmatrix");
+	threadShortcutsMode = $state<"navigation" | "actions">("navigation");
 	shortcuts = $state<Partial<Record<ShortcutAction, ShortcutConfig>>>({});
 
 	/**
 	 * Private promise chain to ensure saves happen sequentially.
 	 */
+
 	#saveQueue = Promise.resolve(true);
 
 	/**
@@ -49,6 +51,7 @@ export class SettingsStore {
 			controlCenterWidth: this.controlCenterWidth,
 			defaultThreadName: this.defaultThreadName,
 			identiconStyle: this.identiconStyle,
+			threadShortcutsMode: this.threadShortcutsMode,
 			shortcuts: this.shortcuts,
 		};
 	}
@@ -69,8 +72,12 @@ export class SettingsStore {
 
 				syncFullAppState(updatedState);
 
-				// If turning OFF "Remember Settings", reset those specific fields to defaults
-				if (updates.rememberSettings === false) await this.resetToDefaults();
+				// If turning OFF "Remember Settings", just save the preference
+				// The actual reset will happen on next app launch
+				if (updates.rememberSettings === false) {
+					// Don't reset current settings immediately - just save the preference
+					// Settings will be reset to defaults on next app launch
+				}
 
 				return true;
 			} catch (error) {
@@ -160,14 +167,33 @@ export class SettingsStore {
 	}
 
 	/**
-	 * Resets remembered settings to their default values.
+	 * Granular setter for thread shortcuts mode that handles conditional persistence.
 	 */
-	async resetToDefaults() {
+	async saveThreadShortcutsMode(
+		mode: "navigation" | "actions",
+	): Promise<boolean> {
+		if (this.rememberSettings)
+			return await this.save({ threadShortcutsMode: mode });
+
+		this.threadShortcutsMode = mode;
+		return true;
+	}
+
+	/**
+	 * Resets remembered settings to their default values.
+	 * @param preserveRememberSettings If true, preserves the current rememberSettings value
+	 */
+	async resetToDefaults(preserveRememberSettings = false) {
 		try {
 			await invoke("reset_config_to_defaults");
 
 			const initialState: AppPayload = await invoke("initialize_app");
 			syncFullAppState(initialState);
+
+			// If we're turning off rememberSettings, preserve that state
+			if (preserveRememberSettings) {
+				this.rememberSettings = false;
+			}
 
 			return true;
 		} catch (error) {

@@ -24,6 +24,7 @@ pub struct ConfigResponse {
     pub control_center_width: f64,
     pub default_thread_name: Option<String>,
     pub identicon_style: String,
+    pub thread_shortcuts_mode: String,
     pub shortcuts: HashMap<String, ShortcutConfig>,
 }
 
@@ -110,6 +111,7 @@ pub struct AppPayload {
     pub control_center_width: f64,
     pub default_thread_name: Option<String>,
     pub identicon_style: String,
+    pub thread_shortcuts_mode: String,
     pub shortcuts: HashMap<String, ShortcutConfig>,
     pub available_locales: Vec<LocaleInfo>,
     pub available_themes: Vec<ThemeInfo>,

@@ -28,6 +28,7 @@ pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, St
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
             identicon_style: config.identicon_style.clone(),
+            thread_shortcuts_mode: config.thread_shortcuts_mode.clone(),
             shortcuts: config.shortcuts.clone(),
         }
     };
@@ -58,6 +59,7 @@ pub fn get_initial_state(
         control_center_width: config.control_center_width,
         default_thread_name: config.default_thread_name,
         identicon_style: config.identicon_style,
+        thread_shortcuts_mode: config.thread_shortcuts_mode,
         shortcuts: config.shortcuts,
         available_locales,
         available_themes,

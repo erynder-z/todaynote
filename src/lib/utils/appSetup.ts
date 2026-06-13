@@ -61,12 +61,27 @@ export const syncSettingsState = (state: AppPayload) => {
 	settings.rememberAppLayout = state.rememberAppLayout;
 	settings.notesListLayout = state.notesListLayout;
 	settings.rememberSettings = state.rememberSettings;
-	settings.searchMode = state.searchMode;
-	settings.searchIsFuzzy = state.searchIsFuzzy;
-	settings.searchSelectedTag = state.searchSelectedTag;
-	settings.sidebarOpen = state.sidebarOpen;
+
+	// If rememberSettings is false, use default values for component settings
+	// Otherwise, use the saved values from the config
+	if (state.rememberSettings) {
+		settings.searchMode = state.searchMode;
+		settings.searchIsFuzzy = state.searchIsFuzzy;
+		settings.searchSelectedTag = state.searchSelectedTag;
+		settings.sidebarOpen = state.sidebarOpen;
+		settings.threadShortcutsMode = state.threadShortcutsMode || "navigation";
+		settings.identiconStyle = state.identiconStyle;
+	} else {
+		// Use default values for component settings
+		settings.searchMode = "notes";
+		settings.searchIsFuzzy = true;
+		settings.searchSelectedTag = null;
+		settings.sidebarOpen = true;
+		settings.threadShortcutsMode = "navigation";
+		settings.identiconStyle = "dotmatrix";
+	}
+
 	settings.defaultThreadName = state.defaultThreadName;
-	settings.identiconStyle = state.identiconStyle;
 	settings.shortcuts = state.shortcuts;
 
 	const width = state.controlCenterWidth;
@@ -88,4 +103,7 @@ export const syncSessionState = (state: AppPayload, syncSession = false) => {
 		if (typeof window !== "undefined" && window.innerWidth > 1024)
 			sessionState.sidebarOpen = state.sidebarOpen;
 	}
+
+	// Initialize thread shortcuts mode from settings
+	sessionState.threadShortcutsMode = state.threadShortcutsMode || "navigation";
 };

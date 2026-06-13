@@ -48,6 +48,8 @@ pub struct AppConfig {
     pub default_thread_name: Option<String>,
     /// Visual style for thread identification icons ("dotmatrix", "round", or "none").
     pub identicon_style: String,
+    /// Last used thread shortcuts mode ("navigation" or "actions").
+    pub thread_shortcuts_mode: String,
     /// Global keyboard shortcuts configuration.
     pub shortcuts: HashMap<String, ShortcutConfig>,
 }
@@ -243,6 +245,7 @@ impl Default for AppConfig {
             control_center_width: 22.0, // Default 22rem
             default_thread_name: None,
             identicon_style: "dotmatrix".to_string(),
+            thread_shortcuts_mode: "navigation".to_string(),
             shortcuts,
         }
     }

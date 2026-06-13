@@ -33,6 +33,7 @@ export interface AppPayload {
 	sidebarOpen: boolean;
 	defaultThreadName: string | null;
 	identiconStyle: "dotmatrix" | "round" | "none";
+	threadShortcutsMode: "navigation" | "actions";
 	availableLocales: LocaleInfo[];
 	availableThemes: ThemeInfo[];
 	translations: Record<string, string>;

@@ -15,6 +15,7 @@ export interface AppSettings {
 	controlCenterWidth: number;
 	defaultThreadName: string | null;
 	identiconStyle: "dotmatrix" | "round" | "none";
+	threadShortcutsMode: "navigation" | "actions";
 	shortcuts: Partial<Record<ShortcutAction, ShortcutConfig>>;
 }
 

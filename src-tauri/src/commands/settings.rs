@@ -33,6 +33,7 @@ pub async fn update_config(
         config.control_center_width = new_config.control_center_width;
         config.default_thread_name = new_config.default_thread_name;
         config.identicon_style = new_config.identicon_style;
+        config.thread_shortcuts_mode = new_config.thread_shortcuts_mode;
         config.shortcuts = new_config.shortcuts;
 
         config.save();
@@ -61,6 +62,7 @@ pub async fn update_config(
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
             identicon_style: config.identicon_style.clone(),
+            thread_shortcuts_mode: config.thread_shortcuts_mode.clone(),
             shortcuts: config.shortcuts.clone(),
         }
     };
@@ -167,7 +169,8 @@ pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), 
     config.theme = default_config.theme;
     config.remember_app_layout = default_config.remember_app_layout;
     config.notes_list_layout = default_config.notes_list_layout;
-    config.remember_settings = default_config.remember_settings;
+    // Preserve remember_settings - if user turned it off, respect that choice
+    // config.remember_settings = default_config.remember_settings;
     config.search_mode = default_config.search_mode;
     config.search_is_fuzzy = default_config.search_is_fuzzy;
     config.search_selected_tag = default_config.search_selected_tag;
@@ -175,6 +178,7 @@ pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), 
     config.control_center_width = default_config.control_center_width;
     config.default_thread_name = default_config.default_thread_name;
     config.identicon_style = default_config.identicon_style;
+    config.thread_shortcuts_mode = default_config.thread_shortcuts_mode;
     config.shortcuts = default_config.shortcuts;
 
     config.save();
@@ -244,6 +248,7 @@ pub async fn switch_notes_folder(
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
             identicon_style: config.identicon_style.clone(),
+            thread_shortcuts_mode: config.thread_shortcuts_mode.clone(),
             shortcuts: config.shortcuts.clone(),
         }
     };
