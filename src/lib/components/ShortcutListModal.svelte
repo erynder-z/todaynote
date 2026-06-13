@@ -20,10 +20,12 @@
     'navigateYesterday',
     'navigateLastAvailable',
     'navigateToday',
+    'toggleThreadOptionsMode',
   ];
   const shortcuts = globalActions.map((action) => settings.shortcuts[action]);
   const fuzzyShortcut = settings.shortcuts.toggleFuzzy;
   const searchModeShortcut = settings.shortcuts.toggleSearchMode;
+  const threadOptionShortcut = settings.shortcuts.threadOptionsDelete;
 </script>
 
 <div class="shortcut-list">
@@ -62,39 +64,54 @@
     </div>
   </div>
 
-  {#if fuzzyShortcut || searchModeShortcut}
-    <div class="search-shortcuts">
-      <h3>{$t('shortcuts.search.description')}</h3>
-      {#if fuzzyShortcut}
-        <div class="shortcut-item">
-          <span class="shortcut-description"
-            >{$t('shortcuts.search.toggle_fuzzy')}</span
-          >
-          <div class="shortcut-keys">
-            <KeyboardShortcut
-              primary={fuzzyShortcut.primary}
-              secondary={fuzzyShortcut.secondary}
-              key={fuzzyShortcut.key.toUpperCase()}
-            />
-          </div>
+  <div class="search-shortcuts">
+    <h3>{$t('shortcuts.search.description')}</h3>
+    {#if fuzzyShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.search.toggle_fuzzy')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={fuzzyShortcut.primary}
+            secondary={fuzzyShortcut.secondary}
+            key={fuzzyShortcut.key.toUpperCase()}
+          />
         </div>
-      {/if}
-      {#if searchModeShortcut}
-        <div class="shortcut-item">
-          <span class="shortcut-description"
-            >{$t('shortcuts.search.toggle_mode')}</span
-          >
-          <div class="shortcut-keys">
-            <KeyboardShortcut
-              primary={searchModeShortcut.primary}
-              secondary={searchModeShortcut.secondary}
-              key={searchModeShortcut.key.toUpperCase()}
-            />
-          </div>
+      </div>
+    {/if}
+    {#if searchModeShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.search.toggle_mode')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={searchModeShortcut.primary}
+            secondary={searchModeShortcut.secondary}
+            key={searchModeShortcut.key.toUpperCase()}
+          />
         </div>
-      {/if}
-    </div>
-  {/if}
+      </div>
+    {/if}
+  </div>
+
+  <div class="thread-option-shortcuts">
+    <h3>{$t('shortcuts.thread.description')}</h3>
+    {#if threadOptionShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description">{$t('shortcuts.thread.delete')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={threadOptionShortcut.primary}
+            secondary={threadOptionShortcut.secondary}
+            key={threadOptionShortcut.key.toUpperCase()}
+          />
+        </div>
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -136,7 +153,8 @@
   }
 
   .tag-shortcuts h3,
-  .search-shortcuts h3 {
+  .search-shortcuts h3,
+  .thread-option-shortcuts h3 {
     margin: 0 0 0.5rem 0;
     font-size: 1.1rem;
     color: var(--accent);

@@ -2,7 +2,11 @@ import type { ShortcutAction } from "../types/input";
 import type { PopupType } from "../types/ui";
 import type { ShortcutConfig } from "./input";
 import type { LocaleInfo } from "./locale";
-import type { NoteContentResponse, ThreadAggregationResult } from "./notes";
+import type {
+	NoteContentResponse,
+	NoteThread,
+	ThreadAggregationResult,
+} from "./notes";
 import type { ThemeInfo } from "./settings";
 
 export interface SessionState {
@@ -12,6 +16,8 @@ export interface SessionState {
 	activePopup: PopupType;
 	isMac: boolean;
 	sidebarOpen: boolean;
+	selectedThreadForOptions: NoteThread | null;
+	threadShortcutsMode: "navigation" | "actions";
 }
 
 export interface AppPayload {

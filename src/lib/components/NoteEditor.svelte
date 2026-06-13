@@ -83,11 +83,19 @@
   };
 
   /**
-   * Jumps to a thread based on its index (0-8).
+   * When in Navigation Mode: Jumps to a thread based on its index.
+   * When in Thread Options Mode: Opens the thread options popup.
    */
   const jumpToThreadByIndex = async (idx: number) => {
     const thread = editor.threads[idx];
-    if (thread?.name) await handleJump(thread.name);
+    if (thread?.name) {
+      if (sessionState.threadShortcutsMode === 'navigation') {
+        await handleJump(thread.name);
+      } else {
+        sessionState.selectedThreadForOptions = thread;
+        sessionState.activePopup = 'threadOptions';
+      }
+    }
   };
 
   useShortcuts({

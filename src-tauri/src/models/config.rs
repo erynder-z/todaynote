@@ -208,6 +208,26 @@ impl Default for AppConfig {
                 description: "Go to today's note".to_string(),
             },
         );
+        shortcuts.insert(
+            "toggleThreadOptionsMode".to_string(),
+            ShortcutConfig {
+                key: "p".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Toggle thread options mode".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "threadOptionsDelete".to_string(),
+            ShortcutConfig {
+                key: "d".to_string(),
+                primary: true,
+                secondary: true,
+                shift: false,
+                description: "Delete thread in options menu".to_string(),
+            },
+        );
 
         Self {
             notes_folder,

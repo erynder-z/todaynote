@@ -9,4 +9,6 @@ export const sessionState = $state<SessionState>({
 	activePopup: null,
 	isMac: false,
 	sidebarOpen: typeof window !== "undefined" ? window.innerWidth > 1024 : false,
+	selectedThreadForOptions: null,
+	threadShortcutsMode: "navigation",
 });

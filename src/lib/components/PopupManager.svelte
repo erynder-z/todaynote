@@ -17,6 +17,7 @@
   import StatisticsView from './StatisticsView.svelte';
   import TagManagerModal from './TagManagerModal.svelte';
   import ThreadAggregationView from './ThreadAggregationView.svelte';
+  import ThreadOptionsMenu from './ThreadOptionsMenu.svelte';
   import Toast from './Toast.svelte';
 </script>
 
@@ -64,6 +65,8 @@
   <Modal title={$t('statistics.title')} size="lg">
     <StatisticsView />
   </Modal>
+{:else if sessionState.activePopup === 'threadOptions' && sessionState.selectedThreadForOptions}
+  <ThreadOptionsMenu thread={sessionState.selectedThreadForOptions} />
 {/if}
 
 <div class="toast-container">

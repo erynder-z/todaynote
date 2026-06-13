@@ -2,7 +2,6 @@
   /**
    * Control Center sidebar containing date, tags, and thread shortcuts.
    */
-
   import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
   import { t } from '$lib/utils/i18n';
   import { useShortcuts } from '$lib/utils/shortcuts';
@@ -10,6 +9,7 @@
   import NoteDate from './NoteDate.svelte';
   import NoteTags from './NoteTags.svelte';
   import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';
+  import ThreadShortcutsModeToggle from './ThreadShortcutsModeToggle.svelte';
 
   let {
     noteContent,
@@ -27,6 +27,20 @@
 
   const toggleSidebar = () => {
     sessionState.sidebarOpen = !sessionState.sidebarOpen;
+  };
+
+  const handleThreadSelect = (threadName: string) => {
+    if (sessionState.threadShortcutsMode === 'navigation') {
+      onSelect(threadName);
+    } else {
+      const selectedThread = threads.find(
+        (t: { name: string }) => t.name === threadName,
+      );
+      if (selectedThread) {
+        sessionState.selectedThreadForOptions = selectedThread;
+        sessionState.activePopup = 'threadOptions';
+      }
+    }
   };
 
   useShortcuts({
@@ -58,18 +72,21 @@
   </button>
 
   <div class="sidebar-content">
-    <div class="sidebar-thread">
+    <div class="sidebar-sectio">
       <NoteDate {noteContent} />
     </div>
 
-    <div class="sidebar-thread">
+    <div class="sidebar-section">
       <h3 class="sidebar-title">{$t('search.tags')}</h3>
       <NoteTags {noteContent} />
     </div>
 
-    <div class="sidebar-thread">
-      <h3 class="sidebar-title">{$t('search.threads')}</h3>
-      <NoteThreadShortcuts {threads} {onSelect} />
+    <div class="sidebar-section">
+      <div class="threads-title-container">
+        <h3 class="sidebar-title">{$t('search.threads')}</h3>
+        <ThreadShortcutsModeToggle />
+      </div>
+      <NoteThreadShortcuts {threads} onSelect={handleThreadSelect} />
     </div>
   </div>
 </div>
@@ -122,8 +139,8 @@
     border-color: var(--accent);
   }
 
-  .sidebar-thread {
-    margin-bottom: 2.5rem;
+  .sidebar-section {
+    margin-top: 2rem;
   }
 
   .sidebar-title {
@@ -133,6 +150,11 @@
     margin-bottom: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.15em;
+  }
+
+  .threads-title-container {
+    display: flex;
+    justify-content: space-between;
   }
 
   @media (min-width: 1025px) {

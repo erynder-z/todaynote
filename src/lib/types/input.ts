@@ -17,4 +17,6 @@ export type ShortcutAction =
 	| "toggleSearchMode"
 	| "navigateYesterday"
 	| "navigateLastAvailable"
-	| "navigateToday";
+	| "navigateToday"
+	| "toggleThreadOptionsMode"
+	| "threadOptionsDelete";
