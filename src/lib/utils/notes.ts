@@ -7,6 +7,7 @@ import type {
 	ThreadAggregationResult,
 	ThreadSearchResult,
 } from "$lib/interfaces/notes";
+import { processSearchResults } from "./search";
 
 /**
  * Performs a full-text search across all notes.
@@ -14,12 +15,25 @@ import type {
 export const searchNotes = async (
 	query: string,
 	isFuzzy: boolean,
+	options?: {
+		minScore?: number;
+		maxResults?: number;
+		filenameFilter?: string;
+		sortBy?: string;
+	}
 ): Promise<SearchResult[]> => {
 	try {
 		const results = (await invoke("search_notes", {
 			query,
 			isFuzzy,
 		})) as SearchResult[];
+		
+		// Process results using backend if options are provided
+		if (options && (options.minScore !== undefined || options.maxResults !== undefined || 
+		              options.filenameFilter || options.sortBy)) {
+			return await processSearchResults(results, options);
+		}
+		
 		return results;
 	} catch (error) {
 		console.error("Error searching notes:", error);

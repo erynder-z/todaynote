@@ -64,3 +64,25 @@ pub async fn aggregate_thread(
     let service = SearchService::new(&note_manager);
     service.aggregate_thread(&name)
 }
+
+/// Processes search results with filtering and sorting options.
+#[tauri::command]
+pub async fn process_search_results(
+    results: Vec<SearchResult>,
+    min_score: Option<i64>,
+    max_results: Option<usize>,
+    filename_filter: Option<String>,
+    sort_by: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<SearchResult>, String> {
+    let note_manager = state.note_manager()?;
+    let service = SearchService::new(&note_manager);
+    let filename_filter_ref = filename_filter.as_deref();
+    Ok(service.process_search_results(
+        results,
+        min_score,
+        max_results,
+        filename_filter_ref,
+        &sort_by,
+    ))
+}

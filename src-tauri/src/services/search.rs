@@ -199,6 +199,80 @@ impl<'a> SearchService<'a> {
         names.into_iter().collect()
     }
 
+    /// Filters search results based on various criteria.
+    pub fn filter_search_results(
+        results: Vec<SearchResult>,
+        min_score: Option<i64>,
+        max_results: Option<usize>,
+        filename_filter: Option<&str>,
+    ) -> Vec<SearchResult> {
+        let mut filtered = results;
+
+        // Apply minimum score filter
+        if let Some(score) = min_score {
+            filtered.retain(|r| r.score >= score);
+        }
+
+        // Apply filename filter (case-insensitive)
+        if let Some(filter) = filename_filter {
+            let filter_lower = filter.to_lowercase();
+            filtered.retain(|r| r.filename.to_lowercase().contains(&filter_lower));
+        }
+
+        // Limit maximum results
+        if let Some(max) = max_results {
+            if filtered.len() > max {
+                filtered.truncate(max);
+            }
+        }
+
+        filtered
+    }
+
+    /// Sorts search results by relevance (score) and other criteria.
+    pub fn sort_search_results(
+        results: Vec<SearchResult>,
+        sort_by: &str,
+    ) -> Vec<SearchResult> {
+        let mut sorted = results;
+
+        match sort_by {
+            "score" => {
+                sorted.sort_by(|a, b| b.score.cmp(&a.score));
+            },
+            "filename" => {
+                sorted.sort_by(|a, b| a.filename.cmp(&b.filename));
+            },
+            "date" => {
+                // Sort by filename (which contains date) in reverse chronological order
+                sorted.sort_by(|a, b| {
+                    let a_date = a.filename.split('_').next().unwrap_or("");
+                    let b_date = b.filename.split('_').next().unwrap_or("");
+                    b_date.cmp(a_date) // Newest first
+                });
+            },
+            _ => {
+                // Default: sort by score descending
+                sorted.sort_by(|a, b| b.score.cmp(&a.score));
+            }
+        }
+
+        sorted
+    }
+
+    /// Processes search results with filtering and sorting.
+    pub fn process_search_results(
+        &self,
+        results: Vec<SearchResult>,
+        min_score: Option<i64>,
+        max_results: Option<usize>,
+        filename_filter: Option<&str>,
+        sort_by: &str,
+    ) -> Vec<SearchResult> {
+        let filtered = Self::filter_search_results(results, min_score, max_results, filename_filter);
+        Self::sort_search_results(filtered, sort_by)
+    }
+
     /// Extracts the content of a specific thread from markdown content.
     fn extract_thread_block(content: &str, thread_name: &str) -> Option<String> {
         let (frontmatter_len, _) = Self::extract_frontmatter(content);

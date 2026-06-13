@@ -12,7 +12,7 @@ use commands::notes::{
     read_note_content, save_note_content, update_note_line,
 };
 use commands::search::{
-    aggregate_thread, search_notes, search_notes_by_tag, search_tags, search_threads,
+    aggregate_thread, process_search_results, search_notes, search_notes_by_tag, search_tags, search_threads,
 };
 use commands::settings::{
     reset_config_to_defaults, set_control_center_width, set_locale, set_notes_folder,
@@ -88,6 +88,7 @@ pub fn run() {
             search_tags,
             search_notes_by_tag,
             aggregate_thread,
+            process_search_results,
             get_translations,
             get_theme_colors,
             get_all_tags,
