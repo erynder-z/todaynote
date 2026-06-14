@@ -56,8 +56,8 @@
     color: var(--text-ui-muted);
     border-radius: 0.25rem;
     transition: all 0.2s ease;
-    height: 1.2rem;
-    font-weight: 600;
+    height: 1.25rem;
+    font-weight: 900;
   }
 
   .mode-toggle-btn:hover {
@@ -66,14 +66,18 @@
   }
 
   .mode-label {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
-  .mode-toggle-btn[data-mode='navigation'] .mode-label {
-    color: var(--text-main);
+  .mode-toggle-btn[data-mode='navigation'] {
+    background-color: var(--thread-mode-navigation-bg);
+    color: var(--thread-mode-navigation-text);
   }
 
-  .mode-toggle-btn[data-mode='actions'] .mode-label {
-    color: var(--text-main);
+  .mode-toggle-btn[data-mode='actions'] {
+    background-color: var(--thread-mode-actions-bg);
+    color: var(--thread-mode-actions-text);
   }
 </style>

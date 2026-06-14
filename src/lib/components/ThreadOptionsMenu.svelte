@@ -81,15 +81,15 @@
     transform: translateX(-50%);
     background-color: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 1rem;
-    padding: 1.5rem;
+    border-radius: 1rem 1rem 0 0;
+    padding: 1rem;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-    z-index: 2000;
+    z-index: 999;
     transition:
       bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(0.5rem);
-    min-width: 70ch;
+    min-width: 50ch;
     max-width: calc(100% - 2rem);
   }
 
@@ -139,9 +139,9 @@
 
   .taskbar-actions {
     display: flex;
+    justify-content: center;
     gap: 1.5rem;
     overflow-x: auto;
-    padding: 1.5rem;
     margin: 0;
   }
 
@@ -164,13 +164,12 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 1rem;
+    padding: 0.25rem;
     background-color: color-mix(in srgb, var(--bg-surface), transparent 45%);
     border: none;
     border-radius: 0.5rem;
     color: var(--text-main);
     cursor: pointer;
-    width: 100%;
     transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
     overflow: hidden;
     min-width: 80px;

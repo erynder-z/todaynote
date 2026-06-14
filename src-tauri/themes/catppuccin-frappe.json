@@ -34,5 +34,9 @@
 	"--identicon-7": "#a6d189",
 	"--identicon-8": "#81c8be",
 	"--identicon-9": "#81c8be",
-	"--identicon-10": "#eebebe"
+	"--identicon-10": "#eebebe",
+	"--thread-mode-navigation-bg": "#a6d189",
+	"--thread-mode-actions-bg": "#8caaee",
+	"--thread-mode-navigation-text": "#303446",
+	"--thread-mode-actions-text": "#303446"
 }
