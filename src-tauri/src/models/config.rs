@@ -221,13 +221,13 @@ impl Default for AppConfig {
             },
         );
         shortcuts.insert(
-            "threadOptionsDelete".to_string(),
+            "threadOptionsRemove".to_string(),
             ShortcutConfig {
-                key: "d".to_string(),
+                key: "r".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
-                description: "Delete thread in options menu".to_string(),
+                description: "Delete note-thread in options menu".to_string(),
             },
         );
 

@@ -25,7 +25,7 @@
   const shortcuts = globalActions.map((action) => settings.shortcuts[action]);
   const fuzzyShortcut = settings.shortcuts.toggleFuzzy;
   const searchModeShortcut = settings.shortcuts.toggleSearchMode;
-  const threadOptionShortcut = settings.shortcuts.threadOptionsDelete;
+  const threadOptionShortcut = settings.shortcuts.threadOptionsRemove;
 </script>
 
 <div class="shortcut-list">

@@ -23,14 +23,14 @@
   /**
    * Deletes the current thread
    */
-  const handleDeleteThread = () => {
+  const handleRemoveThread = () => {
     // TODO: Delete thread
     console.log('Delete thread:', thread.name);
     closeMenu();
   };
 
   useShortcuts({
-    threadOptionsDelete: handleDeleteThread,
+    threadOptionsRemove: handleRemoveThread,
     closePopup: closeMenu,
   });
 </script>
@@ -61,12 +61,12 @@
     <div class="taskbar-actions">
       <button
         class="action-button"
-        title={$t('thread.options.delete')}
-        onclick={handleDeleteThread}
+        title={$t('thread.options.remove')}
+        onclick={handleRemoveThread}
       >
-        <span>{$t('thread.options.delete')}</span>
+        <span>{$t('thread.options.remove')}</span>
         <div class="shortcut-hint">
-          <KeyboardShortcut primary secondary key="D" />
+          <KeyboardShortcut primary secondary key="R" />
         </div>
       </button>
     </div>
