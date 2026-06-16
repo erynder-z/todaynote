@@ -160,6 +160,16 @@ impl NoteSession {
         }
     }
 
+    /// Removes a range of lines from the session.
+    pub fn delete_line_range(&mut self, start: usize, end: usize) {
+        if start < end && end <= self.lines.len() {
+            self.lines.drain(start..end);
+            self.detect_frontmatter();
+            self.ensure_trailing_empty_line();
+            self.detect_threads();
+        }
+    }
+
     /// Returns the index where the actual content (after frontmatter) starts.
     pub fn get_content_start_index(&self) -> usize {
         match self.frontmatter_range {

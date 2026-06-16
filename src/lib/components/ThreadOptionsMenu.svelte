@@ -2,10 +2,13 @@
   /**
    * Slide-in menu for displaying thread options
    */
+
   import { slide } from 'svelte/transition';
   import type { NoteThread } from '$lib/interfaces/notes';
+  import { toast } from '$lib/stores/toast.svelte';
   import { t } from '$lib/utils/i18n';
   import { sessionState } from '../stores/sessionState.svelte';
+  import { removeThread } from '../utils/notes';
   import { useShortcuts } from '../utils/shortcuts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
@@ -23,10 +26,31 @@
   /**
    * Deletes the current thread
    */
-  const handleRemoveThread = () => {
-    // TODO: Delete thread
-    console.log('Delete thread:', thread.name);
-    closeMenu();
+  const handleRemoveThread = async () => {
+    try {
+      // Get current content from session state
+      const currentContent = sessionState.todayNoteContent?.content || '';
+
+      if (!currentContent) {
+        toast.error($t('thread.options.remove_error'));
+        return;
+      }
+
+      const result = await removeThread(thread.name, currentContent);
+
+      // Update the session state with the new content
+      if (result) {
+        // Force a refresh by creating a new object with the same data
+        const newContent = JSON.parse(JSON.stringify(result));
+        sessionState.todayNoteContent = newContent;
+      }
+
+      closeMenu();
+
+      toast.success($t('thread.options.remove_success'));
+    } catch (error) {
+      toast.error($t('thread.options.remove_error'));
+    }
   };
 
   useShortcuts({

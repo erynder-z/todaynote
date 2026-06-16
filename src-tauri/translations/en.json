@@ -135,5 +135,7 @@
 	"settings.thread_visual_style": "Thread Visual Style",
 	"settings.thread_visual_identicon_dotmatrix": "Identicon (Dot Matrix)",
 	"settings.thread_visual_identicon_round": "Identicon (Round)",
-	"settings.thread_visual_static_icon": "Static Icon"
+	"settings.thread_visual_static_icon": "Static Icon",
+	"thread.options.remove_success": "Removed successfully",
+	"thread.options.remove_error": "Failed to remove"
 }
