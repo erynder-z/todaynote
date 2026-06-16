@@ -63,7 +63,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleSearch".to_string(),
             ShortcutConfig {
-                key: "k".to_string(),
+                key: "K".to_string(),
                 primary: true,
                 secondary: false,
                 shift: false,
@@ -73,7 +73,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleNoteBrowser".to_string(),
             ShortcutConfig {
-                key: "l".to_string(),
+                key: "L".to_string(),
                 primary: true,
                 secondary: false,
                 shift: false,
@@ -93,7 +93,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleStatistics".to_string(),
             ShortcutConfig {
-                key: "x".to_string(),
+                key: "X".to_string(),
                 primary: true,
                 secondary: false,
                 shift: false,
@@ -103,7 +103,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleSidebar".to_string(),
             ShortcutConfig {
-                key: "b".to_string(),
+                key: "B".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -113,7 +113,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleNoteBrowserLayout".to_string(),
             ShortcutConfig {
-                key: "l".to_string(),
+                key: "L".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -123,7 +123,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "manageTags".to_string(),
             ShortcutConfig {
-                key: "t".to_string(),
+                key: "T".to_string(),
                 primary: true,
                 secondary: false,
                 shift: false,
@@ -153,7 +153,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "jumpByNumber".to_string(),
             ShortcutConfig {
-                key: "1,2,3,4,5,6,7,8,9,b,c,d,g,h,i,j,k,n,p,r".to_string(),
+                key: "1,2,3,4,5,6,7,8,9,B,C,D,G,H,I,J,K,N,P,R".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -163,7 +163,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleFuzzy".to_string(),
             ShortcutConfig {
-                key: "f".to_string(),
+                key: "F".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -173,7 +173,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleSearchMode".to_string(),
             ShortcutConfig {
-                key: "m".to_string(),
+                key: "M".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -183,7 +183,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "navigateYesterday".to_string(),
             ShortcutConfig {
-                key: "e".to_string(),
+                key: "E".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -193,7 +193,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "navigateLastAvailable".to_string(),
             ShortcutConfig {
-                key: "a".to_string(),
+                key: "A".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -203,7 +203,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "navigateToday".to_string(),
             ShortcutConfig {
-                key: "o".to_string(),
+                key: "O".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -213,7 +213,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleThreadOptionsMode".to_string(),
             ShortcutConfig {
-                key: "p".to_string(),
+                key: "P".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -223,7 +223,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "threadOptionsRemove".to_string(),
             ShortcutConfig {
-                key: "r".to_string(),
+                key: "R".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
