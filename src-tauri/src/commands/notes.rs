@@ -3,7 +3,7 @@
 //! This module provides functions for reading, writing, and manipulating note files, as well as managing the current note editing session.
 
 use crate::models::app_state::AppState;
-use crate::models::note_session::NoteThread;
+use crate::models::note_session::{NoteSession, NoteThread};
 use crate::models::response_types::{AppStatistics, NoteContentResponse, NoteListResponse};
 use std::fs;
 use std::path::PathBuf;
@@ -238,6 +238,39 @@ pub async fn get_statistics(state: State<'_, AppState>) -> Result<AppStatistics,
     note_manager.get_statistics()
 }
 
+/// Helper to sync frontend content, perform a thread operation, and save the result.
+async fn perform_thread_operation<F>(
+    current_content: String,
+    state: State<'_, AppState>,
+    operation: F,
+) -> Result<NoteContentResponse, String>
+where
+    F: FnOnce(&mut NoteSession) -> Result<(), String>,
+{
+    let mut session = state.note_session()?;
+    let path = session
+        .path
+        .clone()
+        .ok_or_else(|| "No active note session".to_string())?;
+
+    let full_content = reconstruct_full_content(&path, &current_content)?;
+    session.load(path.clone(), full_content);
+
+    operation(&mut session)?;
+
+    let full_content = session.get_full_content();
+    fs::write(&path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+
+    let note_manager = state.note_manager()?;
+    let tag_manager = state.tag_manager()?;
+
+    Ok(NoteContentResponse::from_session(
+        &session,
+        &*note_manager,
+        &*tag_manager,
+    ))
+}
+
 /// Finds or creates a thread by name and returns its content-relative line index.
 ///
 /// Jumps to the end of the thread (ready to type). If the thread does not exist,
@@ -252,36 +285,16 @@ pub async fn ensure_thread(
     current_content: String,
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
-    let mut session = state.note_session()?;
-    let path = session.path.clone();
-
-    if let Some(path) = &path {
-        let full_content = reconstruct_full_content(path, &current_content)?;
-        session.load(path.clone(), full_content);
-    } else {
-        return Err("No note session loaded".to_string());
-    }
-
-    if !session.threads.iter().any(|s| s.name == name) {
-        let last_idx = session.lines.len();
-        session.insert_line(last_idx, format!("# {}", name));
-        session.insert_line(last_idx + 1, "".to_string());
-        session.insert_line(last_idx + 2, "".to_string());
-    }
-
-    if let Some(path) = &session.path {
-        let full_content = session.get_full_content();
-        fs::write(path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
-    }
-
-    let note_manager = state.note_manager()?;
-    let tag_manager = state.tag_manager()?;
-
-    Ok(NoteContentResponse::from_session(
-        &session,
-        &note_manager,
-        &tag_manager,
-    ))
+    perform_thread_operation(current_content, state, |session| {
+        if !session.threads.iter().any(|s| s.name == name) {
+            let last_idx = session.lines.len();
+            session.insert_line(last_idx, format!("# {}", name));
+            session.insert_line(last_idx + 1, "".to_string());
+            session.insert_line(last_idx + 2, "".to_string());
+        }
+        Ok(())
+    })
+    .await
 }
 
 /// Detects top-level headings (`# `) in markdown content and returns them as threads.
@@ -380,4 +393,28 @@ pub async fn apply_default_thread_name(
     }
 
     Ok(())
+}
+
+/// Removes a thread by name from the current note session.
+///
+/// The `current_content` parameter should be the content portion from the frontend
+/// (excluding frontmatter). The backend reconstructs the full note by reading the
+/// frontmatter from disk.
+#[tauri::command]
+pub async fn remove_thread(
+    name: String,
+    current_content: String,
+    state: State<'_, AppState>,
+) -> Result<NoteContentResponse, String> {
+    perform_thread_operation(current_content, state, |session| {
+        if let Some(thread_to_remove) = session.threads.iter().find(|t| t.name == name) {
+            let start_line = thread_to_remove.start_line;
+            let end_line = thread_to_remove.end_line;
+            session.delete_line_range(start_line, end_line);
+            Ok(())
+        } else {
+            Err(format!("Thread '{}' not found", name))
+        }
+    })
+    .await
 }

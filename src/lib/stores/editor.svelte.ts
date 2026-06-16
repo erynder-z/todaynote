@@ -1,6 +1,11 @@
 import { untrack } from "svelte";
 import type { NoteContentResponse, NoteThread } from "$lib/interfaces/notes";
-import { detectThreads, ensureThread, saveNoteContent } from "$lib/utils/notes";
+import {
+	detectThreads,
+	ensureThread,
+	removeThread,
+	saveNoteContent,
+} from "$lib/utils/notes";
 
 /**
  * Manages the state and logic for the Note Editor.
@@ -16,8 +21,8 @@ export class EditorStore {
 	private threadRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
 	threads = $state<NoteThread[]>([]);
 
-	// Callback for thread jumps
-	onJump: (updated: NoteContentResponse) => void = () => {};
+	// Callback for when content changes (saves, jumps, etc.) to sync back to the parent
+	onContentUpdate: (updated: NoteContentResponse) => void = () => {};
 
 	// Function to jump to a thread (set by NoteEditor component)
 	jumpToThread: (name: string) => void = () => {};
@@ -92,7 +97,20 @@ export class EditorStore {
 			this.threads = updated.threads;
 			this.pendingExternalUpdate = true;
 			this.hasChanges = false;
-			this.onJump(updated);
+			this.onContentUpdate(updated);
+		}
+	}
+
+	/**
+	 * Removes a thread from the current note and updates the store.
+	 */
+	async removeThread(name: string) {
+		const updated = await removeThread(name, this.content);
+		if (updated) {
+			this.content = updated.content;
+			this.threads = updated.threads;
+			this.pendingExternalUpdate = true;
+			this.hasChanges = false;
 		}
 	}
 
@@ -106,7 +124,11 @@ export class EditorStore {
 			const updated = await saveNoteContent(this.notePath, this.content);
 			if (updated) {
 				this.threads = updated.threads;
-				this.noteContent = updated;
+				if (this.noteContent) {
+					this.noteContent.metadata = updated.metadata;
+					this.noteContent.threads = updated.threads;
+					this.noteContent.path = updated.path;
+				}
 			}
 			this.hasChanges = false;
 		}

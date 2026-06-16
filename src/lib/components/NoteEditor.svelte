@@ -148,7 +148,8 @@
 
   // Connect the store's sync back to the component's bindable props
   $effect(() => {
-    editor.onJump = (updated: NoteContentResponse) => (noteContent = updated);
+    editor.onContentUpdate = (updated: NoteContentResponse) =>
+      (noteContent = updated);
   });
 
   // Expose jump functionality to parent components

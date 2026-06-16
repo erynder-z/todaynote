@@ -20,20 +20,23 @@ export const searchNotes = async (
 		maxResults?: number;
 		filenameFilter?: string;
 		sortBy?: string;
-	}
+	},
 ): Promise<SearchResult[]> => {
 	try {
 		const results = (await invoke("search_notes", {
 			query,
 			isFuzzy,
 		})) as SearchResult[];
-		
-		// Process results using backend if options are provided
-		if (options && (options.minScore !== undefined || options.maxResults !== undefined || 
-		              options.filenameFilter || options.sortBy)) {
+
+		if (
+			options &&
+			(options.minScore !== undefined ||
+				options.maxResults !== undefined ||
+				options.filenameFilter ||
+				options.sortBy)
+		)
 			return await processSearchResults(results, options);
-		}
-		
+
 		return results;
 	} catch (error) {
 		console.error("Error searching notes:", error);
@@ -220,6 +223,23 @@ export const detectThreads = async (content: string): Promise<NoteThread[]> => {
 	} catch (error) {
 		console.error("Error detecting threads:", error);
 		return [];
+	}
+};
+
+/**
+ * Removes a thread by name from the current note and returns the updated note content.
+ * Pass the current content to ensure unsaved edits are not lost.
+ */
+export const removeThread = async (name: string, currentContent: string) => {
+	try {
+		const content = (await invoke("remove_thread", {
+			name,
+			currentContent,
+		})) as NoteContentResponse;
+		return content;
+	} catch (error) {
+		console.error(`Error removing thread ${name}:`, error);
+		return null;
 	}
 };
 
