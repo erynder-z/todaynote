@@ -28,8 +28,8 @@
   onclick={toggleThreadMode}
   title={$t(
     sessionState.threadShortcutsMode === 'navigation'
-      ? 'sidebar.thread_mode_actions'
-      : 'sidebar.thread_mode_navigation',
+      ? 'sidebar.thread_mode_navigation'
+      : 'sidebar.thread_mode_actions',
   )}
 >
   <span class="mode-label">
