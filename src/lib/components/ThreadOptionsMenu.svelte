@@ -24,6 +24,20 @@
   };
 
   /**
+   * Applies strikethrough formatting to thread
+   */
+  const handleStrikethrough = () => {
+    console.log('Strikethrough');
+  };
+
+  /**
+   * Shows linked threads
+   */
+  const handleLinked = () => {
+    console.log('Linked');
+  };
+
+  /**
    * Deletes the current thread
    */
   const handleRemoveThread = async () => {
@@ -85,9 +99,61 @@
     <div class="taskbar-actions">
       <button
         class="action-button"
+        title={$t('thread.options.strikethrough')}
+        onclick={handleStrikethrough}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="1.5rem"
+          viewBox="0 -960 960 960"
+          width="1.5rem"
+          fill="currentColor"
+          ><path
+            d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"
+          /></svg
+        >
+        <span>{$t('thread.options.strikethrough')}</span>
+        <div class="shortcut-hint">
+          <KeyboardShortcut primary secondary key="S" />
+        </div>
+      </button>
+
+      <button
+        class="action-button"
+        title={$t('thread.options.linked')}
+        onclick={handleLinked}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="1.5rem"
+          viewBox="0 -960 960 960"
+          width="1.5rem"
+          fill="currentColor"
+          ><path
+            d="M760-600q-57 0-99-34t-56-86H354q-11 42-41.5 72.5T240-606v251q52 14 86 56t34 99q0 66-47 113T200-40q-66 0-113-47T40-200q0-57 34-99t86-56v-251q-52-14-86-56t-34-98q0-66 47-113t113-47q56 0 98 34t56 86h251q14-52 56-86t99-34q66 0 113 47t47 113q0 66-47 113t-113 47ZM200-120q33 0 56.5-24t23.5-56q0-33-23.5-56.5T200-280q-32 0-56 23.5T120-200q0 32 24 56t56 24Zm0-560q33 0 56.5-23.5T280-760q0-33-23.5-56.5T200-840q-32 0-56 23.5T120-760q0 33 24 56.5t56 23.5ZM760-40q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113T760-40Zm0-80q33 0 56.5-24t23.5-56q0-33-23.5-56.5T760-280q-33 0-56.5 23.5T680-200q0 32 23.5 56t56.5 24Zm0-560q33 0 56.5-23.5T840-760q0-33-23.5-56.5T760-840q-33 0-56.5 23.5T680-760q0 33 23.5 56.5T760-680ZM200-200Zm0-560Zm560 560Zm0-560Z"
+          /></svg
+        >
+        <span>{$t('thread.options.linked')}</span>
+        <div class="shortcut-hint">
+          <KeyboardShortcut primary secondary key="I" />
+        </div>
+      </button>
+
+      <button
+        class="action-button"
         title={$t('thread.options.remove')}
         onclick={handleRemoveThread}
       >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="1.5rem"
+          viewBox="0 -960 960 960"
+          width="1.5rem"
+          fill="currentColor"
+          ><path
+            d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"
+          /></svg
+        >
         <span>{$t('thread.options.remove')}</span>
         <div class="shortcut-hint">
           <KeyboardShortcut primary secondary key="R" />
@@ -105,7 +171,7 @@
     transform: translateX(-50%);
     background-color: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 1rem 1rem 0 0;
+    border-radius: 0.5rem 0.5rem 0 0;
     padding: 1rem;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
     z-index: 999;
@@ -169,29 +235,16 @@
     margin: 0;
   }
 
-  .taskbar-actions::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  .taskbar-actions::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .taskbar-actions::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 3px;
-  }
-
   .action-button {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.25rem;
-    background-color: color-mix(in srgb, var(--bg-surface), transparent 45%);
+    padding: 1rem;
+    background-color: color-mix(in srgb, var(--accent), transparent 80%);
     border: none;
-    border-radius: 0.5rem;
+    border-radius: 0.25rem;
     color: var(--text-main);
     cursor: pointer;
     transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
@@ -201,23 +254,13 @@
     position: relative;
   }
 
-  .action-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-
-  .action-button:hover:not(:disabled) {
-    background-color: color-mix(in srgb, var(--accent), transparent 80%);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
   .action-button:focus {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
   .action-button span {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;

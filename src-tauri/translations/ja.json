@@ -21,6 +21,10 @@
 	"search.start_typing_tags": "タグを検索...",
 	"thread.options.title": "{{threadName}} のオプション",
 	"thread.options.remove": "削除",
+	"thread.options.strikethrough": "打ち消し線",
+	"thread.options.linked": "リンクされたスレッド",
+	"thread.options.remove_success": "削除しました",
+	"thread.options.remove_error": "削除できませんでした",
 	"sidebar.thread_mode_navigation": "ナビゲーションモード",
 	"sidebar.thread_mode_navigation_short": "N-モード",
 	"sidebar.thread_mode_actions": "アクションモード",
@@ -135,7 +139,5 @@
 	"settings.thread_visual_style": "スレッドのビジュアルスタイル",
 	"settings.thread_visual_identicon_dotmatrix": "Identicon（ドットマトリックス）",
 	"settings.thread_visual_identicon_round": "Identicon（丸型）",
-	"settings.thread_visual_static_icon": "静的アイコン",
-	"thread.options.remove_success": "削除しました",
-	"thread.options.remove_error": "削除できませんでした"
+	"settings.thread_visual_static_icon": "静的アイコン"
 }
