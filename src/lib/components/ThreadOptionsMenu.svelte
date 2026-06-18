@@ -2,7 +2,6 @@
   /**
    * Slide-in menu for displaying thread options
    */
-
   import { slide } from 'svelte/transition';
   import type { NoteThread } from '$lib/interfaces/notes';
   import { toast } from '$lib/stores/toast.svelte';
@@ -24,13 +23,6 @@
   };
 
   /**
-   * Applies strikethrough formatting to thread
-   */
-  const handleStrikethrough = () => {
-    console.log('Strikethrough');
-  };
-
-  /**
    * Shows linked threads
    */
   const handleLinked = () => {
@@ -42,8 +34,7 @@
    */
   const handleRemoveThread = async () => {
     try {
-      // Get current content from session state
-      const currentContent = sessionState.todayNoteContent?.content || '';
+      const currentContent = sessionState.todayNoteContent?.content;
 
       if (!currentContent) {
         toast.error($t('thread.options.remove_error'));
@@ -60,8 +51,6 @@
       }
 
       closeMenu();
-
-      toast.success($t('thread.options.remove_success'));
     } catch (error) {
       toast.error($t('thread.options.remove_error'));
     }
@@ -97,27 +86,6 @@
     </div>
 
     <div class="taskbar-actions">
-      <button
-        class="action-button"
-        title={$t('thread.options.strikethrough')}
-        onclick={handleStrikethrough}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          height="1.5rem"
-          viewBox="0 -960 960 960"
-          width="1.5rem"
-          fill="currentColor"
-          ><path
-            d="M486-160q-76 0-135-45t-85-123l88-38q14 48 48.5 79t85.5 31q42 0 76-20t34-64q0-18-7-33t-19-27h112q5 14 7.5 28.5T694-340q0 86-61.5 133T486-160ZM80-480v-80h800v80H80Zm402-326q66 0 115.5 32.5T674-674l-88 39q-9-29-33.5-52T484-710q-41 0-68 18.5T386-640h-96q2-69 54.5-117.5T482-806Z"
-          /></svg
-        >
-        <span>{$t('thread.options.strikethrough')}</span>
-        <div class="shortcut-hint">
-          <KeyboardShortcut primary secondary key="S" />
-        </div>
-      </button>
-
       <button
         class="action-button"
         title={$t('thread.options.linked')}

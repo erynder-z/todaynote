@@ -23,8 +23,6 @@
 	"thread.options.remove": "Delete",
 	"thread.options.strikethrough": "Strikethrough",
 	"thread.options.linked": "Linked",
-	"thread.options.strikethrough_on": "Strikethrough",
-	"thread.options.remove_success": "Removed successfully",
 	"thread.options.remove_error": "Failed to remove",
 	"sidebar.thread_mode_navigation": "Navigation Mode",
 	"sidebar.thread_mode_navigation_short": "N-Mode",
