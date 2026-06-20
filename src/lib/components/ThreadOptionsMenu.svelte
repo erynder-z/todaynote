@@ -7,7 +7,7 @@
   import { toast } from '$lib/stores/toast.svelte';
   import { t } from '$lib/utils/i18n';
   import { sessionState } from '../stores/sessionState.svelte';
-  import { removeThread } from '../utils/notes';
+  import { aggregateThread, removeThread } from '../utils/notes';
   import { useShortcuts } from '../utils/shortcuts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
@@ -25,8 +25,18 @@
   /**
    * Shows linked threads
    */
-  const handleLinked = () => {
-    console.log('Linked');
+  const handleLinked = async () => {
+    try {
+      const result = await aggregateThread(thread.name);
+      if (result) {
+        sessionState.aggregatedThread = result;
+        sessionState.activePopup = 'threadAggregation';
+      } else {
+        toast.error($t('thread.options.aggregation_error'));
+      }
+    } catch (error) {
+      toast.error($t('thread.options.aggregation_error'));
+    }
   };
 
   /**
@@ -57,7 +67,8 @@
   };
 
   useShortcuts({
-    threadOptionsRemove: handleRemoveThread,
+    threadOptionRemove: handleRemoveThread,
+    threadOptionLinked: handleLinked,
     closePopup: closeMenu,
   });
 </script>

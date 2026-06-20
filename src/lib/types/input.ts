@@ -19,4 +19,5 @@ export type ShortcutAction =
 	| "navigateLastAvailable"
 	| "navigateToday"
 	| "toggleThreadOptionsMode"
-	| "threadOptionsRemove";
+	| "threadOptionRemove"
+	| "threadOptionLinked";

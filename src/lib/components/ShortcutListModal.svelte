@@ -25,7 +25,8 @@
   const shortcuts = globalActions.map((action) => settings.shortcuts[action]);
   const fuzzyShortcut = settings.shortcuts.toggleFuzzy;
   const searchModeShortcut = settings.shortcuts.toggleSearchMode;
-  const threadOptionShortcut = settings.shortcuts.threadOptionsRemove;
+  const threadOptionRemoveShortcut = settings.shortcuts.threadOptionRemove;
+  const threadOptionLinkedShortcut = settings.shortcuts.threadOptionLinked;
 </script>
 
 <div class="shortcut-list">
@@ -98,15 +99,28 @@
 
   <div class="thread-option-shortcuts">
     <h3>{$t('shortcuts.thread.description')}</h3>
-    {#if threadOptionShortcut}
+    {#if threadOptionRemoveShortcut}
       <div class="shortcut-item">
         <span class="shortcut-description">{$t('shortcuts.thread.delete')}</span
         >
         <div class="shortcut-keys">
           <KeyboardShortcut
-            primary={threadOptionShortcut.primary}
-            secondary={threadOptionShortcut.secondary}
-            key={threadOptionShortcut.key.toUpperCase()}
+            primary={threadOptionRemoveShortcut.primary}
+            secondary={threadOptionRemoveShortcut.secondary}
+            key={threadOptionRemoveShortcut.key.toUpperCase()}
+          />
+        </div>
+      </div>
+    {/if}
+    {#if threadOptionLinkedShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description">{$t('shortcuts.thread.linked')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={threadOptionLinkedShortcut.primary}
+            secondary={threadOptionLinkedShortcut.secondary}
+            key={threadOptionLinkedShortcut.key.toUpperCase()}
           />
         </div>
       </div>
