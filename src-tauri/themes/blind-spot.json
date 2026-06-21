@@ -4,6 +4,7 @@
 	"--text-main": "#000000",
 	"--text-muted": "#404040",
 	"--text-ui-muted": "#404040",
+	"--shortcut-bg": "#e0e0e0",
 	"--accent": "#000000",
 	"--accent-text": "#FFFAFA",
 	"--border": "#e5e5e5",

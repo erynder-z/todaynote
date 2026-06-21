@@ -44,7 +44,7 @@
   }
 
   .kbd-key {
-    background-color: var(--bg-surface);
+    background: color-mix(in srgb, var(--shortcut-bg), transparent 80%);
     border: 1px solid var(--border);
     border-radius: 0.25rem;
     padding: 0.1rem 0.4rem;

@@ -2,6 +2,7 @@
   /**
    * Control Center sidebar containing date, tags, and thread shortcuts.
    */
+  import { slide } from 'svelte/transition';
   import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
   import { t } from '$lib/utils/i18n';
   import { useShortcuts } from '$lib/utils/shortcuts';
@@ -52,9 +53,8 @@
   class="sidebar"
   class:closed={!sessionState.sidebarOpen}
   class:resizing={isResizing}
-  style="width: {sessionState.sidebarOpen
-    ? width
-    : 0}rem; --content-width: {width - 3}rem;"
+  transition:slide={{ duration: 200, axis: 'x' }}
+  style="width: {width}rem; --content-width: {width - 3}rem;"
 >
   <button
     class="toggle-btn horizontal-only"
@@ -159,6 +159,16 @@
 
   @media (min-width: 1025px) {
     .sidebar {
+      opacity: 1;
+    }
+
+    .sidebar.resizing {
+      transition: none !important;
+    }
+  }
+
+  @media (min-width: 1025px) {
+    .sidebar {
       transition:
         width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         padding 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -179,24 +189,6 @@
       box-shadow: none;
       overflow: hidden;
       pointer-events: none;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    .sidebar {
-      width: 100% !important;
-      height: 100%;
-      border-left: none;
-      padding: 1.5rem;
-      background-color: var(--bg-surface);
-    }
-
-    .sidebar-content {
-      width: 100% !important;
-    }
-
-    .horizontal-only {
-      display: none;
     }
   }
 </style>

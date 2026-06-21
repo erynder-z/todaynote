@@ -72,7 +72,7 @@
     <input
       id="default-thread-name"
       type="text"
-      class="theme-input"
+      class="name-input"
       placeholder={effectiveValue}
       bind:value={localValue}
       onchange={handleValueChange}
@@ -119,11 +119,11 @@
     color: var(--text-main);
   }
 
-  .theme-input {
+  .name-input {
     padding: 0.65rem 1rem;
     border-radius: 0.5rem;
     border: none;
-    background: color-mix(in srgb, var(--accent), transparent 85%);
+    background: color-mix(in srgb, var(--accent), transparent 90%);
     color: var(--text-main);
     width: 25ch;
     font-size: 0.95rem;
@@ -131,12 +131,13 @@
     transition: background 0.2s ease;
   }
 
-  .theme-input:focus {
-    background: color-mix(in srgb, var(--accent), transparent 75%);
+  .name-input:focus {
+    background: color-mix(in srgb, var(--accent), transparent 85%);
   }
 
-  .theme-input::placeholder {
+  .name-input::placeholder {
     color: color-mix(in srgb, var(--text-main), transparent 50%);
+    color: var(--text-main);
   }
 
   .btn-primary {

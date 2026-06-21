@@ -19,7 +19,7 @@
 {#if visibleThreads.length > 0}
   <div class="threads-container">
     {#each visibleThreads as thread, i}
-      <button class="thread-pill" onclick={() => onSelect(thread.name)}>
+      <button class="thread-item" onclick={() => onSelect(thread.name)}>
         <div class="left-side">
           <IdentIcon title={thread.name} size={1} />
           <span class="thread-name">{thread.name}</span>
@@ -46,7 +46,7 @@
     margin-bottom: 1.5rem;
   }
 
-  .thread-pill {
+  .thread-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -63,11 +63,11 @@
     width: 100%;
   }
 
-  .thread-pill:hover {
+  .thread-item:hover {
     background-color: color-mix(in srgb, var(--accent), transparent 90%);
   }
 
-  .thread-pill .left-side {
+  .thread-item .left-side {
     display: flex;
     gap: 0.5rem;
     font-weight: 500;
@@ -76,17 +76,14 @@
     min-width: 0;
   }
 
-  .thread-pill .thread-name {
+  .thread-item .thread-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .shortcut-hint {
-    font-family: var(--font-mono, monospace);
-    font-size: 0.65rem;
     color: var(--text-muted);
-    background-color: color-mix(in srgb, var(--bg-base), transparent 50%);
     padding: 0.1rem 0.2rem;
     border-radius: 0.2rem;
     display: flex;

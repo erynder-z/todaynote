@@ -116,13 +116,8 @@
     transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
-  .mode-btn:hover {
-    background-color: var(--bg-surface);
-    color: var(--text-main);
-  }
-
   .mode-btn.active {
-    background-color: color-mix(in srgb, var(--accent), transparent 85%);
+    background-color: color-mix(in srgb, var(--accent), transparent 90%);
     color: var(--accent);
   }
 

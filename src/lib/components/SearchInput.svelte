@@ -99,7 +99,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background-color: color-mix(in srgb, var(--accent), transparent 80%);
+    background-color: color-mix(in srgb, var(--accent), transparent 95%);
     border-radius: 0.5rem;
     padding: 0 1rem;
     height: 3rem;
@@ -107,7 +107,7 @@
   }
 
   .search-input-container:focus-within {
-    background-color: color-mix(in srgb, var(--accent), transparent 55%);
+    background-color: color-mix(in srgb, var(--accent), transparent 85%);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 

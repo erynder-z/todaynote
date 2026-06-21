@@ -50,7 +50,7 @@
     padding: 0.65rem 1rem;
     border-radius: 0.5rem;
     border: none;
-    background: color-mix(in srgb, var(--accent), transparent 85%);
+    background: color-mix(in srgb, var(--accent), transparent 90%);
     color: var(--text-main);
     cursor: pointer;
     width: 25ch;

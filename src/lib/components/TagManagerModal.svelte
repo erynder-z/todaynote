@@ -291,7 +291,7 @@
     gap: 0.75rem;
     width: 100%;
     height: fit-content;
-    background-color: color-mix(in srgb, var(--accent), transparent 80%);
+    background-color: color-mix(in srgb, var(--accent), transparent 95%);
     border-radius: 0.25rem;
     padding: 0 0.75rem;
     transition:
@@ -300,8 +300,7 @@
   }
 
   .input-wrapper:focus-within {
-    background-color: color-mix(in srgb, var(--accent), transparent 55%);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent), transparent 80%);
+    background-color: color-mix(in srgb, var(--accent), transparent 85%);
   }
 
   .tag-icon {
