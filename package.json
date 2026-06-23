@@ -13,30 +13,30 @@
 	},
 	"license": "MIT",
 	"dependencies": {
-		"@milkdown/core": "^7.20.0",
-		"@milkdown/ctx": "^7.20.0",
+		"@milkdown/core": "^7.21.2",
+		"@milkdown/ctx": "^7.21.2",
 		"@milkdown/plugin-listener": "^7.21.2",
-		"@milkdown/preset-commonmark": "^7.20.0",
+		"@milkdown/preset-commonmark": "^7.21.2",
 		"@milkdown/preset-gfm": "^7.21.2",
-		"@milkdown/prose": "^7.20.0",
-		"@tauri-apps/api": "^2.11.0",
+		"@milkdown/prose": "^7.21.2",
+		"@tauri-apps/api": "^2.11.1",
 		"@tauri-apps/plugin-dialog": "^2.7.1",
 		"@tauri-apps/plugin-opener": "^2.5.4"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.4.13",
+		"@biomejs/biome": "2.5.1",
 		"@milkdown/plugin-listener": "^7.21.2",
 		"@milkdown/preset-gfm": "^7.21.2",
 		"@sveltejs/adapter-static": "^3.0.10",
-		"@sveltejs/kit": "^2.63.0",
+		"@sveltejs/kit": "^2.67.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
-		"@tauri-apps/api": "^2.11.0",
-		"@tauri-apps/cli": "^2.11.2",
+		"@tauri-apps/api": "^2.11.1",
+		"@tauri-apps/cli": "^2.11.3",
 		"@tauri-apps/plugin-dialog": "^2.7.1",
 		"@tauri-apps/plugin-opener": "^2.5.4",
-		"svelte": "^5.56.2",
-		"svelte-check": "^4.6.0",
+		"svelte": "^5.56.4",
+		"svelte-check": "^4.7.0",
 		"typescript": "~6.0.3",
-		"vite": "^8.0.16"
+		"vite": "^8.1.0"
 	}
 }
