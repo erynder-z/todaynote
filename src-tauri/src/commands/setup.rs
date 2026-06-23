@@ -27,6 +27,7 @@ pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, St
             sidebar_open: config.sidebar_open,
             control_center_width: config.control_center_width,
             default_thread_name: config.default_thread_name.clone(),
+            use_default_thread_name: config.use_default_thread_name,
             identicon_style: config.identicon_style.clone(),
             thread_shortcuts_mode: config.thread_shortcuts_mode.clone(),
             shortcuts: config.shortcuts.clone(),
@@ -58,6 +59,7 @@ pub fn get_initial_state(
         sidebar_open: config.sidebar_open,
         control_center_width: config.control_center_width,
         default_thread_name: config.default_thread_name,
+        use_default_thread_name: config.use_default_thread_name,
         identicon_style: config.identicon_style,
         thread_shortcuts_mode: config.thread_shortcuts_mode,
         shortcuts: config.shortcuts,
@@ -117,6 +119,20 @@ fn get_ui_metadata(
         theme_colors,
     )
 }
+/// Creates a note header based on the current configuration.
+fn create_note_header(config: &AppConfig, translations: &HashMap<String, String>) -> String {
+    // When use_default_thread_name is false, return an empty header
+    if !config.use_default_thread_name {
+        return String::new();
+    }
+    // When use_default_thread_name is true, return the default thread name
+    config.default_thread_name.clone().unwrap_or_else(|| {
+        translations
+            .get("note.header")
+            .cloned()
+            .unwrap_or_else(|| "Note".to_string())
+    })
+}
 
 /// Attempts to load today's daily note and updates the application session.
 fn load_today_note(
@@ -128,14 +144,9 @@ fn load_today_note(
     let path_str = file_path.to_string_lossy().into_owned();
 
     let config = state.config()?;
-    let note_header = config.default_thread_name.as_deref().unwrap_or_else(|| {
-        translations
-            .get("note.header")
-            .map(|s| s.as_str())
-            .unwrap_or("Note")
-    });
+    let note_header = create_note_header(&config, translations);
 
-    if let Ok(created_path) = note_manager.create_todays_note(note_header) {
+    if let Ok(created_path) = note_manager.create_todays_note(&note_header) {
         if let Ok(content) = note_manager.read_note_content(&created_path) {
             let mut session = state.note_session()?;
             session.load(created_path.clone(), content);

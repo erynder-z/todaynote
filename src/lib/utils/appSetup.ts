@@ -61,6 +61,13 @@ export const syncSettingsState = (state: AppPayload) => {
 	settings.rememberAppLayout = state.rememberAppLayout;
 	settings.notesListLayout = state.notesListLayout;
 	settings.rememberSettings = state.rememberSettings;
+	settings.useDefaultThreadName = state.useDefaultThreadName;
+	settings.defaultThreadName = state.defaultThreadName;
+	settings.useDefaultThreadName =
+		state.useDefaultThreadName !== undefined
+			? state.useDefaultThreadName
+			: true;
+	settings.shortcuts = state.shortcuts;
 
 	// If rememberSettings is false, use default values for component settings
 	// Otherwise, use the saved values from the config
@@ -80,9 +87,6 @@ export const syncSettingsState = (state: AppPayload) => {
 		settings.threadShortcutsMode = "navigation";
 		settings.identiconStyle = "dotmatrix";
 	}
-
-	settings.defaultThreadName = state.defaultThreadName;
-	settings.shortcuts = state.shortcuts;
 
 	const width = state.controlCenterWidth;
 	settings.controlCenterWidth = width > 100 ? width / 16 : width;

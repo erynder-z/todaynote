@@ -32,6 +32,7 @@ export interface AppPayload {
 	searchSelectedTag: string | null;
 	sidebarOpen: boolean;
 	defaultThreadName: string | null;
+	useDefaultThreadName: boolean;
 	identiconStyle: "dotmatrix" | "round" | "none";
 	threadShortcutsMode: "navigation" | "actions";
 	availableLocales: LocaleInfo[];

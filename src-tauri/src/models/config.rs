@@ -21,6 +21,7 @@ pub struct ShortcutConfig {
 /// This struct is serialized to and deserialized from a `config.json` file
 /// stored in the application's data directory.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AppConfig {
     /// Root directory for note storage.
     pub notes_folder: PathBuf,
@@ -46,6 +47,8 @@ pub struct AppConfig {
     pub control_center_width: f64,
     /// Custom default name for the initial thread in a new daily note.
     pub default_thread_name: Option<String>,
+    /// Whether to use the default thread name for new notes.
+    pub use_default_thread_name: bool,
     /// Visual style for thread identification icons ("dotmatrix", "round", or "none").
     pub identicon_style: String,
     /// Last used thread shortcuts mode ("navigation" or "actions").
@@ -254,6 +257,7 @@ impl Default for AppConfig {
             sidebar_open: true,
             control_center_width: 22.0, // Default 22rem
             default_thread_name: None,
+            use_default_thread_name: true,
             identicon_style: "dotmatrix".to_string(),
             thread_shortcuts_mode: "navigation".to_string(),
             shortcuts,

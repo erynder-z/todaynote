@@ -52,7 +52,7 @@ impl NoteManager {
 
     /// Creates today's daily note if it doesn't already exist.
     ///
-    /// The note is initialized with YAML metadata and a default thread header.
+    /// The note is initialized with YAML metadata. If the note header is not empty, add it below the metadata
     pub fn create_todays_note(&self, note_header: &str) -> Result<PathBuf, String> {
         self.ensure_notes_folder_exists()?;
         let file_path = self.get_today_note_path();
@@ -62,10 +62,14 @@ impl NoteManager {
         }
 
         let current_date = utils::date::get_current_date();
-        let note_content = format!(
-            "---\ncreated: {}\ntags: []\n---\n# {}\n",
-            current_date, note_header
-        );
+        let note_content = if note_header.is_empty() {
+            format!("---\ncreated: {}\ntags: []\n---\n", current_date)
+        } else {
+            format!(
+                "---\ncreated: {}\ntags: []\n---\n# {}\n",
+                current_date, note_header
+            )
+        };
 
         fs::write(&file_path, note_content).map_err(|e| format!("Failed to create note: {}", e))?;
 

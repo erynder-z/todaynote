@@ -14,6 +14,7 @@ export interface AppSettings {
 	sidebarOpen: boolean;
 	controlCenterWidth: number;
 	defaultThreadName: string | null;
+	useDefaultThreadName: boolean;
 	identiconStyle: "dotmatrix" | "round" | "none";
 	threadShortcutsMode: "navigation" | "actions";
 	shortcuts: Partial<Record<ShortcutAction, ShortcutConfig>>;
