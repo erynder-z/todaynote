@@ -94,6 +94,7 @@
 	"shortcuts.search.toggle_fuzzy": "曖昧検索を切り替える",
 	"shortcuts.search.toggle_mode": "検索モードを切り替える",
 	"shortcuts.action.toggle_search": "検索を切り替える",
+	"shortcuts.action.search_in_view": "現在のビューで検索",
 	"shortcuts.action.toggle_note_browser": "ノートブラウザを切り替える",
 	"shortcuts.action.toggle_settings": "設定を切り替える",
 	"shortcuts.action.toggle_statistics": "統計を切り替える",

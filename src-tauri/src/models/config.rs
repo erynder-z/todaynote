@@ -166,7 +166,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleFuzzy".to_string(),
             ShortcutConfig {
-                key: "F".to_string(),
+                key: "Z".to_string(),
                 primary: true,
                 secondary: true,
                 shift: false,
@@ -181,6 +181,16 @@ impl Default for AppConfig {
                 secondary: true,
                 shift: false,
                 description: "Toggle search mode".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleFindInView".to_string(),
+            ShortcutConfig {
+                key: "F".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Search in view".to_string(),
             },
         );
         shortcuts.insert(

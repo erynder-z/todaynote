@@ -20,4 +20,5 @@ export type ShortcutAction =
 	| "navigateToday"
 	| "toggleThreadOptionsMode"
 	| "threadOptionRemove"
-	| "threadOptionLinked";
+	| "threadOptionLinked"
+	| "toggleFindInView";

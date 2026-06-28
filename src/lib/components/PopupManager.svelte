@@ -9,7 +9,9 @@
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';
   import { t } from '../utils/i18n';
+  import { useShortcuts } from '../utils/shortcuts';
   import AboutView from './AboutView.svelte';
+  import FindInView from './FindInView.svelte';
   import Modal from './Modal.svelte';
   import NoteBrowser from './NoteBrowser.svelte';
   import SearchNotes from './SearchNotes.svelte';
@@ -20,6 +22,12 @@
   import ThreadAggregationView from './ThreadAggregationView.svelte';
   import ThreadOptionsMenu from './ThreadOptionsMenu.svelte';
   import Toast from './Toast.svelte';
+
+  useShortcuts({
+    toggleFindInView: () => {
+      sessionState.showFindInView = !sessionState.showFindInView;
+    },
+  });
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -89,6 +97,8 @@
     </div>
   {/each}
 </div>
+
+<FindInView />
 
 <style>
   .overlay {

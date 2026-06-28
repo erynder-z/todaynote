@@ -18,6 +18,7 @@ export interface SessionState {
 	sidebarOpen: boolean;
 	selectedThreadForOptions: NoteThread | null;
 	threadShortcutsMode: "navigation" | "actions";
+	showFindInView: boolean;
 }
 
 export interface AppPayload {

@@ -94,6 +94,7 @@
 	"shortcuts.search.toggle_fuzzy": "Fuzzy Search ein-/ausschalten",
 	"shortcuts.search.toggle_mode": "Suchmodus umschalten",
 	"shortcuts.action.toggle_search": "Suche einblenden",
+	"shortcuts.action.search_in_view": "Suche in der aktuellen Ansicht",
 	"shortcuts.action.toggle_note_browser": "Notenbrowser einblenden",
 	"shortcuts.action.toggle_settings": "Einstellungen einblenden",
 	"shortcuts.action.toggle_statistics": "Statistiken einblenden",

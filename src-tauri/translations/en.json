@@ -95,6 +95,7 @@
 	"shortcuts.search.toggle_fuzzy": "Toggle Fuzzy Search",
 	"shortcuts.search.toggle_mode": "Toggle Search Mode",
 	"shortcuts.action.toggle_search": "Toggle Search",
+	"shortcuts.action.search_in_view": "Search in View",
 	"shortcuts.action.toggle_note_browser": "Toggle Note Browser",
 	"shortcuts.action.toggle_settings": "Toggle Settings",
 	"shortcuts.action.toggle_statistics": "Toggle Statistics",
