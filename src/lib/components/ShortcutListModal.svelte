@@ -9,7 +9,7 @@
   // Global shortcuts (exclude context-specific ones)
   const globalActions: ShortcutAction[] = [
     'toggleSearch',
-    'toggleFindInView',
+    'toggleFindInNote',
     'toggleNoteBrowser',
     'toggleSettings',
     'toggleStatistics',

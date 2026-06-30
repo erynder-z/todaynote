@@ -11,5 +11,5 @@ export const sessionState = $state<SessionState>({
 	sidebarOpen: typeof window !== "undefined" ? window.innerWidth > 1024 : false,
 	selectedThreadForOptions: null,
 	threadShortcutsMode: "navigation",
-	showFindInView: false,
+	showFindInNote: false,
 });

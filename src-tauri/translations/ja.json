@@ -94,7 +94,7 @@
 	"shortcuts.search.toggle_fuzzy": "曖昧検索を切り替える",
 	"shortcuts.search.toggle_mode": "検索モードを切り替える",
 	"shortcuts.action.toggle_search": "検索を切り替える",
-	"shortcuts.action.search_in_view": "現在のビューで検索",
+	"shortcuts.action.find_in_note": "現在のノートで検索",
 	"shortcuts.action.toggle_note_browser": "ノートブラウザを切り替える",
 	"shortcuts.action.toggle_settings": "設定を切り替える",
 	"shortcuts.action.toggle_statistics": "統計を切り替える",
@@ -111,7 +111,8 @@
 	"shortcuts.action.toggle_search_mode": "検索モードを切り替える",
 	"shortcuts.action.toggle_thread_options_mode": "スレッドオプションモードを切り替える",
 	"shortcuts.thread.description": "スレッドのオプションが開いているとき:",
-	"shortcuts.thread.delete": "削除",
+	"shortcuts.thread.linked": "リンクされてるスレッドをみる",
+	"shortcuts.thread.delete": "スレッドを削除",
 	"browser.navigate": "選択を移動",
 	"welcome.no_folder": "フォルダを選んでください",
 	"welcome.loading_notes": "今日のノートを作成しています",
@@ -143,5 +144,10 @@
 	"settings.thread_visual_style": "スレッドのビジュアルスタイル",
 	"settings.thread_visual_identicon_dotmatrix": "Identicon（ドットマトリックス）",
 	"settings.thread_visual_identicon_round": "Identicon（丸型）",
-	"settings.thread_visual_static_icon": "静的アイコン"
+	"settings.thread_visual_static_icon": "静的アイコン",
+	"find_in_note.placeholder": "このノートを検索",
+	"find_in_note.prev": "Previous",
+	"find_in_note.next": "Next",
+	"find_in_note.no_results": "No matches found",
+	"find_in_note.close": "Close"
 }

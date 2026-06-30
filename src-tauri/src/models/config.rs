@@ -184,13 +184,13 @@ impl Default for AppConfig {
             },
         );
         shortcuts.insert(
-            "toggleFindInView".to_string(),
+            "toggleFindInNote".to_string(),
             ShortcutConfig {
                 key: "F".to_string(),
                 primary: true,
                 secondary: false,
                 shift: false,
-                description: "Search in view".to_string(),
+                description: "Find in note".to_string(),
             },
         );
         shortcuts.insert(

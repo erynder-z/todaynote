@@ -95,7 +95,7 @@
 	"shortcuts.search.toggle_fuzzy": "Toggle Fuzzy Search",
 	"shortcuts.search.toggle_mode": "Toggle Search Mode",
 	"shortcuts.action.toggle_search": "Toggle Search",
-	"shortcuts.action.search_in_view": "Search in View",
+	"shortcuts.action.find_in_note": "Search in Note",
 	"shortcuts.action.toggle_note_browser": "Toggle Note Browser",
 	"shortcuts.action.toggle_settings": "Toggle Settings",
 	"shortcuts.action.toggle_statistics": "Toggle Statistics",
@@ -112,7 +112,8 @@
 	"shortcuts.action.toggle_search_mode": "Toggle Search Mode",
 	"shortcuts.action.toggle_thread_options_mode": "Change Thread Options Mode",
 	"shortcuts.thread.description": "While thread options are open:",
-	"shortcuts.thread.delete": "Delete",
+	"shortcuts.thread.linked": "Linked Threads",
+	"shortcuts.thread.delete": "Delete Thread",
 	"browser.navigate": "Navigate",
 	"welcome.no_folder": "Please select a folder!",
 	"welcome.loading_notes": "Preparing your daily note...",
@@ -144,5 +145,10 @@
 	"settings.thread_visual_style": "Thread Visual Style",
 	"settings.thread_visual_identicon_dotmatrix": "Identicon (Dot Matrix)",
 	"settings.thread_visual_identicon_round": "Identicon (Round)",
-	"settings.thread_visual_static_icon": "Static Icon"
+	"settings.thread_visual_static_icon": "Static Icon",
+	"find_in_note.placeholder": "Find in this note",
+	"find_in_note.prev": "Previous",
+	"find_in_note.next": "Next",
+	"find_in_note.no_results": "No matches found",
+	"find_in_note.close": "Close"
 }

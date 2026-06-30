@@ -6,12 +6,13 @@
   import { flip } from 'svelte/animate';
   import { fade } from 'svelte/transition';
   import { toast } from '$lib/stores/toast.svelte';
+  import { toggleFindInNote } from '$lib/utils/findInElement';
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';
   import { t } from '../utils/i18n';
   import { useShortcuts } from '../utils/shortcuts';
   import AboutView from './AboutView.svelte';
-  import FindInView from './FindInView.svelte';
+  import FindInView from './FindInNote.svelte';
   import Modal from './Modal.svelte';
   import NoteBrowser from './NoteBrowser.svelte';
   import SearchNotes from './SearchNotes.svelte';
@@ -24,9 +25,7 @@
   import Toast from './Toast.svelte';
 
   useShortcuts({
-    toggleFindInView: () => {
-      sessionState.showFindInView = !sessionState.showFindInView;
-    },
+    toggleFindInNote,
   });
 </script>
 

@@ -4,6 +4,7 @@ export type ShortcutCallback = (
 
 export type ShortcutAction =
 	| "toggleSearch"
+	| "toggleFindInNote"
 	| "toggleNoteBrowser"
 	| "toggleSettings"
 	| "toggleStatistics"
@@ -20,5 +21,4 @@ export type ShortcutAction =
 	| "navigateToday"
 	| "toggleThreadOptionsMode"
 	| "threadOptionRemove"
-	| "threadOptionLinked"
-	| "toggleFindInView";
+	| "threadOptionLinked";

@@ -94,7 +94,7 @@
 	"shortcuts.search.toggle_fuzzy": "Fuzzy Search ein-/ausschalten",
 	"shortcuts.search.toggle_mode": "Suchmodus umschalten",
 	"shortcuts.action.toggle_search": "Suche einblenden",
-	"shortcuts.action.search_in_view": "Suche in der aktuellen Ansicht",
+	"shortcuts.action.find_in_note": "Suche in der aktuellen Notiz",
 	"shortcuts.action.toggle_note_browser": "Notenbrowser einblenden",
 	"shortcuts.action.toggle_settings": "Einstellungen einblenden",
 	"shortcuts.action.toggle_statistics": "Statistiken einblenden",
@@ -111,7 +111,8 @@
 	"shortcuts.action.toggle_search_mode": "Suchmodus umschalten",
 	"shortcuts.action.toggle_thread_options_mode": "Thread-Optionen Modus wechseln",
 	"shortcuts.thread.description": "Bei geöffneten Thread-Optionen:",
-	"shortcuts.thread.delete": "Löschen",
+	"shortcuts.thread.linked": "Verlinkte Threads ansehen",
+	"shortcuts.thread.delete": "Thread löschen",
 	"browser.navigate": "Navigation",
 	"welcome.no_folder": "Bitte wähle einen Ordner für deine Notizen aus!",
 	"welcome.loading_notes": "Erstelle deine heutige Notiz...",
@@ -143,5 +144,10 @@
 	"settings.thread_visual_style": "Thread-Visualisierungsstil",
 	"settings.thread_visual_identicon_dotmatrix": "Identicon (Dotmatrix)",
 	"settings.thread_visual_identicon_round": "Identicon (Rund)",
-	"settings.thread_visual_static_icon": "Statisches Icon"
+	"settings.thread_visual_static_icon": "Statisches Icon",
+	"find_in_note.placeholder": "In dieser Notiz suchen",
+	"find_in_note.prev": "Vorheriges",
+	"find_in_note.next": "Nächstes",
+	"find_in_note.no_results": "Nichts gefunden",
+	"find_in_note.close": "Schließen"
 }
