@@ -5,7 +5,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { ask } from '@tauri-apps/plugin-dialog';
   import { sessionState, settings, t, toast } from '$lib';
-  import { readNoteContent } from '../utils/notes';
+  import { notesService } from '../utils/notes';
 
   let localValue = $state(settings.defaultThreadName || '');
 
@@ -46,7 +46,9 @@
 
         // If a note is currently open, refresh it to show the changes
         if (sessionState.todayNotePath) {
-          const updated = await readNoteContent(sessionState.todayNotePath);
+          const updated = await notesService.readNoteContent(
+            sessionState.todayNotePath,
+          );
           if (updated) sessionState.todayNoteContent = updated;
         }
       } catch (error) {

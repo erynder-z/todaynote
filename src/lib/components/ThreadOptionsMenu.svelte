@@ -8,7 +8,7 @@
   import { toast } from '$lib/stores/toast.svelte';
   import { t } from '$lib/utils/i18n';
   import { sessionState } from '../stores/sessionState.svelte';
-  import { aggregateThread, removeThread } from '../utils/notes';
+  import { notesService } from '../utils/notes';
   import { useShortcuts } from '../utils/shortcuts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
@@ -17,7 +17,7 @@
   }>();
 
   let aggregatedThread = $state<Awaited<
-    ReturnType<typeof aggregateThread>
+    ReturnType<typeof notesService.aggregateThread>
   > | null>(null);
 
   let hasLinkedThreads = $state(false);
@@ -34,7 +34,7 @@
    */
   const loadLinkedThreads = async () => {
     try {
-      aggregatedThread = await aggregateThread(thread.name);
+      aggregatedThread = await notesService.aggregateThread(thread.name);
       hasLinkedThreads =
         aggregatedThread !== null && aggregatedThread.items.length > 1;
     } catch {
@@ -70,7 +70,10 @@
         return;
       }
 
-      const result = await removeThread(thread.name, currentContent);
+      const result = await notesService.removeThread(
+        thread.name,
+        currentContent,
+      );
 
       // Update the session state with the new content
       if (result) {

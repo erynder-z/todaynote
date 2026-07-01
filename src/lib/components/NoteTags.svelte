@@ -3,8 +3,9 @@
    * Component for displaying tags for a note.
    * Clicking the add button opens the Tag Manager modal.
    */
-  import { removeNoteTag, sessionState, useShortcuts } from '$lib';
+  import { sessionState, useShortcuts } from '$lib';
   import type { NoteContentResponse } from '$lib/interfaces/notes';
+  import { notesService } from '$lib/utils/notes';
 
   let { noteContent } = $props<{
     noteContent: NoteContentResponse | null;
@@ -32,7 +33,10 @@
   const handleRemoveTag = async () => {
     if (!selectedTag) return;
     const content = noteContent?.content || '';
-    const updatedContent = await removeNoteTag(selectedTag, content);
+    const updatedContent = await notesService.removeNoteTag(
+      selectedTag,
+      content,
+    );
     if (updatedContent) sessionState.todayNoteContent = updatedContent;
     selectedTag = null;
   };

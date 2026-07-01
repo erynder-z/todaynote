@@ -4,7 +4,7 @@ import type { ShortcutConfig } from "$lib/interfaces/input";
 import type { NoteContentResponse } from "$lib/interfaces/notes";
 import type { AppSettings } from "$lib/interfaces/settings";
 import type { ShortcutAction } from "$lib/types/input";
-import { syncFullAppState } from "$lib/utils/appSetup";
+import { appInitializer } from "$lib/utils/appSetup";
 import { sessionState } from "./sessionState.svelte";
 
 /**
@@ -72,7 +72,7 @@ export class SettingsStore {
 					newConfig: this.serialize(),
 				});
 
-				syncFullAppState(updatedState);
+				appInitializer.syncFullAppState(updatedState);
 
 				// If turning OFF "Remember Settings", just save the preference
 				// The actual reset will happen on next app launch
@@ -189,7 +189,7 @@ export class SettingsStore {
 			await invoke("reset_config_to_defaults");
 
 			const initialState: AppPayload = await invoke("initialize_app");
-			syncFullAppState(initialState);
+			appInitializer.syncFullAppState(initialState);
 
 			// If we're turning off rememberSettings, preserve that state
 			if (preserveRememberSettings) {
@@ -219,7 +219,7 @@ export class SettingsStore {
 				path,
 			});
 
-			if (newState.notesFolder) syncFullAppState(newState, true);
+			if (newState.notesFolder) appInitializer.syncFullAppState(newState, true);
 
 			sessionState.activePopup = null;
 

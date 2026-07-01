@@ -5,7 +5,7 @@
    */
   import type { NoteContentResponse } from '$lib/interfaces/notes';
   import { locale } from '$lib/utils/i18n';
-  import { formatNoteName } from '$lib/utils/notes';
+  import { notesService } from '$lib/utils/notes';
 
   let { noteContent } = $props<{
     noteContent: NoteContentResponse | null;
@@ -13,7 +13,10 @@
 
   let date = $derived(
     noteContent?.path
-      ? formatNoteName(noteContent.path.split(/[/\\]/).pop() || '', $locale)
+      ? notesService.formatNoteName(
+          noteContent.path.split(/[/\\]/).pop() || '',
+          $locale,
+        )
       : '',
   );
 </script>

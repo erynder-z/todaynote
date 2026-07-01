@@ -2,80 +2,88 @@ import { type Editor, editorViewCtx, parserCtx } from "@milkdown/core";
 import { Selection } from "@milkdown/prose/state";
 
 /**
- * Directs the Milkdown editor to a specific named thread.
- * Finds the heading and moves the cursor to the end of that thread.
+ * Service class for Milkdown editor operations.
+ * Provides methods for navigating, updating, and focusing editor content.
  */
-export const jumpToThreadInEditor = (instance: Editor, name: string) => {
-	instance.action((ctx) => {
-		const view = ctx.get(editorViewCtx);
-		const { doc } = view.state;
+export class EditorService {
+	constructor(private editor: Editor) {}
 
-		// 1. Collect all top-level headings (level 1)
-		const headings: { name: string; pos: number }[] = [];
-		doc.descendants((node, pos) => {
-			if (node.type.name === "heading" && node.attrs?.level === 1) {
-				headings.push({ name: node.textContent.trim(), pos });
-			}
+	/**
+	 * Directs the editor to a specific named thread.
+	 * Finds the heading and moves the cursor to the end of that thread.
+	 */
+	jumpToThread(name: string) {
+		this.editor.action((ctx) => {
+			const view = ctx.get(editorViewCtx);
+			const { doc } = view.state;
+
+			// 1. Collect all top-level headings (level 1)
+			const headings: { name: string; pos: number }[] = [];
+			doc.descendants((node, pos) => {
+				if (node.type.name === "heading" && node.attrs?.level === 1) {
+					headings.push({ name: node.textContent.trim(), pos });
+				}
+			});
+
+			// 2. Find the target heading index
+			const targetIdx = headings.findIndex((h) => h.name === name);
+			if (targetIdx === -1) return;
+
+			// 3. Target the boundary: either the next heading or end of doc
+			const nextHeading = headings[targetIdx + 1];
+			const jumpPos = nextHeading ? nextHeading.pos : doc.content.size;
+
+			// 4. Update selection and scroll
+			view.focus();
+			const resolvedPos = view.state.doc.resolve(jumpPos);
+			// Bias -1 ensures we land in the content BEFORE the next heading
+			const selection = Selection.near(resolvedPos, -1);
+			view.dispatch(view.state.tr.setSelection(selection).scrollIntoView());
 		});
+	}
 
-		// 2. Find the target heading index
-		const targetIdx = headings.findIndex((h) => h.name === name);
-		if (targetIdx === -1) return;
+	/**
+	 * Updates the editor's content from a Markdown string and positions the cursor at the end.
+	 */
+	updateContent(markdown: string) {
+		this.editor.action((ctx) => {
+			const view = ctx.get(editorViewCtx);
+			const parser = ctx.get(parserCtx);
+			const doc = parser(markdown);
+			if (!doc) return;
 
-		// 3. Target the boundary: either the next heading or end of doc
-		const nextHeading = headings[targetIdx + 1];
-		const jumpPos = nextHeading ? nextHeading.pos : doc.content.size;
+			let tr = view.state.tr.replaceWith(0, view.state.doc.content.size, doc);
 
-		// 4. Update selection and scroll
-		view.focus();
-		const resolvedPos = view.state.doc.resolve(jumpPos);
-		// Bias -1 ensures we land in the content BEFORE the next heading
-		const selection = Selection.near(resolvedPos, -1);
-		view.dispatch(view.state.tr.setSelection(selection).scrollIntoView());
-	});
-};
+			// Ensure trailing empty line for headings (Milkdown parser workaround)
+			if (doc.lastChild?.type.name === "heading") {
+				const paragraph = view.state.schema.nodes.paragraph.create();
+				tr = tr.insert(tr.doc.content.size, paragraph);
+			}
 
-/**
- * Updates the editor's content from a Markdown string and positions the cursor at the end.
- */
-export const updateEditorContent = (instance: Editor, markdown: string) => {
-	instance.action((ctx) => {
-		const view = ctx.get(editorViewCtx);
-		const parser = ctx.get(parserCtx);
-		const doc = parser(markdown);
-		if (!doc) return;
+			// Position cursor at end and focus
+			const selection = Selection.atEnd(tr.doc);
+			view.dispatch(tr.setSelection(selection).scrollIntoView());
+			view.focus();
+		});
+	}
 
-		let tr = view.state.tr.replaceWith(0, view.state.doc.content.size, doc);
+	/**
+	 * Focuses the editor instance.
+	 */
+	focus() {
+		this.editor.action((ctx) => ctx.get(editorViewCtx).focus());
+	}
 
-		// Ensure trailing empty line for headings (Milkdown parser workaround)
-		if (doc.lastChild?.type.name === "heading") {
-			const paragraph = view.state.schema.nodes.paragraph.create();
-			tr = tr.insert(tr.doc.content.size, paragraph);
-		}
-
-		// Position cursor at end and focus
-		const selection = Selection.atEnd(tr.doc);
-		view.dispatch(tr.setSelection(selection).scrollIntoView());
-		view.focus();
-	});
-};
-
-/**
- * Focuses the editor instance.
- */
-export const focusEditor = (instance: Editor) => {
-	instance.action((ctx) => ctx.get(editorViewCtx).focus());
-};
-
-/**
- * Focuses the editor and moves selection to the end.
- */
-export const focusEnd = (instance: Editor) => {
-	instance.action((ctx) => {
-		const view = ctx.get(editorViewCtx);
-		view.focus();
-		const tr = view.state.tr;
-		const selection = Selection.atEnd(tr.doc);
-		view.dispatch(tr.setSelection(selection).scrollIntoView());
-	});
-};
+	/**
+	 * Focuses the editor and moves selection to the end.
+	 */
+	focusEnd() {
+		this.editor.action((ctx) => {
+			const view = ctx.get(editorViewCtx);
+			view.focus();
+			const tr = view.state.tr;
+			const selection = Selection.atEnd(tr.doc);
+			view.dispatch(tr.setSelection(selection).scrollIntoView());
+		});
+	}
+}

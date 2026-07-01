@@ -4,7 +4,7 @@
    */
   import { onMount } from 'svelte';
   import {
-    initializeApp,
+    appInitializer,
     lang,
     locale,
     MainView,
@@ -16,7 +16,7 @@
    * Bootstraps the app by fetching initial state from the backend.
    */
   onMount(async () => {
-    await initializeApp();
+    await appInitializer.initialize();
   });
 </script>
 

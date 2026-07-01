@@ -9,14 +9,7 @@
     TagSearchResult,
     ThreadSearchResult,
   } from '$lib/interfaces/notes';
-  import {
-    aggregateThread,
-    readNoteContent,
-    searchNotes,
-    searchNotesByTag,
-    searchTags,
-    searchThreads,
-  } from '$lib/utils/notes';
+  import { notesService } from '$lib/utils/notes';
   import { ListNavigator } from '../stores/listNav.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';
@@ -106,12 +99,16 @@
       const { searchMode, searchIsFuzzy, searchSelectedTag } = settings;
 
       const searchActions = {
-        notes: () => searchNotes(query, searchIsFuzzy),
-        threads: () => searchThreads(query, searchIsFuzzy),
+        notes: () => notesService.searchNotes(query, searchIsFuzzy),
+        threads: () => notesService.searchThreads(query, searchIsFuzzy),
         tags: () =>
           searchSelectedTag
-            ? searchNotesByTag(searchSelectedTag, query, searchIsFuzzy)
-            : searchTags(query, searchIsFuzzy),
+            ? notesService.searchNotesByTag(
+                searchSelectedTag,
+                query,
+                searchIsFuzzy,
+              )
+            : notesService.searchTags(query, searchIsFuzzy),
       };
 
       const data = await searchActions[searchMode]();
@@ -142,7 +139,7 @@
   const selectResult = async (result: SearchResult) => {
     if (!settings.notesFolder || !result) return;
     const path = `${settings.notesFolder}/${result.filename}`;
-    const content = await readNoteContent(path);
+    const content = await notesService.readNoteContent(path);
     if (content !== null) {
       sessionState.todayNotePath = path;
       sessionState.todayNoteContent = content;
@@ -157,7 +154,7 @@
    */
   const selectThread = async (thread: ThreadSearchResult) => {
     if (!thread) return;
-    const aggregation = await aggregateThread(thread.name);
+    const aggregation = await notesService.aggregateThread(thread.name);
     if (aggregation) {
       sessionState.aggregatedThread = aggregation;
       sessionState.activePopup = 'threadAggregation';

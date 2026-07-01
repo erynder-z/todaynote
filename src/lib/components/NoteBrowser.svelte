@@ -4,7 +4,7 @@
    */
   import type { FormattedNote } from '$lib/interfaces/notes';
   import { listNotes } from '$lib/utils/folder';
-  import { formatNoteName, readNoteContent } from '$lib/utils/notes';
+  import { notesService } from '$lib/utils/notes';
   import { ListNavigator } from '../stores/listNav.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';
@@ -63,7 +63,7 @@
   const selectNote = async (note: FormattedNote) => {
     if (!settings.notesFolder) return;
     const path = `${settings.notesFolder}/${note.filename}`;
-    const content = await readNoteContent(path);
+    const content = await notesService.readNoteContent(path);
     if (content !== null) {
       sessionState.todayNotePath = path;
       sessionState.todayNoteContent = content;
@@ -134,7 +134,9 @@
 
 {#snippet listSnippet(note: FormattedNote, i: number)}
   <div class="result-content">
-    <span class="note-name">{formatNoteName(note.filename, $locale)}</span>
+    <span class="note-name"
+      >{notesService.formatNoteName(note.filename, $locale)}</span
+    >
     {#if note.tags && note.tags.length > 0}
       <div class="list-tags">
         {#each note.tags as tag}
@@ -147,7 +149,9 @@
 
 {#snippet masonrySnippet(note: FormattedNote, i: number)}
   <div class="card-header">
-    <span class="note-name">{formatNoteName(note.filename, $locale)}</span>
+    <span class="note-name"
+      >{notesService.formatNoteName(note.filename, $locale)}</span
+    >
   </div>
 
   {#if note.tags && note.tags.length > 0}

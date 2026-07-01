@@ -1,11 +1,6 @@
 import { untrack } from "svelte";
 import type { NoteContentResponse, NoteThread } from "$lib/interfaces/notes";
-import {
-	detectThreads,
-	ensureThread,
-	removeThread,
-	saveNoteContent,
-} from "$lib/utils/notes";
+import { notesService } from "$lib/utils/notes";
 
 /**
  * Manages the state and logic for the Note Editor.
@@ -81,7 +76,7 @@ export class EditorStore {
 
 	private refreshThreads() {
 		const content = this.content;
-		detectThreads(content).then((threads) => {
+		notesService.detectThreads(content).then((threads) => {
 			this.threads = threads;
 		});
 	}
@@ -91,7 +86,7 @@ export class EditorStore {
 	 * Navigation logic remains in the component.
 	 */
 	async ensureThreadExists(name: string) {
-		const updated = await ensureThread(name, this.content);
+		const updated = await notesService.ensureThread(name, this.content);
 		if (updated) {
 			this.content = updated.content;
 			this.threads = updated.threads;
@@ -105,7 +100,7 @@ export class EditorStore {
 	 * Removes a thread from the current note and updates the store.
 	 */
 	async removeThread(name: string) {
-		const updated = await removeThread(name, this.content);
+		const updated = await notesService.removeThread(name, this.content);
 		if (updated) {
 			this.content = updated.content;
 			this.threads = updated.threads;
@@ -121,7 +116,10 @@ export class EditorStore {
 	 */
 	async flush() {
 		if (this.notePath && this.hasChanges) {
-			const updated = await saveNoteContent(this.notePath, this.content);
+			const updated = await notesService.saveNoteContent(
+				this.notePath,
+				this.content,
+			);
 			if (updated) {
 				this.threads = updated.threads;
 				if (this.noteContent) {

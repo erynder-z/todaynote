@@ -15,12 +15,7 @@
     navigateToLastAvailable,
     navigateToOffset,
   } from '../utils/dailyNote';
-  import {
-    focusEditor,
-    focusEnd,
-    jumpToThreadInEditor,
-    updateEditorContent,
-  } from '../utils/editor';
+  import { EditorService } from '../utils/editor';
   import { useShortcuts } from '../utils/shortcuts';
   import MilkdownEditor from './MilkdownEditor.svelte';
 
@@ -35,8 +30,9 @@
   }>();
 
   let milkdownInstance: Editor | null = $state(null);
-
-  // --- Lifecycle & Reactive Effects ---
+  let editorService = $derived(
+    milkdownInstance ? new EditorService(milkdownInstance) : null,
+  );
 
   /**
    * 1. Sync props to the internal store before rendering
@@ -53,15 +49,13 @@
     if (!instance) return;
 
     if (editor.pendingExternalUpdate) {
-      updateEditorContent(instance, editor.content);
+      editorService?.updateContent(editor.content);
       editor.pendingExternalUpdate = false;
     }
 
     if (sessionState.activePopup === null && notePath)
-      untrack(() => focusEditor(instance));
+      untrack(() => editorService?.focus());
   });
-
-  // --- Actions & Helpers ---
 
   /**
    * Main entry point for jumping to a thread.
@@ -72,12 +66,12 @@
 
     const exists = editor.threads.some((s: NoteThread) => s.name === name);
     if (exists) {
-      jumpToThreadInEditor(instance, name);
+      editorService?.jumpToThread(name);
     } else {
       await editor.ensureThreadExists(name);
       // Wait for the next tick/update to ensure thread is rendered before jumping
       setTimeout(() => {
-        if (milkdownInstance) jumpToThreadInEditor(milkdownInstance, name);
+        if (milkdownInstance) editorService?.jumpToThread(name);
       }, 100);
     }
   };
@@ -102,7 +96,7 @@
     focusLastLine: () => {
       if (sessionState.activePopup !== null) return false;
       if (milkdownInstance) {
-        focusEnd(milkdownInstance);
+        editorService?.focusEnd();
         return true;
       }
     },
@@ -146,17 +140,21 @@
     }),
   );
 
-  // Connect the store's sync back to the component's bindable props
+  /**
+   * Connect the store's sync back to the component's bindable props
+   */
   $effect(() => {
     editor.onContentUpdate = (updated: NoteContentResponse) =>
       (noteContent = updated);
   });
 
-  // Expose jump functionality to parent components
+  /**
+   * Expose jump functionality to parent components
+   */
   $effect(() => {
     editor.jumpToThread = (name: string) => {
       const instance = milkdownInstance;
-      if (instance) jumpToThreadInEditor(instance, name);
+      if (instance) editorService?.jumpToThread(name);
     };
   });
 </script>

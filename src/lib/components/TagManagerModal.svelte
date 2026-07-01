@@ -9,7 +9,7 @@
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';
   import { t } from '../utils/i18n';
-  import { addNoteTag, getTagSuggestions, removeNoteTag } from '../utils/notes';
+  import { notesService } from '../utils/notes';
   import { useShortcuts } from '../utils/shortcuts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
   import MasonryLayout from './MasonryLayout.svelte';
@@ -34,7 +34,7 @@
    * Fetches suggestions from the backend.
    */
   const updateSuggestions = async () => {
-    suggestedTags = await getTagSuggestions(newTag);
+    suggestedTags = await notesService.getTagSuggestions(newTag);
   };
 
   /**
@@ -48,8 +48,8 @@
     const isRemoving = currentTags.includes(tag);
 
     const updatedContent = isRemoving
-      ? await removeNoteTag(tag, content)
-      : await addNoteTag(tag, content);
+      ? await notesService.removeNoteTag(tag, content)
+      : await notesService.addNoteTag(tag, content);
 
     if (updatedContent) {
       sessionState.todayNoteContent = updatedContent;
