@@ -183,7 +183,6 @@ export class SettingsStore {
 
 	/**
 	 * Resets remembered settings to their default values.
-	 * @param preserveRememberSettings If true, preserves the current rememberSettings value
 	 */
 	async resetToDefaults(preserveRememberSettings = false) {
 		try {

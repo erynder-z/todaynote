@@ -30,9 +30,9 @@ export const updateTheme = async (themeId: string) => {
 /**
  * Dynamically applies theme colors by setting CSS variables on the document root.
  */
-export function applyThemeColors(colors: Record<string, string>) {
+export const applyThemeColors = (colors: Record<string, string>) => {
 	const root = document.documentElement;
 	Object.entries(colors).forEach(([property, value]) => {
 		root.style.setProperty(property, value);
 	});
-}
+};
