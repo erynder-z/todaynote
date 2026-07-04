@@ -6,7 +6,7 @@
   import type { Editor } from '@milkdown/core';
   import { keymap } from '@milkdown/prose/keymap';
   import { $prose as prosePlugin } from '@milkdown/utils';
-  import { untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
   import { tagSuggestionShortcuts } from '../config/shortcuts';
   import type { EditorStore } from '../stores/editor.svelte';
@@ -69,10 +69,9 @@
       editorService?.jumpToThread(name);
     } else {
       await editor.ensureThreadExists(name);
-      // Wait for the next tick/update to ensure thread is rendered before jumping
-      setTimeout(() => {
+      tick().then(() => {
         if (milkdownInstance) editorService?.jumpToThread(name);
-      }, 100);
+      });
     }
   };
 
