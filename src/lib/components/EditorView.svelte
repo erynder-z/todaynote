@@ -15,6 +15,7 @@
     noteContent: NoteContentResponse | null;
     notePath: string | null;
   }>();
+  let previousNotePath = $state<string | null>(null);
 
   const editor = new EditorStore();
 
@@ -29,6 +30,20 @@
 
   $effect(() => {
     editor.sync(noteContent, notePath);
+  });
+
+  /**
+   * Scroll to top when navigating to a different note
+   */
+  $effect(() => {
+    if (notePath && notePath !== previousNotePath) {
+      previousNotePath = notePath;
+
+      const editorElement = document.querySelector('.editor-main');
+      if (editorElement) {
+        editorElement.scrollTop = 0;
+      }
+    }
   });
 
   /**
