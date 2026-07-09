@@ -30,9 +30,26 @@
   }>();
 
   let milkdownInstance: Editor | null = $state(null);
-  let editorService = $derived(
-    milkdownInstance ? new EditorService(milkdownInstance) : null,
-  );
+  let editorService: EditorService | null = $state(null);
+
+  /**
+   * Clean up Milkdown editor instance when component is destroyed
+   * to prevent memory leaks
+   */
+  $effect(() => {
+    return () => {
+      if (milkdownInstance) milkdownInstance.destroy();
+    };
+  });
+
+  /**
+   * Update editor service when milkdown instance changes
+   */
+  $effect(() => {
+    editorService = milkdownInstance
+      ? new EditorService(milkdownInstance)
+      : null;
+  });
 
   /**
    * 1. Sync props to the internal store before rendering
@@ -46,15 +63,16 @@
    */
   $effect(() => {
     const instance = milkdownInstance;
-    if (!instance) return;
+    const service = editorService;
+    if (!instance || !service) return;
 
     if (editor.pendingExternalUpdate) {
-      editorService?.updateContent(editor.content);
+      service.updateContent(editor.content);
       editor.pendingExternalUpdate = false;
     }
 
     if (sessionState.activePopup === null && notePath)
-      untrack(() => editorService?.focus());
+      untrack(() => service.focus());
   });
 
   /**
@@ -62,15 +80,17 @@
    */
   const handleJump = async (name: string) => {
     const instance = milkdownInstance;
-    if (!instance) return;
+    if (!instance || !editorService) return;
 
     const exists = editor.threads.some((s: NoteThread) => s.name === name);
     if (exists) {
-      editorService?.jumpToThread(name);
+      editorService.jumpToThread(name);
     } else {
       await editor.ensureThreadExists(name);
       tick().then(() => {
-        if (milkdownInstance) editorService?.jumpToThread(name);
+        if (milkdownInstance && editorService) {
+          editorService.jumpToThread(name);
+        }
       });
     }
   };
@@ -91,45 +111,74 @@
     }
   };
 
-  useShortcuts({
-    focusLastLine: () => {
-      if (sessionState.activePopup !== null) return false;
-      if (milkdownInstance) {
-        editorService?.focusEnd();
-        return true;
-      }
-    },
-    jumpByNumber: (e) => {
-      if (sessionState.activePopup !== null) return false;
+  /**
+   * Shortcut handler: Focus the last line of the editor
+   */
+  const handleFocusLastLine = (): boolean => {
+    if (sessionState.activePopup !== null) return false;
+    if (milkdownInstance && editorService) {
+      editorService.focusEnd();
+      return true;
+    }
+    return false;
+  };
 
-      const idx = tagSuggestionShortcuts.codes.indexOf(e.code);
-      if (idx !== -1 && idx < editor.threads.length) {
-        jumpToThreadByIndex(idx);
-        return true;
-      }
-      return false;
-    },
-    navigateYesterday: async (e) => {
-      if (sessionState.activePopup !== null) {
-        e.preventDefault();
-        return;
-      }
-      await navigateToOffset(-1);
-    },
-    navigateLastAvailable: async (e) => {
-      if (sessionState.activePopup !== null) {
-        e.preventDefault();
-        return;
-      }
-      await navigateToLastAvailable();
-    },
-    navigateToday: async (e) => {
-      if (sessionState.activePopup !== null) {
-        e.preventDefault();
-        return;
-      }
-      await navigateToOffset(0);
-    },
+  /**
+   * Shortcut handler: Jump to thread by number shortcut
+   */
+  const handleJumpByNumber = (e: KeyboardEvent): boolean => {
+    if (sessionState.activePopup !== null) return false;
+
+    const idx = tagSuggestionShortcuts.codes.indexOf(e.code);
+    if (idx !== -1 && idx < editor.threads.length) {
+      jumpToThreadByIndex(idx);
+      return true;
+    }
+
+    return false;
+  };
+
+  /**
+   * Shortcut handler: Navigate to yesterday's note
+   */
+  const handleNavigateYesterday = async (e: Event) => {
+    if (sessionState.activePopup !== null) {
+      e.preventDefault();
+      return;
+    }
+
+    await navigateToOffset(-1);
+  };
+
+  /**
+   * Shortcut handler: Navigate to last available note
+   */
+  const handleNavigateLastAvailable = async (e: Event) => {
+    if (sessionState.activePopup !== null) {
+      e.preventDefault();
+      return;
+    }
+
+    await navigateToLastAvailable();
+  };
+
+  /**
+   * Shortcut handler: Navigate to today's note
+   */
+  const handleNavigateToday = async (e: Event) => {
+    if (sessionState.activePopup !== null) {
+      e.preventDefault();
+      return;
+    }
+    await navigateToOffset(0);
+  };
+
+  useShortcuts({
+    focusLastLine: handleFocusLastLine,
+    jumpByNumber: handleJumpByNumber,
+    navigateYesterday: handleNavigateYesterday,
+    navigateLastAvailable: handleNavigateLastAvailable,
+    navigateToday: handleNavigateToday,
   });
 
   const customKeymap = prosePlugin(() =>
@@ -153,7 +202,7 @@
   $effect(() => {
     editor.jumpToThread = (name: string) => {
       const instance = milkdownInstance;
-      if (instance) editorService?.jumpToThread(name);
+      if (instance && editorService) editorService.jumpToThread(name);
     };
   });
 </script>
