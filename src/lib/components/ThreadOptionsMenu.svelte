@@ -70,10 +70,7 @@
         return;
       }
 
-      const result = await notesService.removeThread(
-        thread.name,
-        currentContent,
-      );
+      const result = await notesService.removeThread(thread.id, currentContent);
 
       // Update the session state with the new content
       if (result) {

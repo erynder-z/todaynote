@@ -228,10 +228,11 @@ export class NotesService {
 
 	/**
 	 * Asks the backend to detect threads in the given markdown content.
+	 * If path is provided, the backend will load the full content from disk to access frontmatter.
 	 */
-	async detectThreads(content: string): Promise<NoteThread[]> {
+	async detectThreads(content: string, path?: string): Promise<NoteThread[]> {
 		try {
-			return (await invoke("detect_threads", { content })) as NoteThread[];
+			return (await invoke("detect_threads", { content, path })) as NoteThread[];
 		} catch (error) {
 			console.error("Error detecting threads:", error);
 			return [];
@@ -243,17 +244,17 @@ export class NotesService {
 	 * Pass the current content to ensure unsaved edits are not lost.
 	 */
 	async removeThread(
-		name: string,
+		threadId: string,
 		currentContent: string,
 	): Promise<NoteContentResponse | null> {
 		try {
 			const content = (await invoke("remove_thread", {
-				name,
+				threadId,
 				currentContent,
 			})) as NoteContentResponse;
 			return content;
 		} catch (error) {
-			console.error(`Error removing thread ${name}:`, error);
+			console.error(`Error removing thread ${threadId}:`, error);
 			return null;
 		}
 	}

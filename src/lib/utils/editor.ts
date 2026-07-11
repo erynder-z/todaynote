@@ -9,10 +9,10 @@ export class EditorService {
 	constructor(private editor: Editor) {}
 
 	/**
-	 * Directs the editor to a specific named thread.
+	 * Directs the editor to a specific thread by index.
 	 * Finds the heading and moves the cursor to the end of that thread.
 	 */
-	jumpToThread(name: string) {
+	jumpToThreadByIndex(index: number) {
 		this.editor.action((ctx) => {
 			const view = ctx.get(editorViewCtx);
 			const { doc } = view.state;
@@ -25,12 +25,11 @@ export class EditorService {
 				}
 			});
 
-			// 2. Find the target heading index
-			const targetIdx = headings.findIndex((h) => h.name === name);
-			if (targetIdx === -1) return;
+			// 2. Check if index is valid
+			if (index < 0 || index >= headings.length) return;
 
 			// 3. Target the boundary: either the next heading or end of doc
-			const nextHeading = headings[targetIdx + 1];
+			const nextHeading = headings[index + 1];
 			const jumpPos = nextHeading ? nextHeading.pos : doc.content.size;
 
 			// 4. Update selection and scroll

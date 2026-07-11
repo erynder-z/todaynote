@@ -25,7 +25,16 @@ where
         .ok_or_else(|| "No active note session".to_string())?;
 
     // Sync session with frontend content first
-    let full_content = reconstruct_full_content(&path, &current_content)?;
+    // Use the session's current frontmatter combined with the frontend's content
+    // to ensure we don't lose any backend-made changes (like thread ID comments)
+    let full_content = if let Some((_, end)) = session.frontmatter_range {
+        let frontmatter_lines = &session.lines[..=end];
+        let frontmatter = frontmatter_lines.join("\n");
+        format!("{}\n{}", frontmatter, current_content)
+    } else {
+        // No frontmatter in session, use reconstruct_full_content as fallback
+        reconstruct_full_content(&path, &current_content)?
+    };
     session.load(path.clone(), full_content);
 
     let mut tag_manager = state.tag_manager()?;
@@ -33,7 +42,7 @@ where
     tag_manager.invalidate_cache();
 
     let full_content = session.get_full_content();
-    fs::write(&path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+    fs::write(&path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
 
     let note_manager = state.note_manager()?;
     Ok(NoteContentResponse::from_session(

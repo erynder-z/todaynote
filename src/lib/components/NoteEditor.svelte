@@ -78,18 +78,24 @@
   /**
    * Main entry point for jumping to a thread.
    */
-  const handleJump = async (name: string) => {
+  const handleJump = async (threadId: string) => {
     const instance = milkdownInstance;
     if (!instance || !editorService) return;
 
-    const exists = editor.threads.some((s: NoteThread) => s.name === name);
-    if (exists) {
-      editorService.jumpToThread(name);
+    const threadIndex = editor.threads.findIndex(
+      (nt: NoteThread) => nt.id === threadId,
+    );
+    if (threadIndex !== -1) {
+      editorService.jumpToThreadByIndex(threadIndex);
     } else {
-      await editor.ensureThreadExists(name);
       tick().then(() => {
         if (milkdownInstance && editorService) {
-          editorService.jumpToThread(name);
+          const newThreadIndex = editor.threads.findIndex(
+            (s: NoteThread) => s.id === threadId,
+          );
+          if (newThreadIndex !== -1) {
+            editorService.jumpToThreadByIndex(newThreadIndex);
+          }
         }
       });
     }
@@ -101,9 +107,9 @@
    */
   const jumpToThreadByIndex = async (idx: number) => {
     const thread = editor.threads[idx];
-    if (thread?.name) {
+    if (thread?.id) {
       if (sessionState.threadShortcutsMode === 'navigation') {
-        await handleJump(thread.name);
+        await handleJump(thread.id);
       } else {
         sessionState.selectedThreadForOptions = thread;
         sessionState.activePopup = 'threadOptions';
@@ -200,9 +206,14 @@
    * Expose jump functionality to parent components
    */
   $effect(() => {
-    editor.jumpToThread = (name: string) => {
+    editor.jumpToThread = (threadId: string) => {
       const instance = milkdownInstance;
-      if (instance && editorService) editorService.jumpToThread(name);
+      if (instance && editorService) {
+        const threadIndex = editor.threads.findIndex(
+          (nt: NoteThread) => nt.id === threadId,
+        );
+        if (threadIndex !== -1) editorService.jumpToThreadByIndex(threadIndex);
+      }
     };
   });
 </script>

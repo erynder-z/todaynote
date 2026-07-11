@@ -21,7 +21,7 @@
   } = $props<{
     noteContent: NoteContentResponse | null;
     threads: NoteThread[];
-    onSelect: (name: string) => void;
+    onSelect: (threadId: string) => void;
     width?: number;
     isResizing?: boolean;
   }>();
@@ -30,12 +30,12 @@
     sessionState.sidebarOpen = !sessionState.sidebarOpen;
   };
 
-  const handleThreadSelect = (threadName: string) => {
+  const handleThreadSelect = (threadId: string) => {
     if (sessionState.threadShortcutsMode === 'navigation') {
-      onSelect(threadName);
+      onSelect(threadId);
     } else {
       const selectedThread = threads.find(
-        (t: { name: string }) => t.name === threadName,
+        (t: { id: string }) => t.id === threadId,
       );
       if (selectedThread) {
         sessionState.selectedThreadForOptions = selectedThread;

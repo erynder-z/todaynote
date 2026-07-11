@@ -13,14 +13,13 @@ export class EditorStore {
 	hasChanges = $state<boolean>(false);
 	pendingExternalUpdate = $state<boolean>(false);
 	private autoSaveTimeout: ReturnType<typeof setTimeout> | null = null;
-	private threadRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
 	threads = $state<NoteThread[]>([]);
 
 	// Callback for when content changes (saves, jumps, etc.) to sync back to the parent
 	onContentUpdate: (updated: NoteContentResponse) => void = () => {};
 
 	// Function to jump to a thread (set by NoteEditor component)
-	jumpToThread: (name: string) => void = () => {};
+	jumpToThread: (threadId: string) => void = () => {};
 
 	// --- Initialization ---
 
@@ -36,9 +35,9 @@ export class EditorStore {
 
 		if (pathChanged) {
 			this.content = noteContent?.content ?? "";
+			this.threads = noteContent?.threads ?? [];
 			this.hasChanges = false;
 			this.pendingExternalUpdate = true;
-			this.refreshThreads();
 		} else if (
 			noteContent?.content !== undefined &&
 			currentContent !== noteContent.content
@@ -63,22 +62,6 @@ export class EditorStore {
 
 		this.hasChanges = true;
 		this.scheduleAutoSave();
-		this.scheduleThreadRefresh();
-	}
-
-	private scheduleThreadRefresh() {
-		if (this.threadRefreshTimeout) clearTimeout(this.threadRefreshTimeout);
-
-		this.threadRefreshTimeout = setTimeout(() => {
-			untrack(() => this.refreshThreads());
-		}, 250);
-	}
-
-	private refreshThreads() {
-		const content = this.content;
-		notesService.detectThreads(content).then((threads) => {
-			this.threads = threads;
-		});
 	}
 
 	/**
@@ -99,8 +82,8 @@ export class EditorStore {
 	/**
 	 * Removes a thread from the current note and updates the store.
 	 */
-	async removeThread(name: string) {
-		const updated = await notesService.removeThread(name, this.content);
+	async removeThread(threadId: string) {
+		const updated = await notesService.removeThread(threadId, this.content);
 		if (updated) {
 			this.content = updated.content;
 			this.threads = updated.threads;

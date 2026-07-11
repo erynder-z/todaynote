@@ -67,16 +67,10 @@
   });
 
   /**
-   * Handles navigation to a specific thread, creating it if it doesn't exist.
+   * Handles navigation to a specific thread by ID.
    */
-  const handleJump = async (name: string) => {
-    // Update content to ensure thread exists
-    if (!editor.threads.some((s) => s.name === name)) {
-      const updatedContent = await editor.ensureThreadExists(name);
-      noteContent = updatedContent;
-    }
-
-    if (editor.jumpToThread) editor.jumpToThread(name);
+  const handleJump = async (threadId: string) => {
+    if (editor.jumpToThread) editor.jumpToThread(threadId);
 
     // Close sidebar in vertical layout after jumping
     if (window.innerWidth <= 1024) sessionState.sidebarOpen = false;

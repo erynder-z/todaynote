@@ -20,6 +20,7 @@ export interface NoteMetadata {
 }
 
 export interface NoteThread {
+	id: string;
 	name: string;
 	level: number;
 	startLine: number;

@@ -9,7 +9,7 @@
 
   let { threads, onSelect } = $props<{
     threads: NoteThread[];
-    onSelect: (name: string) => void;
+    onSelect: (threadId: string) => void;
   }>();
 
   // Show only up to 20 threads as there are only 20 shortcuts (1-9, A-K)
@@ -19,7 +19,7 @@
 {#if visibleThreads.length > 0}
   <div class="threads-container">
     {#each visibleThreads as thread, i}
-      <button class="thread-item" onclick={() => onSelect(thread.name)}>
+      <button class="thread-item" onclick={() => onSelect(thread.id)}>
         <div class="left-side">
           <IdentIcon title={thread.name} size={1} />
           <span class="thread-name">{thread.name}</span>

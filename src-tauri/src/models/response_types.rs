@@ -261,6 +261,7 @@ impl NoteContentResponse {
                     0
                 };
                 NoteThread {
+                    id: s.id.clone(),
                     name: s.name.clone(),
                     level: s.level,
                     start_line: rel_start,
@@ -269,8 +270,8 @@ impl NoteContentResponse {
             })
             .collect();
 
-        // Get content lines and join them into a single string
-        let content_lines = session.get_content_lines();
+        // Get content lines (excluding frontmatter) and join them into a single string
+        let content_lines: Vec<String> = session.lines[session.get_content_start_index()..].to_vec();
         let content = content_lines.join("\n");
 
         Self {

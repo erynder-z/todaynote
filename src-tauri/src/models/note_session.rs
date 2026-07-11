@@ -8,6 +8,8 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NoteThread {
+    /// Unique identifier for the thread.
+    pub id: String,
     /// The display name of the thread (e.g., "Work").
     pub name: String,
     /// The absolute line index where the thread header starts.
@@ -48,6 +50,7 @@ impl NoteSession {
         self.lines = content.split('\n').map(|s| s.to_string()).collect();
         self.detect_frontmatter();
         self.ensure_trailing_empty_line();
+        self.migrate_html_comments_to_frontmatter();
         self.detect_threads();
     }
 
@@ -70,9 +73,22 @@ impl NoteSession {
     }
     /// Scans the lines to identify threads based on `#` headings.
     /// Only top-level headings (#) are considered threads.
+    /// Uses thread IDs from frontmatter if available, otherwise generates new UUIDs.
     pub fn detect_threads(&mut self) {
+        use uuid::Uuid;
+        
         self.threads.clear();
         let content_start = self.get_content_start_index();
+        
+        // Try to parse thread IDs from frontmatter first
+        let frontmatter_threads = self.parse_threads_from_frontmatter();
+        
+        // Build a map of line -> ID from frontmatter
+        let mut id_map: std::collections::HashMap<usize, String> = std::collections::HashMap::new();
+        for (id, relative_line) in &frontmatter_threads {
+            let absolute_line = content_start + relative_line;
+            id_map.insert(absolute_line, id.clone());
+        }
 
         for i in content_start..self.lines.len() {
             let line = &self.lines[i];
@@ -86,7 +102,16 @@ impl NoteSession {
                         prev.end_line = i;
                     }
 
+                    // Use ID from frontmatter if available, otherwise generate new UUID
+                    let id = if let Some(existing_id) = id_map.get(&i) {
+                        existing_id.clone()
+                    } else {
+                        // Generate new UUID for this thread
+                        Uuid::new_v4().to_string()
+                    };
+
                     self.threads.push(NoteThread {
+                        id,
                         name,
                         start_line: i,
                         end_line: self.lines.len(),
@@ -95,7 +120,12 @@ impl NoteSession {
                 }
             }
         }
+        
+        // Update frontmatter with current thread metadata
+        self.update_threads_in_frontmatter();
     }
+
+
 
     /// Ensures that the frontmatter block exists.
     pub fn ensure_frontmatter(&mut self) {
@@ -183,15 +213,7 @@ impl NoteSession {
         self.get_content_start_index() + relative_index
     }
 
-    /// Returns a slice of lines that represent the actual content (excluding frontmatter).
-    pub fn get_content_lines(&self) -> Vec<String> {
-        let start = self.get_content_start_index();
-        if start < self.lines.len() {
-            self.lines[start..].to_vec()
-        } else {
-            Vec::new()
-        }
-    }
+
 
     /// Replaces the content of a specific line in the session using a relative index.
     pub fn update_content_line(&mut self, relative_index: usize, content: String) {
@@ -240,4 +262,163 @@ impl NoteSession {
     pub fn get_full_content(&self) -> String {
         self.lines.join("\n")
     }
+
+    /// Migrates thread IDs from HTML comments to frontmatter metadata.
+    /// This is a one-time migration for notes that were using HTML comments for thread IDs.
+    /// Removes HTML comments after extracting the IDs.
+    pub fn migrate_html_comments_to_frontmatter(&mut self) {
+        let content_start = self.get_content_start_index();
+        let mut has_html_comments = false;
+        let mut html_thread_ids: Vec<(String, usize)> = Vec::new(); // (id, line_index)
+        
+        // Scan for HTML thread ID comments
+        for i in content_start..self.lines.len() {
+            if i > content_start && self.lines[i].trim().starts_with("<!--") && self.lines[i].contains("thread-id:") {
+                // Parse the thread ID from the comment
+                if let Some(id) = self.parse_thread_id_from_html_comment(&self.lines[i]) {
+                    // The thread header is the previous line
+                    if i > 0 && self.lines[i - 1].starts_with("# ") {
+                        let relative_line = i - 1 - content_start;
+                        html_thread_ids.push((id, relative_line));
+                        has_html_comments = true;
+                    }
+                }
+            }
+        }
+        
+        // If we found HTML comments, remove them and update frontmatter
+        if has_html_comments {
+            // Ensure frontmatter exists
+            self.ensure_frontmatter();
+            let (start, end) = self.frontmatter_range.unwrap();
+            
+            // Build the threads metadata line
+            let threads_meta: String = html_thread_ids.iter()
+                .map(|(id, line)| format!("{}:{}", id, line))
+                .collect::<Vec<_>>()
+                .join(",");
+            
+            // Add or update threads in frontmatter
+            let threads_key = "threads:";
+            let mut found = false;
+            for i in (start + 1)..end {
+                if self.lines[i].trim().starts_with(threads_key) {
+                    self.lines[i] = format!("{} {}", threads_key, threads_meta);
+                    found = true;
+                    break;
+                }
+            }
+            if !found && end > start + 1 {
+                self.lines.insert(end, format!("{} {}", threads_key, threads_meta));
+                self.frontmatter_range = Some((start, end + 1));
+            }
+            
+            // Remove HTML comment lines
+            let mut i = 0;
+            while i < self.lines.len() {
+                if self.lines[i].trim().starts_with("<!--") && self.lines[i].contains("thread-id:") {
+                    self.lines.remove(i);
+                } else {
+                    i += 1;
+                }
+            }
+            
+            // Re-detect frontmatter after modification
+            self.detect_frontmatter();
+        }
+    }
+
+    /// Parses a thread ID from an HTML comment line.
+    /// Expected format: <!-- thread-id: uuid -->
+    fn parse_thread_id_from_html_comment(&self, line: &str) -> Option<String> {
+        let trimmed = line.trim();
+        if trimmed.starts_with("<!--") && trimmed.ends_with("-->") {
+            if let Some(content) = trimmed.strip_prefix("<!--").and_then(|s| s.strip_suffix("-->")) {
+                let content = content.trim();
+                if content.starts_with("thread-id:") {
+                    let id_part = content.strip_prefix("thread-id:").unwrap_or("").trim();
+                    if !id_part.is_empty() {
+                        return Some(id_part.to_string());
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Updates the threads metadata in the frontmatter.
+    /// Stores thread IDs and their relative line positions (from content start).
+    pub fn update_threads_in_frontmatter(&mut self) {
+        self.ensure_frontmatter();
+        let (start, end) = self.frontmatter_range.unwrap();
+        let content_start = self.get_content_start_index();
+        
+        // Build the threads metadata as a comma-separated list of id:line pairs
+        let threads_meta: String = self.threads.iter()
+            .map(|t| {
+                let relative_line = if t.start_line >= content_start {
+                    t.start_line - content_start
+                } else {
+                    0
+                };
+                format!("{}:{}", t.id, relative_line)
+            })
+            .collect::<Vec<_>>()
+            .join(",");
+        
+        // Find and update or add the threads line in frontmatter
+        let threads_key = "threads:";
+        let mut found = false;
+        
+        for i in (start + 1)..end {
+            if self.lines[i].trim().starts_with(threads_key) {
+                self.lines[i] = format!("{} {}", threads_key, threads_meta);
+                found = true;
+                break;
+            }
+        }
+        
+        // If not found, add it before the closing ---
+        if !found && end > start + 1 {
+            self.lines.insert(end, format!("{} {}", threads_key, threads_meta));
+            self.frontmatter_range = Some((start, end + 1));
+        }
+    }
+
+    /// Parses thread metadata from the frontmatter.
+    /// Expected format: threads: id1:line1,id2:line2,...
+    pub fn parse_threads_from_frontmatter(&self) -> Vec<(String, usize)> {
+        let (start, end) = match self.frontmatter_range {
+            Some(range) => range,
+            None => return Vec::new(),
+        };
+        
+        for i in (start + 1)..end {
+            let line = self.lines[i].trim();
+            if line.starts_with("threads:") {
+                let value = line[8..].trim();
+                return value.split(',')
+                    .filter(|s| !s.is_empty())
+                    .filter_map(|s| {
+                        let parts: Vec<&str> = s.split(':').collect();
+                        if parts.len() == 2 {
+                            if let Ok(line_num) = parts[1].parse() {
+                                return Some((parts[0].to_string(), line_num));
+                            }
+                        }
+                        None
+                    })
+                    .collect();
+            }
+        }
+        
+        Vec::new()
+    }
+
+    /// Finds a thread by its ID.
+    pub fn find_thread_by_id(&self, id: &str) -> Option<&NoteThread> {
+        self.threads.iter().find(|t| t.id == id)
+    }
+
+
 }

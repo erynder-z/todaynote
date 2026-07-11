@@ -44,7 +44,7 @@ pub fn reconstruct_full_content(path: &PathBuf, content: &str) -> Result<String,
 /// Saves the complete content of a note to the specified path.
 ///
 /// The `content` parameter is the content portion (after frontmatter).
-/// This function preserves frontmatter by reading it from disk and prepending it.
+/// This function preserves frontmatter and ensures thread ID comments are maintained.
 #[tauri::command]
 pub async fn save_note_content(
     path: String,
@@ -52,13 +52,22 @@ pub async fn save_note_content(
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     let path_buf = PathBuf::from(&path);
-    let full_content = reconstruct_full_content(&path_buf, &content)?;
-
-    // Update the active session so other commands (like tags) have the latest content
+    
+    // For save operations, we need to merge the frontend's content with the session's frontmatter
     let mut session = state.note_session()?;
+    let full_content = if let Some((_, end)) = session.frontmatter_range {
+        let frontmatter_lines = &session.lines[..=end];
+        let frontmatter = frontmatter_lines.join("\n");
+        format!("{}\n{}", frontmatter, content)
+    } else {
+        // No frontmatter in session, read from disk
+        reconstruct_full_content(&path_buf, &content)?
+    };
+
+    // Update the active session with the new content
     session.load(path_buf.clone(), full_content.clone());
 
-    fs::write(path_buf, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+    fs::write(path_buf, session.get_full_content()).map_err(|e| format!("Failed to save note: {}", e))?;
 
     let note_manager = state.note_manager()?;
     let tag_manager = state.tag_manager()?;
@@ -83,7 +92,7 @@ pub async fn update_note_line(
     session.update_content_line(index, content);
     if let Some(path) = &session.path {
         let full_content = session.get_full_content();
-        fs::write(path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+        fs::write(path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
     }
     Ok(())
 }
@@ -102,7 +111,7 @@ pub async fn insert_note_line(
 
     if let Some(path) = &session.path {
         let full_content = session.get_full_content();
-        fs::write(path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+        fs::write(path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
     }
     Ok(())
 }
@@ -117,7 +126,7 @@ pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Resul
 
     if let Some(path) = &session.path {
         let full_content = session.get_full_content();
-        fs::write(path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+        fs::write(path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
     }
     Ok(())
 }
@@ -191,6 +200,7 @@ pub async fn check_todays_note_exists(state: State<'_, AppState>) -> Result<bool
 /// If the note file does not exist, returns an error.
 ///
 /// Automatically loads the note content into the application session.
+/// If the note has legacy thread IDs, migrates them to UUID-based IDs and saves the updated content.
 ///
 /// Returns a `NoteContentResponse` containing the note's content and metadata.
 #[tauri::command]
@@ -253,13 +263,16 @@ where
         .clone()
         .ok_or_else(|| "No active note session".to_string())?;
 
+    // Reload the session with the latest content from disk to ensure we have
+    // any changes made by previous operations (like thread ID comments from ensure_thread).
+    // This is critical because the session might be stale.
     let full_content = reconstruct_full_content(&path, &current_content)?;
     session.load(path.clone(), full_content);
 
     operation(&mut session)?;
 
     let full_content = session.get_full_content();
-    fs::write(&path, full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+    fs::write(&path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
 
     let note_manager = state.note_manager()?;
     let tag_manager = state.tag_manager()?;
@@ -274,7 +287,7 @@ where
 /// Finds or creates a thread by name and returns its content-relative line index.
 ///
 /// Jumps to the end of the thread (ready to type). If the thread does not exist,
-/// it is appended to the end of the note.
+/// it is appended to the end of the note with a unique ID comment.
 ///
 /// The `current_content` parameter should be the content portion from the frontend
 /// (excluding frontmatter). The backend reconstructs the full note by reading the
@@ -286,11 +299,27 @@ pub async fn ensure_thread(
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     perform_thread_operation(current_content, state, |session| {
+        use uuid::Uuid;
+        
         if !session.threads.iter().any(|s| s.name == name) {
             let last_idx = session.lines.len();
+            let thread_id = Uuid::new_v4().to_string();
+            
             session.insert_line(last_idx, format!("# {}", name));
             session.insert_line(last_idx + 1, "".to_string());
             session.insert_line(last_idx + 2, "".to_string());
+            
+            // Create a new thread and add it to the list with proper metadata
+            session.threads.push(NoteThread {
+                id: thread_id,
+                name: name.clone(),
+                start_line: last_idx,
+                end_line: session.lines.len(),
+                level: 1,
+            });
+            
+            // Update frontmatter with the new thread
+            session.update_threads_in_frontmatter();
         }
         Ok(())
     })
@@ -298,31 +327,32 @@ pub async fn ensure_thread(
 }
 
 /// Detects top-level headings (`# `) in markdown content and returns them as threads.
+/// Uses thread IDs from frontmatter or generates new UUIDs.
+/// If path is provided, loads the full content from disk to access frontmatter.
 #[tauri::command]
-pub async fn detect_threads(content: String) -> Result<Vec<NoteThread>, String> {
-    let lines: Vec<&str> = content.split('\n').collect();
-    let mut threads: Vec<NoteThread> = Vec::new();
-
-    for (i, line) in lines.iter().enumerate() {
-        if line.starts_with("# ") && !line.starts_with("## ") {
-            let name = line[2..].trim().to_string();
-            if !name.is_empty() {
-                // Update previous thread's end_line
-                if let Some(prev) = threads.last_mut() {
-                    prev.end_line = i;
-                }
-
-                threads.push(NoteThread {
-                    name,
-                    level: 1,
-                    start_line: i,
-                    end_line: lines.len(),
-                });
+pub async fn detect_threads(
+    content: String,
+    path: Option<String>,
+) -> Result<Vec<NoteThread>, String> {
+    // If we have a path, try to load the full content from disk
+    // to access frontmatter with thread metadata
+    if let Some(path_str) = path {
+        let path_buf = PathBuf::from(path_str);
+        if path_buf.exists() {
+            if let Ok(file_content) = std::fs::read_to_string(&path_buf) {
+                let mut session = NoteSession::new();
+                session.load(path_buf, file_content);
+                return Ok(session.threads);
             }
         }
     }
-
-    Ok(threads)
+    
+    // Fallback: detect threads from content only (no frontmatter)
+    // This will generate new UUIDs, which may not match existing threads
+    let mut session = NoteSession::new();
+    session.load(PathBuf::new(), content);
+    
+    Ok(session.threads)
 }
 
 /// Renames the first top-level heading in a markdown string if it differs from the new name.
@@ -395,25 +425,31 @@ pub async fn apply_default_thread_name(
     Ok(())
 }
 
-/// Removes a thread by name from the current note session.
+/// Removes a thread by ID from the current note session.
 ///
+/// Removes the thread header, its ID comment (if present), and all content until the next thread.
 /// The `current_content` parameter should be the content portion from the frontend
 /// (excluding frontmatter). The backend reconstructs the full note by reading the
 /// frontmatter from disk.
 #[tauri::command]
 pub async fn remove_thread(
-    name: String,
+    thread_id: String,
     current_content: String,
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
-    perform_thread_operation(current_content, state, |session| {
-        if let Some(thread_to_remove) = session.threads.iter().find(|t| t.name == name) {
-            let start_line = thread_to_remove.start_line;
-            let end_line = thread_to_remove.end_line;
-            session.delete_line_range(start_line, end_line);
+    perform_thread_operation(current_content.clone(), state, |session| {
+        // Reload session to ensure we have the latest content from disk
+        let full_content = reconstruct_full_content(&session.path.clone().ok_or("No path".to_string())?, &current_content)?;
+        session.load(session.path.clone().ok_or("No path".to_string())?, full_content);
+        
+        // Find the thread by ID from the threads list (which is populated from frontmatter)
+        if let Some(thread_to_remove) = session.find_thread_by_id(&thread_id) {
+            session.delete_line_range(thread_to_remove.start_line, thread_to_remove.end_line);
             Ok(())
         } else {
-            Err(format!("Thread '{}' not found", name))
+            // Debug: print all thread IDs
+            let found_ids: Vec<String> = session.threads.iter().map(|t| t.id.clone()).collect();
+            Err(format!("Thread '{}' not found. Available thread IDs: {:?}", thread_id, found_ids))
         }
     })
     .await
