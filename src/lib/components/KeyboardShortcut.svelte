@@ -37,27 +37,17 @@
 
 <style>
   .keyboard-shortcut {
-    font-family: var(--font-mono, monospace);
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 0.2rem;
   }
 
   .kbd-key {
-    background: color-mix(in srgb, var(--shortcut-bg), transparent 80%);
-    border: 1px solid var(--border);
-    border-radius: 0.25rem;
-    padding: 0.1rem 0.4rem;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 600;
-    min-width: 1.2rem;
+    min-width: 0.6rem;
     text-align: center;
-    box-shadow: 0 1px 0 var(--border);
-  }
-
-  .kbd-key.boxed {
-    background-color: var(--bg-main);
   }
 
   .separator {
