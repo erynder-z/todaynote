@@ -91,6 +91,7 @@ export class AppInitializer {
 			settings.sidebarOpen = state.sidebarOpen;
 			settings.threadShortcutsMode = state.threadShortcutsMode || "navigation";
 			settings.identiconStyle = state.identiconStyle;
+			settings.dateFormatStyle = state.dateFormatStyle || "medium";
 		} else {
 			// Use default values for component settings
 			settings.searchMode = "notes";
@@ -99,6 +100,7 @@ export class AppInitializer {
 			settings.sidebarOpen = true;
 			settings.threadShortcutsMode = "navigation";
 			settings.identiconStyle = "dotmatrix";
+			settings.dateFormatStyle = "medium";
 		}
 
 		const width = state.controlCenterWidth;

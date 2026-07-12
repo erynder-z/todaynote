@@ -26,6 +26,7 @@ export class SettingsStore {
 	useDefaultThreadName = $state(true);
 	identiconStyle = $state<"dotmatrix" | "round" | "none">("dotmatrix");
 	threadShortcutsMode = $state<"navigation" | "actions">("navigation");
+	dateFormatStyle = $state<"medium" | "narrow">("medium");
 	shortcuts = $state<Partial<Record<ShortcutAction, ShortcutConfig>>>({});
 
 	/**
@@ -54,6 +55,7 @@ export class SettingsStore {
 			useDefaultThreadName: this.useDefaultThreadName,
 			identiconStyle: this.identiconStyle,
 			threadShortcutsMode: this.threadShortcutsMode,
+			dateFormatStyle: this.dateFormatStyle,
 			shortcuts: this.shortcuts,
 		};
 	}
@@ -178,6 +180,17 @@ export class SettingsStore {
 			return await this.save({ threadShortcutsMode: mode });
 
 		this.threadShortcutsMode = mode;
+		return true;
+	}
+
+	/**
+	 * Granular setter for date format style that handles conditional persistence.
+	 */
+	async saveDateFormatStyle(style: "medium" | "narrow"): Promise<boolean> {
+		if (this.rememberSettings)
+			return await this.save({ dateFormatStyle: style });
+
+		this.dateFormatStyle = style;
 		return true;
 	}
 

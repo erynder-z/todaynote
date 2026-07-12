@@ -53,6 +53,8 @@ pub struct AppConfig {
     pub identicon_style: String,
     /// Last used thread shortcuts mode ("navigation" or "actions").
     pub thread_shortcuts_mode: String,
+    /// Date format style ("medium" for standard format, "narrow" for abbreviated).
+    pub date_format_style: String,
     /// Global keyboard shortcuts configuration.
     pub shortcuts: HashMap<String, ShortcutConfig>,
 }
@@ -270,6 +272,7 @@ impl Default for AppConfig {
             use_default_thread_name: true,
             identicon_style: "dotmatrix".to_string(),
             thread_shortcuts_mode: "navigation".to_string(),
+            date_format_style: "medium".to_string(),
             shortcuts,
         }
     }

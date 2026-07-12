@@ -17,6 +17,7 @@ export interface AppSettings {
 	useDefaultThreadName: boolean;
 	identiconStyle: "dotmatrix" | "round" | "none";
 	threadShortcutsMode: "navigation" | "actions";
+	dateFormatStyle: "medium" | "narrow";
 	shortcuts: Partial<Record<ShortcutAction, ShortcutConfig>>;
 }
 

@@ -6,6 +6,7 @@
   import type { NoteContentResponse } from '$lib/interfaces/notes';
   import { locale } from '$lib/utils/i18n';
   import { notesService } from '$lib/utils/notes';
+  import { settings } from '../stores/settings.svelte';
 
   let { noteContent } = $props<{
     noteContent: NoteContentResponse | null;
@@ -16,6 +17,7 @@
       ? notesService.formatNoteName(
           noteContent.path.split(/[/\\]/).pop() || '',
           $locale,
+          settings.dateFormatStyle,
         )
       : '',
   );

@@ -232,7 +232,10 @@ export class NotesService {
 	 */
 	async detectThreads(content: string, path?: string): Promise<NoteThread[]> {
 		try {
-			return (await invoke("detect_threads", { content, path })) as NoteThread[];
+			return (await invoke("detect_threads", {
+				content,
+				path,
+			})) as NoteThread[];
 		} catch (error) {
 			console.error("Error detecting threads:", error);
 			return [];
@@ -262,10 +265,14 @@ export class NotesService {
 	/**
 	 * Formats a note's filename into a human-readable, localized string.
 	 */
-	formatNoteName(filename: string, currentLocale: string): string {
+	formatNoteName(
+		filename: string,
+		currentLocale: string,
+		dateFormatStyle: "medium" | "narrow" = "medium",
+	): string {
 		const withoutExt = filename.replace(/.md$/, "");
 
-		const datePattern = /^(d{4})-(d{2})-(d{2})$/;
+		const datePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
 		const match = withoutExt.match(datePattern);
 		if (!match) return withoutExt;
 
@@ -274,12 +281,26 @@ export class NotesService {
 		const day = Number.parseInt(match[3], 10);
 		const dateObj = new Date(year, month, day);
 
-		return dateObj.toLocaleDateString(currentLocale, {
-			weekday: "long",
-			year: "numeric",
-			month: "long",
-			day: "numeric",
-		});
+		const options =
+			dateFormatStyle === "medium"
+				? {
+						weekday: "short" as const,
+						year: "numeric" as const,
+						month: "long" as const,
+						day: "2-digit" as const,
+					}
+				: {
+						weekday: "narrow" as const,
+						year: "2-digit" as const,
+						month: "short" as const,
+						day: "2-digit" as const,
+					};
+
+		const localized = new Intl.DateTimeFormat(currentLocale, options).format(
+			dateObj,
+		);
+
+		return localized;
 	}
 }
 

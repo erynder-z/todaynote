@@ -30,6 +30,7 @@ pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, St
             use_default_thread_name: config.use_default_thread_name,
             identicon_style: config.identicon_style.clone(),
             thread_shortcuts_mode: config.thread_shortcuts_mode.clone(),
+            date_format_style: config.date_format_style.clone(),
             shortcuts: config.shortcuts.clone(),
         }
     };
@@ -62,6 +63,7 @@ pub fn get_initial_state(
         use_default_thread_name: config.use_default_thread_name,
         identicon_style: config.identicon_style,
         thread_shortcuts_mode: config.thread_shortcuts_mode,
+        date_format_style: config.date_format_style,
         shortcuts: config.shortcuts,
         available_locales,
         available_themes,

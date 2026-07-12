@@ -85,7 +85,6 @@
 
   .theme-input {
     -webkit-appearance: none;
-    -moz-appearance: none;
     appearance: none;
     padding: 0.65rem 1rem;
     border-radius: 0.5rem;

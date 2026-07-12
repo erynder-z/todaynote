@@ -26,6 +26,7 @@ pub struct ConfigResponse {
     pub use_default_thread_name: bool,
     pub identicon_style: String,
     pub thread_shortcuts_mode: String,
+    pub date_format_style: String,
     pub shortcuts: HashMap<String, ShortcutConfig>,
 }
 
@@ -114,6 +115,7 @@ pub struct AppPayload {
     pub use_default_thread_name: bool,
     pub identicon_style: String,
     pub thread_shortcuts_mode: String,
+    pub date_format_style: String,
     pub shortcuts: HashMap<String, ShortcutConfig>,
     pub available_locales: Vec<LocaleInfo>,
     pub available_themes: Vec<ThemeInfo>,
@@ -271,7 +273,8 @@ impl NoteContentResponse {
             .collect();
 
         // Get content lines (excluding frontmatter) and join them into a single string
-        let content_lines: Vec<String> = session.lines[session.get_content_start_index()..].to_vec();
+        let content_lines: Vec<String> =
+            session.lines[session.get_content_start_index()..].to_vec();
         let content = content_lines.join("\n");
 
         Self {

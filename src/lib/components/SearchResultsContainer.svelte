@@ -94,7 +94,11 @@
   <div class="list-note-item">
     <div class="result-meta">
       <span class="date"
-        >{notesService.formatNoteName(result.filename, $locale)}</span
+        >{notesService.formatNoteName(
+          result.filename,
+          $locale,
+          settings.dateFormatStyle,
+        )}</span
       >
       <span class="ln">L{result.lineNumber + 1}</span>
     </div>
@@ -110,7 +114,11 @@
   <div class="masonry-note-item">
     <div class="card-header">
       <span class="note-name"
-        >{notesService.formatNoteName(result.filename, $locale)}</span
+        >{notesService.formatNoteName(
+          result.filename,
+          $locale,
+          settings.dateFormatStyle,
+        )}</span
       >
       <span class="ln">L{result.lineNumber + 1}</span>
     </div>

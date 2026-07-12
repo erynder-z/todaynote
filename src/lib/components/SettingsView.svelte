@@ -5,6 +5,7 @@
    */
   import type { Component } from 'svelte';
   import AboutSelector from './AboutSelector.svelte';
+  import DateFormatStyleSelector from './DateFormatStyleSelector.svelte';
   import DefaultThreadNameSelector from './DefaultThreadNameSelector.svelte';
   import FolderSelector from './FolderSelector.svelte';
   import IdentIconStyleSelector from './IdentIconStyleSelector.svelte';
@@ -35,6 +36,7 @@
     LanguageSelector,
     ThemeSelector,
     IdentIconStyleSelector,
+    DateFormatStyleSelector,
     WindowSizeSelector,
     RememberSettingsSelector,
     ShortcutSelector,

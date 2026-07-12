@@ -135,7 +135,11 @@
 {#snippet listSnippet(note: FormattedNote, i: number)}
   <div class="result-content">
     <span class="note-name"
-      >{notesService.formatNoteName(note.filename, $locale)}</span
+      >{notesService.formatNoteName(
+        note.filename,
+        $locale,
+        settings.dateFormatStyle,
+      )}</span
     >
     {#if note.tags && note.tags.length > 0}
       <div class="list-tags">
@@ -150,7 +154,11 @@
 {#snippet masonrySnippet(note: FormattedNote, i: number)}
   <div class="card-header">
     <span class="note-name"
-      >{notesService.formatNoteName(note.filename, $locale)}</span
+      >{notesService.formatNoteName(
+        note.filename,
+        $locale,
+        settings.dateFormatStyle,
+      )}</span
     >
   </div>
 
