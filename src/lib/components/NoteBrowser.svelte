@@ -94,7 +94,7 @@
    * Returns the appropriate navigation key based on current layout
    */
   const getNavigationKey = () => {
-    return settings.notesListLayout === 'masonry' ? '↑↓←→' : '↑↓';
+    return settings.notesListLayout === 'masonry' ? '🠝🠟 🠜🠞' : '🠝🠟';
   };
 
   /**
@@ -251,7 +251,7 @@
   <ModalFooter
     shortcuts={[
       { label: getNavigationLabel(), key: getNavigationKey() },
-      { label: $t('search.footer.open'), key: 'Enter' },
+      { label: $t('search.footer.open'), key: '↵' },
       {
         label: $t('shortcuts.action.toggle_note_browser_layout'),
         action: 'toggleNoteBrowserLayout',

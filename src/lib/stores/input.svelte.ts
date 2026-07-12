@@ -42,7 +42,7 @@ class InputManager {
 	 * Returns the platform-specific label for the secondary modifier.
 	 */
 	get secondaryLabel() {
-		return sessionState.isMac ? "⌥" : "Shift";
+		return sessionState.isMac ? "⌥" : "⇧";
 	}
 
 	/** List of registered shortcut configurations. */
