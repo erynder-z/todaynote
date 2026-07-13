@@ -272,8 +272,8 @@
       <ModalFooter
         shortcuts={[
           ...(settings.notesListLayout === 'masonry'
-            ? [{ label: $t('browser.navigate'), key: '🠝🠟 🠜🠞' }]
-            : [{ label: $t('browser.navigate'), key: '🠝🠟' }]),
+            ? [{ label: $t('browser.navigate'), key: '↑ ↓ ← →' }]
+            : [{ label: $t('browser.navigate'), key: '↑ ↓' }]),
           { label: $t('search.footer.open'), key: '↵' },
           {
             label: $t('shortcuts.search.toggle_fuzzy'),
