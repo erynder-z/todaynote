@@ -32,13 +32,13 @@
 
 <style>
   @font-face {
-    font-family: SUSE Mono;
-    src: url(../assets/SUSEMono-VariableFont_wght.ttf) format('truetype');
+    font-family: 0xProtoNerd;
+    src: url(../assets/font/0xProtoNerdFontPropo-Regular.ttf) format('truetype');
   }
 
   :global(:root) {
     box-sizing: border-box;
-    --font-mono: 'SUSE Mono', monospace;
+    --font-mono: '0xProtoNerd', monospace;
     font-family: var(--font-mono);
     font-weight: 400;
     background-color: var(--bg-base);
