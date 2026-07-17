@@ -135,6 +135,7 @@
     text-decoration: underline;
     text-underline-offset: 2px;
     transition: color 0.15s cubic-bezier(0.2, 0, 0, 1);
+    cursor: pointer;
   }
 
   .milkdown-editor-wrapper :global(.milkdown a:hover) {

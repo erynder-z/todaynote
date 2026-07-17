@@ -94,7 +94,7 @@
    * Returns the appropriate navigation key based on current layout
    */
   const getNavigationKey = () => {
-    return settings.notesListLayout === 'masonry' ? '🠝🠟 🠜🠞' : '🠝🠟';
+    return settings.notesListLayout === 'masonry' ? '↑ ↓ ← →' : '↑ ↓';
   };
 
   /**

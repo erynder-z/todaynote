@@ -9,6 +9,7 @@
   import { tick, untrack } from 'svelte';
   import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
   import { tagSuggestionShortcuts } from '../config/shortcuts';
+  import { linkOpenerPlugin } from '../plugins/linkOpenerPlugin';
   import type { EditorStore } from '../stores/editor.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
   import {
@@ -17,6 +18,7 @@
   } from '../utils/dailyNote';
   import { EditorService } from '../utils/editor';
   import { useShortcuts } from '../utils/shortcuts';
+  import FloatingToolbar from './FloatingToolbar.svelte';
   import MilkdownEditor from './MilkdownEditor.svelte';
 
   let {
@@ -223,6 +225,7 @@
     content={editor.content}
     bind:instance={milkdownInstance}
     onUpdate={(markdown) => editor.updateContent(markdown)}
-    plugins={[customKeymap]}
+    plugins={[customKeymap, linkOpenerPlugin]}
   />
+  <FloatingToolbar editorInstance={milkdownInstance} />
 {/if}
