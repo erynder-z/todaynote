@@ -6,6 +6,7 @@
   import { sessionState, settings, t, toast } from '$lib';
   import { locale } from '$lib/utils/i18n';
   import { notesService } from '$lib/utils/notes';
+  import { linkOpenerPlugin } from '../plugins/linkOpenerPlugin';
   import IdentIcon from './IdentIcon.svelte';
   import MilkdownEditor from './MilkdownEditor.svelte';
 
@@ -58,7 +59,11 @@
             </button>
           </header>
           <div class="item-body">
-            <MilkdownEditor content={item.content} readonly />
+            <MilkdownEditor
+              content={item.content}
+              readonly
+              plugins={[linkOpenerPlugin]}
+            />
           </div>
         </div>
       {/each}

@@ -4,20 +4,17 @@
 	"description": "Capability for the main window",
 	"windows": ["main"],
 	"permissions": [
+		"dialog:default",
+		"dialog:allow-open",
+		"core:webview:allow-internal-toggle-devtools",
 		{
-			"identifier": "dialog:default",
-			"windows": ["main"],
-			"permissions": []
-		},
-		{
-			"identifier": "dialog:allow-open",
-			"windows": ["main"],
-			"permissions": []
-		},
-		{
-			"identifier": "core:webview:allow-internal-toggle-devtools",
-			"windows": ["main"],
-			"permissions": ["core:webview:allow-internal-toggle-devtools"]
+			"identifier": "opener:allow-open-url",
+			"allow": [
+				{
+					"url": "https://*",
+					"app": true
+				}
+			]
 		}
 	]
 }
