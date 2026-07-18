@@ -11,7 +11,7 @@
 	"--success": "#a3be8c",
 	"--error": "#bf616a",
 	"--remove": "#bf616a",
-	"--md-h1": "#b48ead",
+	"--md-h1": "#81a1c1",
 	"--md-h2": "#bf616a",
 	"--md-h3": "#d08770",
 	"--md-h4": "#ebcb8b",
@@ -39,5 +39,6 @@
 	"--thread-mode-navigation-bg": "#a3be8c",
 	"--thread-mode-actions-bg": "#88c0d0",
 	"--thread-mode-navigation-text": "#2e3440",
-	"--thread-mode-actions-text": "#2e3440"
+	"--thread-mode-actions-text": "#2e3440",
+	"--thread-marker-color": "#88c0d0"
 }

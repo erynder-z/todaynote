@@ -12,7 +12,7 @@
 	"--success": "#40a02b",
 	"--error": "#d20f39",
 	"--remove": "#d20f39",
-	"--md-h1": "#8839ef",
+	"--md-h1": "#7287fd",
 	"--md-h2": "#7287fd",
 	"--md-h3": "#fe640b",
 	"--md-h4": "#179299",
@@ -40,5 +40,6 @@
 	"--thread-mode-navigation-bg": "#40a02b",
 	"--thread-mode-actions-bg": "#7287fd",
 	"--thread-mode-navigation-text": "#ffffff",
-	"--thread-mode-actions-text": "#ffffff"
+	"--thread-mode-actions-text": "#ffffff",
+	"--thread-marker-color": "#8839ef"
 }

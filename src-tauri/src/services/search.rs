@@ -183,14 +183,14 @@ impl<'a> SearchService<'a> {
         Ok(files)
     }
 
-    /// Extracts all unique thread names (H1 headings) from markdown content.
+    /// Extracts all unique thread names (lines starting with !!!) from markdown content.
     fn extract_thread_names(content: &str) -> Vec<String> {
         let (frontmatter_len, _) = Self::extract_frontmatter(content);
         let mut names = std::collections::HashSet::new();
 
         for line in content.lines().skip(frontmatter_len) {
-            if line.starts_with("# ") {
-                let name = line[2..].trim().to_string();
+            if line.starts_with("!!! ") {
+                let name = line[4..].trim().to_string();
                 if !name.is_empty() {
                     names.insert(name);
                 }
@@ -230,19 +230,16 @@ impl<'a> SearchService<'a> {
     }
 
     /// Sorts search results by relevance (score) and other criteria.
-    pub fn sort_search_results(
-        results: Vec<SearchResult>,
-        sort_by: &str,
-    ) -> Vec<SearchResult> {
+    pub fn sort_search_results(results: Vec<SearchResult>, sort_by: &str) -> Vec<SearchResult> {
         let mut sorted = results;
 
         match sort_by {
             "score" => {
                 sorted.sort_by(|a, b| b.score.cmp(&a.score));
-            },
+            }
             "filename" => {
                 sorted.sort_by(|a, b| a.filename.cmp(&b.filename));
-            },
+            }
             "date" => {
                 // Sort by filename (which contains date) in reverse chronological order
                 sorted.sort_by(|a, b| {
@@ -250,7 +247,7 @@ impl<'a> SearchService<'a> {
                     let b_date = b.filename.split('_').next().unwrap_or("");
                     b_date.cmp(a_date) // Newest first
                 });
-            },
+            }
             _ => {
                 // Default: sort by score descending
                 sorted.sort_by(|a, b| b.score.cmp(&a.score));
@@ -269,7 +266,8 @@ impl<'a> SearchService<'a> {
         filename_filter: Option<&str>,
         sort_by: &str,
     ) -> Vec<SearchResult> {
-        let filtered = Self::filter_search_results(results, min_score, max_results, filename_filter);
+        let filtered =
+            Self::filter_search_results(results, min_score, max_results, filename_filter);
         Self::sort_search_results(filtered, sort_by)
     }
 
@@ -282,8 +280,8 @@ impl<'a> SearchService<'a> {
         let mut in_thread = false;
 
         for line in lines.iter().skip(frontmatter_len) {
-            if line.starts_with("# ") {
-                let name = line[2..].trim();
+            if line.starts_with("!!! ") {
+                let name = line[4..].trim();
                 if name == thread_name {
                     in_thread = true;
                     continue;
@@ -393,7 +391,7 @@ impl<'a> SearchService<'a> {
         Ok(all_results)
     }
 
-    /// Searches for unique thread names (H1 headings) across all notes.
+    /// Searches for unique thread names (lines starting with !!!) across all notes.
     pub fn search_threads(
         &self,
         query: &str,
