@@ -106,7 +106,6 @@
 
       const { state, dispatch } = view;
       toggleMark(markType)(state, dispatch);
-      toggleMark(markType)(state, dispatch);
       updateSelectionState();
     });
   };
@@ -338,10 +337,8 @@
       }
     };
 
-    document.addEventListener('mousedown', handleOutsideClick, true);
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick, true);
-    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
   });
 
   /**
@@ -425,7 +422,6 @@
     role="toolbar"
     aria-label="Text formatting"
     tabindex="-1"
-    onmousedown={(e) => e.preventDefault()}
     in:fly={{ y: 20, duration: 150 }}
     out:fly={{ y: -20, duration: 200 }}
   >
@@ -451,7 +447,12 @@
           onmousedown={(e) => e.stopPropagation()}
         />
 
-        <button type="submit" class="toolbar-btn active" title="Apply Link">
+        <button
+          type="submit"
+          class="toolbar-btn active"
+          title="Apply Link"
+          onclick={(e) => e.stopPropagation()}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             height="1.1rem"
@@ -467,7 +468,10 @@
           <button
             type="button"
             class="toolbar-btn danger"
-            onclick={() => applyLink('')}
+            onclick={(e) => {
+              e.stopPropagation();
+              applyLink('');
+            }}
             title="Remove Link"
           >
             <svg
@@ -485,7 +489,8 @@
         <button
           type="button"
           class="toolbar-btn"
-          onclick={() => {
+          onclick={(e) => {
+            e.stopPropagation();
             showLinkInput = false;
           }}
           title="Cancel"
@@ -507,7 +512,10 @@
       <button
         class="toolbar-btn"
         class:active={isBold}
-        onclick={() => toggleFormat('strong')}
+        onclick={(e) => {
+          e.stopPropagation();
+          toggleFormat('strong');
+        }}
         title="Bold"
       >
         <svg
@@ -525,7 +533,10 @@
       <button
         class="toolbar-btn"
         class:active={isItalic}
-        onclick={() => toggleFormat('emphasis')}
+        onclick={(e) => {
+          e.stopPropagation();
+          toggleFormat('emphasis');
+        }}
         title="Italic"
       >
         <svg
@@ -543,7 +554,10 @@
       <button
         class="toolbar-btn"
         class:active={isStrikethrough}
-        onclick={() => toggleFormat('strike_through')}
+        onclick={(e) => {
+          e.stopPropagation();
+          toggleFormat('strike_through');
+        }}
         title="Strikethrough"
       >
         <svg
@@ -561,7 +575,10 @@
       <button
         class="toolbar-btn"
         class:active={isCode}
-        onclick={() => toggleFormat('inlineCode')}
+        onclick={(e) => {
+          e.stopPropagation();
+          toggleFormat('inlineCode');
+        }}
         title="Code"
       >
         <svg
@@ -579,7 +596,8 @@
       <button
         class="toolbar-btn"
         class:active={isLink}
-        onclick={() => {
+        onclick={(e) => {
+          e.stopPropagation();
           showLinkInput = true;
         }}
         title="Link"
