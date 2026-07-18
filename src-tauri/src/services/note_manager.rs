@@ -66,7 +66,7 @@ impl NoteManager {
             format!("---\ncreated: {}\ntags: []\n---\n", current_date)
         } else {
             format!(
-                "---\ncreated: {}\ntags: []\n---\n# {}\n",
+                "---\ncreated: {}\ntags: []\n---\n!!! {}\n",
                 current_date, note_header
             )
         };
@@ -132,13 +132,13 @@ impl NoteManager {
         Ok(NoteListResponse { notes, total_count })
     }
 
-    /// Extracts the first N thread names (headings) from the content.
+    /// Extracts the first N thread names (lines starting with !!!) from the content.
     pub fn extract_threads(&self, content: &str, limit: usize) -> Vec<String> {
         content
             .lines()
-            .filter(|l| l.starts_with("# "))
+            .filter(|l| l.starts_with("!!! "))
             .take(limit)
-            .map(|l| l[2..].trim().to_string())
+            .map(|l| l[4..].trim().to_string())
             .filter(|s| !s.is_empty())
             .collect()
     }
@@ -161,7 +161,6 @@ impl NoteManager {
         let mut preview_text = Vec::new();
         for line in lines.iter().skip(start_idx) {
             let stripped = crate::utils::markdown::strip_markdown(line);
-            // Skip headings (already handled by strip_markdown but we also skip empty results)
             if stripped.is_empty() {
                 continue;
             }
@@ -205,7 +204,7 @@ impl NoteManager {
         fs::read_to_string(path).map_err(|e| format!("Failed to read note content: {}", e))
     }
 
-    /// Deletes all notes that have no content (only frontmatter and headings).
+    /// Deletes all notes that have no content (only frontmatter, headings, and thread markers).
     pub fn purge_empty_notes(&self) -> Result<usize, String> {
         let all_files = self.get_sorted_note_files()?;
         let mut purged_count = 0;
@@ -223,7 +222,7 @@ impl NoteManager {
         Ok(purged_count)
     }
 
-    /// Determines if a note is considered "empty" (no tags and no content beyond headings).
+    /// Determines if a note is considered "empty" (no tags and no content beyond headings and thread markers).
     fn is_note_empty(&self, content: &str) -> bool {
         // If it has tags, it's not empty
         let tags = crate::utils::tag_parser::parse_tags_from_content(content);
@@ -247,7 +246,7 @@ impl NoteManager {
         // Check if there is any content other than headings and whitespace
         for line in lines.iter().skip(start_idx) {
             let trimmed = line.trim();
-            if trimmed.is_empty() || trimmed.starts_with("# ") {
+            if trimmed.is_empty() || trimmed.starts_with("# ") || trimmed.starts_with("!!! ") {
                 continue;
             }
             return false;

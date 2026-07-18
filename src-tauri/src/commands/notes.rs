@@ -52,7 +52,7 @@ pub async fn save_note_content(
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     let path_buf = PathBuf::from(&path);
-    
+
     // For save operations, we need to merge the frontend's content with the session's frontmatter
     let mut session = state.note_session()?;
     let full_content = if let Some((_, end)) = session.frontmatter_range {
@@ -67,7 +67,8 @@ pub async fn save_note_content(
     // Update the active session with the new content
     session.load(path_buf.clone(), full_content.clone());
 
-    fs::write(path_buf, session.get_full_content()).map_err(|e| format!("Failed to save note: {}", e))?;
+    fs::write(path_buf, session.get_full_content())
+        .map_err(|e| format!("Failed to save note: {}", e))?;
 
     let note_manager = state.note_manager()?;
     let tag_manager = state.tag_manager()?;
@@ -300,24 +301,23 @@ pub async fn ensure_thread(
 ) -> Result<NoteContentResponse, String> {
     perform_thread_operation(current_content, state, |session| {
         use uuid::Uuid;
-        
+
         if !session.threads.iter().any(|s| s.name == name) {
             let last_idx = session.lines.len();
             let thread_id = Uuid::new_v4().to_string();
-            
-            session.insert_line(last_idx, format!("# {}", name));
+
+            session.insert_line(last_idx, format!("!!! {}", name));
             session.insert_line(last_idx + 1, "".to_string());
             session.insert_line(last_idx + 2, "".to_string());
-            
+
             // Create a new thread and add it to the list with proper metadata
             session.threads.push(NoteThread {
                 id: thread_id,
                 name: name.clone(),
                 start_line: last_idx,
                 end_line: session.lines.len(),
-                level: 1,
             });
-            
+
             // Update frontmatter with the new thread
             session.update_threads_in_frontmatter();
         }
@@ -326,7 +326,7 @@ pub async fn ensure_thread(
     .await
 }
 
-/// Detects top-level headings (`# `) in markdown content and returns them as threads.
+/// Detects thread identifiers (`!!! `) in markdown content and returns them as threads.
 /// Uses thread IDs from frontmatter or generates new UUIDs.
 /// If path is provided, loads the full content from disk to access frontmatter.
 #[tauri::command]
@@ -346,27 +346,27 @@ pub async fn detect_threads(
             }
         }
     }
-    
+
     // Fallback: detect threads from content only (no frontmatter)
     // This will generate new UUIDs, which may not match existing threads
     let mut session = NoteSession::new();
     session.load(PathBuf::new(), content);
-    
+
     Ok(session.threads)
 }
 
-/// Renames the first top-level heading in a markdown string if it differs from the new name.
+/// Renames the first thread identifier in a markdown string if it differs from the new name.
 fn rename_primary_thread(content: &str, new_name: &str) -> Option<String> {
     let (content_start, _) = extract_frontmatter(content);
     let lines: Vec<&str> = content.split('\n').collect();
 
     for i in content_start..lines.len() {
-        if lines[i].starts_with("# ") {
-            let current_name = lines[i][2..].trim();
+        if lines[i].starts_with("!!! ") {
+            let current_name = lines[i][4..].trim();
             if current_name != new_name {
                 let mut owned_lines: Vec<String> =
                     lines.into_iter().map(|s| s.to_string()).collect();
-                owned_lines[i] = format!("# {}", new_name);
+                owned_lines[i] = format!("!!! {}", new_name);
                 return Some(owned_lines.join("\n"));
             }
             break; // Only rename the first thread
@@ -388,7 +388,7 @@ fn update_session_if_active(
     Ok(())
 }
 
-/// Renames the first top-level heading in all notes to the specified name.
+/// Renames the first thread identifier in all notes to the specified name.
 ///
 /// This is used to batch-apply a new default thread name to existing notes.
 #[tauri::command]
@@ -439,9 +439,15 @@ pub async fn remove_thread(
 ) -> Result<NoteContentResponse, String> {
     perform_thread_operation(current_content.clone(), state, |session| {
         // Reload session to ensure we have the latest content from disk
-        let full_content = reconstruct_full_content(&session.path.clone().ok_or("No path".to_string())?, &current_content)?;
-        session.load(session.path.clone().ok_or("No path".to_string())?, full_content);
-        
+        let full_content = reconstruct_full_content(
+            &session.path.clone().ok_or("No path".to_string())?,
+            &current_content,
+        )?;
+        session.load(
+            session.path.clone().ok_or("No path".to_string())?,
+            full_content,
+        );
+
         // Find the thread by ID from the threads list (which is populated from frontmatter)
         if let Some(thread_to_remove) = session.find_thread_by_id(&thread_id) {
             session.delete_line_range(thread_to_remove.start_line, thread_to_remove.end_line);
@@ -449,7 +455,10 @@ pub async fn remove_thread(
         } else {
             // Debug: print all thread IDs
             let found_ids: Vec<String> = session.threads.iter().map(|t| t.id.clone()).collect();
-            Err(format!("Thread '{}' not found. Available thread IDs: {:?}", thread_id, found_ids))
+            Err(format!(
+                "Thread '{}' not found. Available thread IDs: {:?}",
+                thread_id, found_ids
+            ))
         }
     })
     .await

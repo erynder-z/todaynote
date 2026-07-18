@@ -265,7 +265,6 @@ impl NoteContentResponse {
                 NoteThread {
                     id: s.id.clone(),
                     name: s.name.clone(),
-                    level: s.level,
                     start_line: rel_start,
                     end_line: rel_end,
                 }

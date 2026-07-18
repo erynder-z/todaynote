@@ -10,6 +10,11 @@ pub fn strip_markdown(line: &str) -> String {
     // 1. Strip leading markers
     let mut s = trimmed;
 
+    // Thread markers (e.g., !!! Thread Name)
+    if s.starts_with("!!! ") {
+        s = s[4..].trim_start();
+    }
+
     // Headings (e.g., ### Title)
     if s.starts_with('#') {
         s = s.trim_start_matches('#').trim_start();

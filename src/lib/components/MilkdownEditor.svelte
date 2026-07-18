@@ -14,6 +14,7 @@
   import { commonmark } from '@milkdown/preset-commonmark';
   import { gfm } from '@milkdown/preset-gfm';
   import { untrack } from 'svelte';
+  import { threadMarkerPlugin } from '../plugins/threadMarkerPlugin';
 
   let {
     content,
@@ -51,7 +52,8 @@
       })
       .use(commonmark)
       .use(gfm)
-      .use(listener);
+      .use(listener)
+      .use(threadMarkerPlugin);
 
     // Add any plugins provided via props
     for (const plugin of plugins) editor.use(plugin);
@@ -91,6 +93,7 @@
   }
 
   /* Headings */
+  .milkdown-editor-wrapper :global(.milkdown .thread-marker),
   .milkdown-editor-wrapper :global(.milkdown h1),
   .milkdown-editor-wrapper :global(.milkdown h2),
   .milkdown-editor-wrapper :global(.milkdown h3),
@@ -104,21 +107,14 @@
   .milkdown-editor-wrapper :global(.milkdown h1) {
     color: var(--md-h1);
     font-size: 1.875rem;
-    border-bottom: 0.2rem solid
-      color-mix(in srgb, var(--md-h1), transparent 60%);
-    padding-bottom: 0.5rem;
-  }
-
-  .milkdown-editor-wrapper :global(.milkdown h1):first-child {
-    margin-top: 0;
+    border-bottom: 0.085rem solid
+      color-mix(in srgb, var(--md-h2), transparent 80%);
+    padding-bottom: 0.3rem;
   }
 
   .milkdown-editor-wrapper :global(.milkdown h2) {
     color: var(--md-h2);
     font-size: 1.5rem;
-    border-bottom: 0.085rem solid
-      color-mix(in srgb, var(--md-h2), transparent 80%);
-    padding-bottom: 0.3rem;
   }
   .milkdown-editor-wrapper :global(.milkdown h3) {
     color: var(--md-h3);
@@ -127,6 +123,21 @@
   .milkdown-editor-wrapper :global(.milkdown h4) {
     color: var(--md-h4);
     font-size: 1.125rem;
+  }
+
+  /* Thread Markers */
+  .milkdown-editor-wrapper :global(.milkdown .thread-marker) {
+    color: var(--thread-marker-color);
+    font-size: 1.75rem;
+    cursor: default;
+    user-select: none;
+    border-bottom: 0.2rem solid
+      color-mix(in srgb, var(--md-h1), transparent 60%);
+    padding-bottom: 0.5rem;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown .thread-marker:first-child) {
+    margin-top: 0;
   }
 
   /* Links */

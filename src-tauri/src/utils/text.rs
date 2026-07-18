@@ -104,6 +104,11 @@ pub fn count_words(content: &str) -> (usize, bool) {
                 return String::new();
             }
 
+            // Remove thread markers (!!!)
+            if line.starts_with("!!! ") {
+                line = line[4..].trim_start().to_string();
+            }
+
             // Remove heading markers (#, ##, etc.)
             if line.starts_with('#') {
                 line = line.trim_start_matches('#').trim_start().to_string();
