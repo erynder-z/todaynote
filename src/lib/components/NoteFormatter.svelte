@@ -2,7 +2,7 @@
   import type { Editor } from '@milkdown/core';
   import { editorViewCtx } from '@milkdown/core';
   import type { Ctx } from '@milkdown/ctx';
-  import { setBlockType, toggleMark } from '@milkdown/prose/commands';
+  import { lift, toggleMark, wrapIn } from '@milkdown/prose/commands';
   import type { Mark, Node as PMNode } from 'prosemirror-model';
   import type { EditorState } from 'prosemirror-state';
   import { t } from '$lib/utils/i18n';
@@ -13,6 +13,7 @@
   let isItalic = $state(false);
   let isStrikethrough = $state(false);
   let isCode = $state(false);
+  let isQuote = $state(false);
   let isLink = $state(false);
 
   let showLinkInput = $state(false);
@@ -65,6 +66,7 @@
             fromPos.marks().some((m: Mark) => m.type.name === 'strike_through')
           : false;
         const codeBlock = state.schema.nodes.code_block;
+        const blockquote = state.schema.nodes.blockquote;
         const isInInlineCode = inlineCode
           ? state.doc.rangeHasMark(from, to, inlineCode) ||
             fromPos.marks().some((m: Mark) => m.type.name === 'inlineCode')
@@ -73,6 +75,7 @@
           ? fromPos.parent.type === codeBlock
           : false;
         isCode = isInInlineCode || isInCodeBlock;
+        isQuote = blockquote ? isInBlockquote(state) : false;
         isLink = link
           ? state.doc.rangeHasMark(from, to, link) ||
             fromPos.marks().some((m: Mark) => m.type.name === 'link')
@@ -157,6 +160,47 @@
         } else if (inlineCodeType) {
           toggleMark(inlineCodeType)(state, dispatch);
         }
+      }
+
+      view.focus();
+      updateSelectionState();
+    });
+  };
+
+  /**
+   * Checks if the selection is inside a blockquote
+   */
+  const isInBlockquote = (state: EditorState): boolean => {
+    const { $from: fromPos } = state.selection;
+    const blockquoteType = state.schema.nodes.blockquote;
+    if (!blockquoteType) return false;
+
+    for (let depth = fromPos.depth; depth > 0; depth--) {
+      if (fromPos.node(depth).type === blockquoteType) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /**
+   * Toggles wrapping selection in a blockquote
+   */
+  const toggleBlockquote = () => {
+    if (!editorInstance) return;
+
+    editorInstance.action((ctx: Ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const { state, dispatch } = view;
+      const blockquoteType = state.schema.nodes.blockquote;
+      if (!blockquoteType) return;
+
+      const inQuote = isInBlockquote(state);
+
+      if (inQuote) {
+        lift(state, dispatch);
+      } else {
+        wrapIn(blockquoteType)(state, dispatch);
       }
 
       view.focus();
@@ -405,6 +449,28 @@
       fill="currentColor"
       ><path
         d="M320-240 80-480l240-240 57 57-184 184 183 183-56 56Zm320 0-57-57 184-184-183-183 56-56 240 240-240 240Z"
+      /></svg
+    >
+  </button>
+
+  <button
+    class="toolbar-btn"
+    class:active={isQuote}
+    onmousedown={(e) => e.preventDefault()}
+    onclick={(e) => {
+      e.stopPropagation();
+      toggleBlockquote();
+    }}
+    title={$t('note_formatter.quote')}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      height="1.1rem"
+      viewBox="0 -960 960 960"
+      width="1.1rem"
+      fill="currentColor"
+      ><path
+        d="m228-240 92-160q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 23-5.5 42.5T458-480L320-240h-92Zm360 0 92-160q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 23-5.5 42.5T818-480L680-240h-92ZM362.5-517.5Q380-535 380-560t-17.5-42.5Q345-620 320-620t-42.5 17.5Q260-585 260-560t17.5 42.5Q295-500 320-500t42.5-17.5Zm360 0Q740-535 740-560t-17.5-42.5Q705-620 680-620t-42.5 17.5Q620-585 620-560t17.5 42.5Q655-500 680-500t42.5-17.5ZM680-560Zm-360 0Z"
       /></svg
     >
   </button>
