@@ -149,8 +149,18 @@
 	"settings.thread_visual_identicon_round": "Identicon（丸型）",
 	"settings.thread_visual_static_icon": "静的アイコン",
 	"find_in_note.placeholder": "このノートを検索",
-	"find_in_note.prev": "Previous",
-	"find_in_note.next": "Next",
-	"find_in_note.no_results": "No matches found",
-	"find_in_note.close": "Close"
+	"find_in_note.prev": "前",
+	"find_in_note.next": "次",
+	"find_in_note.no_results": "見つかりません",
+	"find_in_note.close": "閉じる",
+	"note_formatter.link.placeholder": "URLを貼り付ける",
+	"note_formatter.link.apply": "適用",
+	"note_formatter.link.cancel": "キャンセル",
+	"note_formatter.link.remove": "リンクを削除",
+	"note_formatter.bold": "Bold",
+	"note_formatter.italic": "Italic",
+	"note_formatter.strikethrough": "Strikethrough",
+	"note_formatter.code": "Code",
+	"note_formatter.quote": "Quote",
+	"note_formatter.link": "リンク"
 }

@@ -152,5 +152,15 @@
 	"find_in_note.prev": "Vorheriges",
 	"find_in_note.next": "Nächstes",
 	"find_in_note.no_results": "Nichts gefunden",
-	"find_in_note.close": "Schließen"
+	"find_in_note.close": "Schließen",
+	"note_formatter.link.placeholder": "URL einfügen",
+	"note_formatter.link.apply": "Übernehmen",
+	"note_formatter.link.cancel": "Abbrechen",
+	"note_formatter.link.remove": "Link entfernen",
+	"note_formatter.bold": "Bold",
+	"note_formatter.italic": "Italic",
+	"note_formatter.strikethrough": "Strikethrough",
+	"note_formatter.code": "Code",
+	"note_formatter.quote": "Quote",
+	"note_formatter.link": "Link"
 }

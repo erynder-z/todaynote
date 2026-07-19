@@ -5,6 +5,7 @@
   import { toggleMark } from '@milkdown/prose/commands';
   import type { Mark, Node as PMNode } from 'prosemirror-model';
   import type { EditorState } from 'prosemirror-state';
+  import { t } from '$lib/utils/i18n';
 
   let { editorInstance } = $props<{ editorInstance: Editor | null }>();
 
@@ -187,7 +188,7 @@
     <input
       bind:this={inputElement}
       type="text"
-      placeholder="Paste or type URL..."
+      placeholder={$t('note_formatter.link.placeholder')}
       bind:value={linkUrl}
       class="link-input"
       onkeydown={(e) => {
@@ -203,7 +204,7 @@
       type="submit"
       class="toolbar-btn active"
       onmousedown={(e) => e.preventDefault()}
-      title="Apply Link"
+      title={$t('note_formatter.link.apply')}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -225,7 +226,7 @@
           e.stopPropagation();
           applyLink('');
         }}
-        title="Remove Link"
+        title={$t('note_formatter.link.remove')}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -247,7 +248,7 @@
         e.stopPropagation();
         cancelLink();
       }}
-      title="Cancel"
+      title={$t('note_formatter.link.cancel')}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -271,7 +272,7 @@
       e.stopPropagation();
       toggleFormat('strong');
     }}
-    title="Bold"
+    title={$t('note_formatter.bold')}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -293,7 +294,7 @@
       e.stopPropagation();
       toggleFormat('emphasis');
     }}
-    title="Italic"
+    title={$t('note_formatter.italic')}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -315,7 +316,7 @@
       e.stopPropagation();
       toggleFormat('strike_through');
     }}
-    title="Strikethrough"
+    title={$t('note_formatter.strikethrough')}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -337,7 +338,7 @@
       e.stopPropagation();
       toggleFormat('inlineCode');
     }}
-    title="Code"
+    title={$t('note_formatter.code')}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -359,7 +360,7 @@
       e.stopPropagation();
       showLinkInput = true;
     }}
-    title="Link"
+    title={$t('note_formatter.link')}
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
