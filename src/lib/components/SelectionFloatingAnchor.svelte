@@ -189,13 +189,16 @@
   // Watch for changes in container dimensions (e.g. switching between buttons and form)
   $effect(() => {
     if (visible && container) {
+      const el = container;
       const observer = new ResizeObserver(() => {
-        const selection = window.getSelection();
-        if (selection && !selection.isCollapsed) {
-          positionToolbar(selection);
-        }
+        const newWidth = el.offsetWidth;
+        const viewportWidth = window.innerWidth;
+        const safeMargin = 12;
+        const minX = newWidth / 2 + safeMargin;
+        const maxX = viewportWidth - newWidth / 2 - safeMargin;
+        x = Math.max(minX, Math.min(x, maxX));
       });
-      observer.observe(container);
+      observer.observe(el);
       return () => observer.disconnect();
     }
   });
@@ -221,6 +224,10 @@
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && visible) {
+        e.preventDefault();
+        visible = false;
+      }
       if (
         e.shiftKey &&
         ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)
@@ -295,8 +302,7 @@
     gap: 0.35rem;
     padding: 0.35rem;
     background: var(--bg-surface, var(--bg-base));
-    border: 1px solid color-mix(in srgb, var(--border) 35%, transparent);
-    border-radius: 8px;
+    border-radius: 0.25rem;
     box-shadow:
       0 10px 30px -5px rgba(0, 0, 0, 0.2),
       0 4px 12px -4px rgba(0, 0, 0, 0.1);

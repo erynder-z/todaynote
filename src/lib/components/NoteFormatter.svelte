@@ -549,13 +549,12 @@
 
   .link-input {
     background: var(--bg-base);
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    border: none;
+    border-radius: 0.25rem;
     padding: 0.3rem 0.6rem;
     color: var(--text-main);
     font-family: inherit;
     font-size: 0.85rem;
-    width: 13rem;
     outline: none;
     transition:
       border-color 0.15s,
