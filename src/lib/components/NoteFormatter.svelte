@@ -2,7 +2,7 @@
   import type { Editor } from '@milkdown/core';
   import { editorViewCtx } from '@milkdown/core';
   import type { Ctx } from '@milkdown/ctx';
-  import { toggleMark } from '@milkdown/prose/commands';
+  import { setBlockType, toggleMark } from '@milkdown/prose/commands';
   import type { Mark, Node as PMNode } from 'prosemirror-model';
   import type { EditorState } from 'prosemirror-state';
   import { t } from '$lib/utils/i18n';
@@ -64,10 +64,15 @@
           ? state.doc.rangeHasMark(from, to, strike_through) ||
             fromPos.marks().some((m: Mark) => m.type.name === 'strike_through')
           : false;
-        isCode = inlineCode
+        const codeBlock = state.schema.nodes.code_block;
+        const isInInlineCode = inlineCode
           ? state.doc.rangeHasMark(from, to, inlineCode) ||
             fromPos.marks().some((m: Mark) => m.type.name === 'inlineCode')
           : false;
+        const isInCodeBlock = codeBlock
+          ? fromPos.parent.type === codeBlock
+          : false;
+        isCode = isInInlineCode || isInCodeBlock;
         isLink = link
           ? state.doc.rangeHasMark(from, to, link) ||
             fromPos.marks().some((m: Mark) => m.type.name === 'link')
@@ -102,6 +107,58 @@
 
       const { state, dispatch } = view;
       toggleMark(markType)(state, dispatch);
+      view.focus();
+      updateSelectionState();
+    });
+  };
+
+  /**
+   * Toggles code formatting: inline code for single line selection, code block for multi-line selection.
+   */
+  const toggleCode = () => {
+    if (!editorInstance) return;
+
+    editorInstance.action((ctx: Ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const { state, dispatch } = view;
+      const { from, to, $from: fromPos } = state.selection;
+
+      const codeBlockType = state.schema.nodes.code_block;
+      const inlineCodeType = state.schema.marks.inlineCode;
+      const paragraphType = state.schema.nodes.paragraph;
+
+      const isInCodeBlock =
+        codeBlockType && fromPos.parent.type === codeBlockType;
+
+      if (isInCodeBlock) {
+        if (paragraphType) {
+          const codeBlockNode = fromPos.parent;
+          const textContent = codeBlockNode.textContent;
+          const lines = textContent.split('\n');
+          const paragraphNodes = lines.map((line) => {
+            const textNode = line ? state.schema.text(line) : null;
+            return paragraphType.create(null, textNode);
+          });
+          const startPos = fromPos.before();
+          const endPos = fromPos.after();
+          const tr = state.tr.replaceWith(startPos, endPos, paragraphNodes);
+          dispatch(tr);
+        }
+      } else {
+        const text = state.doc.textBetween(from, to, '\n');
+        const isMultiLine =
+          text.includes('\n') || fromPos.parent !== state.selection.$to.parent;
+
+        if (isMultiLine && codeBlockType) {
+          const textNode = text ? state.schema.text(text) : null;
+          const newCodeBlockNode = codeBlockType.create(null, textNode);
+          const tr = state.tr.replaceSelectionWith(newCodeBlockNode);
+          dispatch(tr);
+        } else if (inlineCodeType) {
+          toggleMark(inlineCodeType)(state, dispatch);
+        }
+      }
+
       view.focus();
       updateSelectionState();
     });
@@ -336,7 +393,7 @@
     onmousedown={(e) => e.preventDefault()}
     onclick={(e) => {
       e.stopPropagation();
-      toggleFormat('inlineCode');
+      toggleCode();
     }}
     title={$t('note_formatter.code')}
   >
