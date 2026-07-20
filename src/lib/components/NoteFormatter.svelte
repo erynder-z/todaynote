@@ -251,6 +251,24 @@
     }
   };
 
+  /**
+   * Copies the selected text to the clipboard (Plain text)
+   */
+  const copyToClipboard = async () => {
+    if (!editorInstance) return;
+
+    editorInstance.action(async (ctx: Ctx) => {
+      const view = ctx.get(editorViewCtx);
+      const { state } = view;
+      const { from, to } = state.selection;
+
+      if (from === to) return;
+
+      const text = state.doc.textBetween(from, to, '\n');
+      await navigator.clipboard.writeText(text);
+    });
+  };
+
   // Focus and highlight text inside link input when shown
   $effect(() => {
     if (showLinkInput && inputElement) {
@@ -493,6 +511,26 @@
       fill="currentColor"
       ><path
         d="M318-120q-82 0-140-58t-58-140q0-40 15-76t43-64l134-133 56 56-134 134q-17 17-25.5 38.5T200-318q0 49 34.5 83.5T318-200q23 0 45-8.5t39-25.5l133-134 57 57-134 133q-28 28-64 43t-76 15Zm79-220-57-57 223-223 57 57-223 223Zm251-28-56-57 134-133q17-17 25-38t8-44q0-50-34-85t-84-35q-23 0-44.5 8.5T558-726L425-592l-57-56 134-134q28-28 64-43t76-15q82 0 139.5 58T839-641q0 39-14.5 75T782-502L648-368Z"
+      /></svg
+    >
+  </button>
+  <button
+    class="toolbar-btn"
+    onmousedown={(e) => e.preventDefault()}
+    onclick={(e) => {
+      e.stopPropagation();
+      copyToClipboard();
+    }}
+    title={$t('note_formatter.copy')}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      height="1.1rem"
+      viewBox="0 -960 960 960"
+      width="1.1rem"
+      fill="currentColor"
+      ><path
+        d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"
       /></svg
     >
   </button>
