@@ -162,5 +162,6 @@
 	"note_formatter.strikethrough": "Strikethrough",
 	"note_formatter.code": "Code",
 	"note_formatter.quote": "Quote",
-	"note_formatter.link": "リンク"
+	"note_formatter.link": "リンク",
+	"note_formatter.copy": "コピー"
 }
