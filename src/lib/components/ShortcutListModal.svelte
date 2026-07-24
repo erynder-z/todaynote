@@ -28,6 +28,15 @@
   const searchModeShortcut = settings.shortcuts.toggleSearchMode;
   const threadOptionRemoveShortcut = settings.shortcuts.threadOptionRemove;
   const threadOptionLinkedShortcut = settings.shortcuts.threadOptionLinked;
+
+  // Editor formatting shortcuts
+  const toggleBoldShortcut = settings.shortcuts.toggleBold;
+  const toggleItalicShortcut = settings.shortcuts.toggleItalic;
+  const toggleStrikethroughShortcut = settings.shortcuts.toggleStrikethrough;
+  const toggleCodeShortcut = settings.shortcuts.toggleCode;
+  const toggleBlockquoteShortcut = settings.shortcuts.toggleBlockquote;
+  const toggleLinkShortcut = settings.shortcuts.toggleLink;
+  const copySelectionShortcut = settings.shortcuts.copySelection;
 </script>
 
 <div class="shortcut-list">
@@ -122,6 +131,108 @@
             primary={threadOptionLinkedShortcut.primary}
             secondary={threadOptionLinkedShortcut.secondary}
             key={threadOptionLinkedShortcut.key.toUpperCase()}
+          />
+        </div>
+      </div>
+    {/if}
+  </div>
+
+  <div class="editor-formatting-shortcuts">
+    <h3>{$t('shortcuts.editor_formatting.description')}</h3>
+    {#if toggleBoldShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.editor_formatting.bold')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={toggleBoldShortcut.primary}
+            secondary={toggleBoldShortcut.secondary}
+            key={toggleBoldShortcut.key.toUpperCase()}
+          />
+        </div>
+      </div>
+    {/if}
+    {#if toggleItalicShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.editor_formatting.italic')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={toggleItalicShortcut.primary}
+            secondary={toggleItalicShortcut.secondary}
+            key={toggleItalicShortcut.key.toUpperCase()}
+          />
+        </div>
+      </div>
+    {/if}
+    {#if toggleStrikethroughShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.editor_formatting.strikethrough')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={toggleStrikethroughShortcut.primary}
+            secondary={toggleStrikethroughShortcut.secondary}
+            key={toggleStrikethroughShortcut.key.toUpperCase()}
+          />
+        </div>
+      </div>
+    {/if}
+    {#if toggleCodeShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.editor_formatting.code')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={toggleCodeShortcut.primary}
+            secondary={toggleCodeShortcut.secondary}
+            key={toggleCodeShortcut.key.toUpperCase()}
+          />
+        </div>
+      </div>
+    {/if}
+    {#if toggleBlockquoteShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.editor_formatting.blockquote')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={toggleBlockquoteShortcut.primary}
+            secondary={toggleBlockquoteShortcut.secondary}
+            key={toggleBlockquoteShortcut.key.toUpperCase()}
+          />
+        </div>
+      </div>
+    {/if}
+    {#if toggleLinkShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.editor_formatting.link')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={toggleLinkShortcut.primary}
+            secondary={toggleLinkShortcut.secondary}
+            key={toggleLinkShortcut.key.toUpperCase()}
+          />
+        </div>
+      </div>
+    {/if}
+    {#if copySelectionShortcut}
+      <div class="shortcut-item">
+        <span class="shortcut-description"
+          >{$t('shortcuts.editor_formatting.copy')}</span
+        >
+        <div class="shortcut-keys">
+          <KeyboardShortcut
+            primary={copySelectionShortcut.primary}
+            secondary={copySelectionShortcut.secondary}
+            key={copySelectionShortcut.key.toUpperCase()}
           />
         </div>
       </div>

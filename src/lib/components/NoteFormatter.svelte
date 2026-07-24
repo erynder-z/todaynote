@@ -5,9 +5,14 @@
   import { lift, toggleMark, wrapIn } from '@milkdown/prose/commands';
   import type { Mark, Node as PMNode } from 'prosemirror-model';
   import type { EditorState } from 'prosemirror-state';
+  import { inputManager } from '$lib/stores/input.svelte';
   import { t } from '$lib/utils/i18n';
+  import { useShortcuts } from '$lib/utils/shortcuts';
 
-  let { editorInstance } = $props<{ editorInstance: Editor | null }>();
+  let { editorInstance, onLinkInputActive } = $props<{
+    editorInstance: Editor | null;
+    onLinkInputActive?: (active: boolean) => void;
+  }>();
 
   let isBold = $state(false);
   let isItalic = $state(false);
@@ -269,11 +274,66 @@
     });
   };
 
+  /**
+   * Keyboard shortcut handlers for formatting
+   */
+  const handleToggleBold = (): boolean => {
+    if (!editorInstance) return false;
+    toggleFormat('strong');
+    return true;
+  };
+
+  const handleToggleItalic = (): boolean => {
+    if (!editorInstance) return false;
+    toggleFormat('emphasis');
+    return true;
+  };
+
+  const handleToggleStrikethrough = (): boolean => {
+    if (!editorInstance) return false;
+    toggleFormat('strike_through');
+    return true;
+  };
+
+  const handleToggleCode = (): boolean => {
+    if (!editorInstance) return false;
+    toggleCode();
+    return true;
+  };
+
+  const handleToggleBlockquote = (): boolean => {
+    if (!editorInstance) return false;
+    toggleBlockquote();
+    return true;
+  };
+
+  const handleToggleLink = (): boolean => {
+    if (!editorInstance) return false;
+    inputManager.activateScope(editorScope);
+    showLinkInput = true;
+    return true;
+  };
+
+  const handleCopySelection = (): boolean => {
+    if (!editorInstance) return false;
+    copyToClipboard();
+    return true;
+  };
+
+  // Call the callback prop to notify parent about link input active state
+  $effect(() => {
+    if (onLinkInputActive) onLinkInputActive(showLinkInput);
+  });
+
   // Focus and highlight text inside link input when shown
   $effect(() => {
     if (showLinkInput && inputElement) {
-      inputElement.focus();
-      inputElement.select();
+      requestAnimationFrame(() => {
+        if (inputElement) {
+          inputElement.focus();
+          inputElement.select();
+        }
+      });
     }
   });
 
@@ -294,6 +354,78 @@
     return () =>
       document.removeEventListener('selectionchange', handleSelectionUpdate);
   });
+
+  // Register scoped shortcuts for editor formatting
+  // These only work when the editor has focus
+  const editorScope = 'editor-formatting';
+
+  // Track editor focus to activate/deactivate shortcuts
+  $effect(() => {
+    if (!editorInstance) return;
+
+    const view = editorInstance.ctx.get(editorViewCtx);
+    const dom = view.dom;
+
+    const handleFocus = () => inputManager.activateScope(editorScope);
+    const handleBlur = () => {
+      if (showLinkInput) return;
+
+      inputManager.deactivateScope(editorScope);
+    };
+
+    dom.addEventListener('focus', handleFocus, { capture: true });
+    dom.addEventListener('blur', handleBlur, { capture: true });
+
+    // Check initial focus state
+    if (
+      document.activeElement === dom ||
+      dom.contains(document.activeElement)
+    ) {
+      inputManager.activateScope(editorScope);
+    }
+
+    return () => {
+      dom.removeEventListener('focus', handleFocus, { capture: true });
+      dom.removeEventListener('blur', handleBlur, { capture: true });
+      inputManager.deactivateScope(editorScope);
+    };
+  });
+
+  // Keep editor scope active while link input is visible
+  $effect(() => {
+    if (showLinkInput) {
+      inputManager.activateScope(editorScope);
+      return () => {
+        // When link input is hidden, check if editor still has focus
+        if (editorInstance) {
+          const view = editorInstance.ctx.get(editorViewCtx);
+          if (
+            document.activeElement === view.dom ||
+            view.dom.contains(document.activeElement)
+          ) {
+            inputManager.activateScope(editorScope);
+          } else {
+            inputManager.deactivateScope(editorScope);
+          }
+        }
+      };
+    }
+  });
+
+  // Register scoped shortcuts for editor formatting
+  useShortcuts(
+    editorScope,
+    {
+      toggleBold: handleToggleBold,
+      toggleItalic: handleToggleItalic,
+      toggleStrikethrough: handleToggleStrikethrough,
+      toggleCode: handleToggleCode,
+      toggleBlockquote: handleToggleBlockquote,
+      toggleLink: handleToggleLink,
+      copySelection: handleCopySelection,
+    },
+    false,
+  );
 </script>
 
 {#if showLinkInput}

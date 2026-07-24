@@ -1,10 +1,15 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte';
+  import { type Snippet, tick } from 'svelte';
   import { fade, scale } from 'svelte/transition';
 
-  let { children, editorWrapperClass = 'milkdown-editor-wrapper' } = $props<{
+  let {
+    children,
+    editorWrapperClass = 'milkdown-editor-wrapper',
+    linkInputActive = false,
+  } = $props<{
     children: Snippet<[boolean]>;
     editorWrapperClass?: string;
+    linkInputActive?: boolean;
   }>();
 
   let visible = $state(false);
@@ -128,24 +133,41 @@
    * Handles selection changes to prepare toolbar positioning but delays showing it.
    */
   const handleSelectionChange = () => {
+    // Show/hide floating toolbar based on selection state and link input activity
     const selection = window.getSelection();
 
-    if (
-      !selection ||
-      !isSelectionValid(selection) ||
-      !isSelectionInEditor(selection) ||
-      isSelectionInThreadMarker(selection)
-    ) {
+    if (!selection || isSelectionInThreadMarker(selection)) {
       visible = false;
       return;
     }
 
     if (isSelecting) {
       visible = false;
-    } else {
+      return;
+    }
+
+    // Check if selection is in editor or if link input is active
+    const selectionInEditor = isSelectionInEditor(selection);
+    const selectionValid = isSelectionValid(selection);
+
+    // Case 1: Selection is valid and in editor - show toolbar normally
+    if (selectionValid && selectionInEditor) {
       positionToolbar(selection);
       visible = true;
+      return;
     }
+
+    // Case 2: Link input is active - keep toolbar visible regardless of selection
+    if (linkInputActive) {
+      if (selectionInEditor) {
+        positionToolbar(selection);
+      }
+      visible = true;
+      return;
+    }
+
+    // Case 3: Selection is collapsed or not in editor, and link input is not active
+    visible = false;
   };
 
   /**

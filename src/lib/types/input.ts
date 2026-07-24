@@ -21,4 +21,11 @@ export type ShortcutAction =
 	| "navigateToday"
 	| "toggleThreadOptionsMode"
 	| "threadOptionRemove"
-	| "threadOptionLinked";
+	| "threadOptionLinked"
+	| "toggleBold"
+	| "toggleItalic"
+	| "toggleStrikethrough"
+	| "toggleCode"
+	| "toggleBlockquote"
+	| "toggleLink"
+	| "copySelection";

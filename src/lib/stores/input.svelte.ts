@@ -48,6 +48,12 @@ class InputManager {
 	/** List of registered shortcut configurations. */
 	private shortcuts: ShortcutRegistration[] = [];
 
+	/** Map of scoped shortcut registrations by scope name. */
+	private scopedShortcuts: Map<string, ShortcutRegistration[]> = new Map();
+
+	/** Currently active scopes. */
+	private activeScopes: Set<string> = new Set();
+
 	/**
 	 * Initializes the input manager and sets up global event listeners.
 	 */
@@ -86,6 +92,48 @@ class InputManager {
 	}
 
 	/**
+	 * Registers shortcut actions within a specific scope.
+	 * Shortcuts are only active when the scope is active.
+	 */
+	registerScopedActions(
+		scope: string,
+		actions: Partial<Record<ShortcutAction, ShortcutCallback>>,
+	) {
+		const registrations: ShortcutRegistration[] = Object.entries(actions).map(
+			([action, callback]) => ({
+				action: action as ShortcutAction,
+				callback,
+			}),
+		);
+
+		// Add registrations to the scope
+		const existing = this.scopedShortcuts.get(scope) || [];
+		existing.push(...registrations);
+		this.scopedShortcuts.set(scope, existing);
+
+		return () => {
+			this.scopedShortcuts.set(
+				scope,
+				existing.filter((r) => !registrations.includes(r)),
+			);
+		};
+	}
+
+	/**
+	 * Activates a scope, making its shortcuts available.
+	 */
+	activateScope(scope: string) {
+		this.activeScopes.add(scope);
+	}
+
+	/**
+	 * Deactivates a scope, making its shortcuts unavailable.
+	 */
+	deactivateScope(scope: string) {
+		this.activeScopes.delete(scope);
+	}
+
+	/**
 	 * Low-level method to register a manual shortcut.
 	 */
 	register(registration: ShortcutRegistration) {
@@ -107,8 +155,17 @@ class InputManager {
 			target?.tagName === "TEXTAREA" ||
 			target?.isContentEditable;
 
-		for (let i = this.shortcuts.length - 1; i >= 0; i--) {
-			const registration = this.shortcuts[i];
+		// Collect all shortcuts to check: global + active scoped
+		const shortcutsToCheck: ShortcutRegistration[] = [...this.shortcuts];
+
+		// Add shortcuts from active scopes
+		for (const scope of this.activeScopes) {
+			const scoped = this.scopedShortcuts.get(scope) || [];
+			shortcutsToCheck.push(...scoped);
+		}
+
+		for (let i = shortcutsToCheck.length - 1; i >= 0; i--) {
+			const registration = shortcutsToCheck[i];
 
 			// Resolve config from action if provided, otherwise use manual config
 			const shortcut = registration.action

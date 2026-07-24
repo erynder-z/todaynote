@@ -255,6 +255,77 @@ impl Default for AppConfig {
                 description: "Show linked threads".to_string(),
             },
         );
+        //
+        shortcuts.insert(
+            "toggleBold".to_string(),
+            ShortcutConfig {
+                key: "B".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle bold formatting".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleItalic".to_string(),
+            ShortcutConfig {
+                key: "I".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle italic formatting".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleStrikethrough".to_string(),
+            ShortcutConfig {
+                key: "S".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle strikethrough formatting".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleCode".to_string(),
+            ShortcutConfig {
+                key: "O".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle code formatting".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleBlockquote".to_string(),
+            ShortcutConfig {
+                key: "K".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle blockquote formatting".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "toggleLink".to_string(),
+            ShortcutConfig {
+                key: "N".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Toggle link formatting".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "copySelection".to_string(),
+            ShortcutConfig {
+                key: "C".to_string(),
+                primary: true,
+                secondary: false,
+                shift: false,
+                description: "Copy selected text".to_string(),
+            },
+        );
 
         Self {
             notes_folder,
