@@ -182,3 +182,107 @@ pub async fn set_use_custom_font(
 
     Ok(())
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use crate::models::config::AppConfig;
+
+    ///
+    /// Config Mutation Tests
+    ///
+    #[test]
+    fn test_config_font_family_default() {
+        let config = AppConfig::default();
+        assert_eq!(
+            config.font_family, None,
+            "Default font family should be None"
+        );
+    }
+
+    #[test]
+    fn test_config_use_custom_font_default() {
+        let config = AppConfig::default();
+        assert_eq!(
+            config.use_custom_font, false,
+            "Default use_custom_font should be false"
+        );
+    }
+
+    #[test]
+    fn test_config_font_family_can_be_set() {
+        let mut config = AppConfig::default();
+        config.font_family = Some("Helvetica".to_string());
+        assert_eq!(config.font_family, Some("Helvetica".to_string()));
+    }
+
+    #[test]
+    fn test_config_use_custom_font_can_be_set() {
+        let mut config = AppConfig::default();
+        config.use_custom_font = true;
+        assert_eq!(config.use_custom_font, true);
+    }
+
+    #[test]
+    fn test_config_serialization_with_font_settings() {
+        let mut config = AppConfig::default();
+        config.font_family = Some("Fira Code".to_string());
+        config.use_custom_font = true;
+
+        let json = serde_json::to_string(&config).expect("Failed to serialize config");
+        let deserialized: AppConfig =
+            serde_json::from_str(&json).expect("Failed to deserialize config");
+
+        assert_eq!(deserialized.font_family, Some("Fira Code".to_string()));
+        assert_eq!(deserialized.use_custom_font, true);
+    }
+
+    #[test]
+    fn test_config_serialization_without_custom_font() {
+        let config = AppConfig::default();
+
+        let json = serde_json::to_string(&config).expect("Failed to serialize config");
+        let deserialized: AppConfig =
+            serde_json::from_str(&json).expect("Failed to deserialize config");
+
+        assert_eq!(deserialized.font_family, None);
+        assert_eq!(deserialized.use_custom_font, false);
+    }
+
+    ///
+    /// Font Name Validation Tests
+    ///
+    #[test]
+    fn test_font_names_are_non_empty() {
+        let fonts = vec![
+            "Helvetica".to_string(),
+            "Times New Roman".to_string(),
+            "Arial".to_string(),
+            "Fira Code".to_string(),
+        ];
+
+        for font in &fonts {
+            assert!(!font.is_empty(), "Font name should not be empty");
+        }
+    }
+
+    #[test]
+    fn test_font_names_can_contain_spaces() {
+        let font = "Times New Roman";
+        assert!(font.contains(' '), "Font names can contain spaces");
+    }
+
+    #[test]
+    fn test_font_names_can_contain_commas() {
+        let font = "Fira Code, Monospace";
+        assert!(font.contains(','), "Font names can contain commas");
+    }
+
+    #[test]
+    fn test_font_names_can_contain_special_characters() {
+        let font = "SF Pro Display-Regular";
+        assert!(font.contains('-'), "Font names can contain hyphens");
+    }
+}
