@@ -166,6 +166,15 @@ pub struct FolderValidation {
     pub error: Option<String>,
 }
 
+/// Result of importing notes from a backup archive.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportReport {
+    pub imported: usize,
+    pub skipped: usize,
+    pub errors: Vec<String>,
+}
+
 /// Statistics about the note collection.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

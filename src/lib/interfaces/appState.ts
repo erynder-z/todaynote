@@ -24,6 +24,7 @@ export interface SessionState {
 	selectedThreadForOptions: NoteThread | null;
 	threadShortcutsMode: "navigation" | "actions";
 	showFindInNote: boolean;
+	notesVersion: number;
 }
 
 export interface AppPayload {

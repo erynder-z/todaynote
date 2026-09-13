@@ -3,6 +3,7 @@
 //! This module organizes all backend logic that is exposed
 //! to the Svelte frontend via Tauri's `invoke` system.
 
+pub mod backup;
 pub mod folder;
 pub mod font;
 pub mod i18n;

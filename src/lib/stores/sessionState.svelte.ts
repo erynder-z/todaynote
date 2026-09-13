@@ -17,4 +17,5 @@ export const sessionState = $state<SessionState>({
 	threadShortcutsMode: "navigation",
 	showFindInNote: false,
 	pendingThreadJump: null,
+	notesVersion: 0,
 });

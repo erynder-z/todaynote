@@ -3,6 +3,7 @@ mod models;
 mod services;
 mod utils;
 
+use commands::backup::{export_notes_archive, import_notes_archive};
 use commands::folder::validate_folder;
 use commands::font::{get_system_fonts, set_font_family, set_use_custom_font};
 use commands::i18n::get_translations;
@@ -14,8 +15,8 @@ use commands::notes::{
     save_note_content, toggle_thread_pin, update_note_line,
 };
 use commands::search::{
-    aggregate_thread, get_pinned_threads, get_thread_content, process_search_results,
-    search_notes, search_notes_by_tag, search_tags, search_threads,
+    aggregate_thread, get_pinned_threads, get_thread_content, process_search_results, search_notes,
+    search_notes_by_tag, search_tags, search_threads,
 };
 use commands::settings::{
     reset_config_to_defaults, set_control_center_width, set_locale, set_notes_folder,
@@ -75,6 +76,8 @@ pub fn run() {
             check_day_boundary,
             check_todays_note_exists,
             detect_threads,
+            export_notes_archive,
+            import_notes_archive,
             get_last_available_note_path,
             get_note_path_by_offset,
             get_pinned_threads,

@@ -120,6 +120,10 @@
   };
 
   $effect(() => {
+    // Re-run when the notes folder changes or when notes are modified on disk
+    // (e.g. after a backup import bumps notesVersion).
+    settings.notesFolder;
+    sessionState.notesVersion;
     if (settings.notesFolder) loadNotes(50);
   });
 
