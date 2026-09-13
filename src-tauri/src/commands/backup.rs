@@ -232,3 +232,497 @@ pub async fn import_notes_archive(
         errors,
     })
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::response_types::ImportReport;
+
+    // Encryption / Decryption Tests
+
+    #[test]
+    fn test_encrypt_decrypt_roundtrip() {
+        let plaintext = b"Hello, World! This is a test of the encryption system.";
+        let password = "my-secret-password";
+
+        let encrypted = encrypt_bytes(plaintext, password).expect("Encryption failed");
+
+        assert_eq!(
+            &encrypted[..TNBK_MAGIC.len()],
+            TNBK_MAGIC,
+            "Magic bytes mismatch"
+        );
+        let expected_min_size = TNBK_MAGIC.len() + SALT_LEN + NONCE_LEN + plaintext.len();
+        assert!(
+            encrypted.len() >= expected_min_size,
+            "Encrypted size should be at least header + plaintext (actual: {}, expected: {})",
+            encrypted.len(),
+            expected_min_size
+        );
+
+        let decrypted = decrypt_bytes(&encrypted, password).expect("Decryption failed");
+        assert_eq!(
+            decrypted, plaintext,
+            "Decrypted content doesn't match plaintext"
+        );
+    }
+
+    #[test]
+    fn test_decrypt_with_wrong_password() {
+        let plaintext = b"Secret data";
+        let correct_password = "correct-password";
+        let wrong_password = "wrong-password";
+
+        let encrypted = encrypt_bytes(plaintext, correct_password).expect("Encryption failed");
+        let result = decrypt_bytes(&encrypted, wrong_password);
+
+        assert!(
+            result.is_err(),
+            "Decryption with wrong password should fail"
+        );
+        assert_eq!(
+            result.unwrap_err(),
+            "Wrong password or corrupted backup",
+            "Error message mismatch"
+        );
+    }
+
+    #[test]
+    fn test_decrypt_invalid_magic_bytes() {
+        let mut invalid_data = vec![0u8; 48];
+        invalid_data[0..8].copy_from_slice(b"notatnbk");
+        let password = "some-password";
+
+        let result = decrypt_bytes(&invalid_data, password);
+        assert!(result.is_err(), "Decryption with invalid magic should fail");
+        assert_eq!(
+            result.unwrap_err(),
+            "File is not a valid encrypted backup",
+            "Error message mismatch"
+        );
+    }
+
+    #[test]
+    fn test_decrypt_too_small() {
+        let too_small = b"";
+        let password = "some-password";
+
+        let result = decrypt_bytes(too_small, password);
+        assert!(
+            result.is_err(),
+            "Decryption with too small data should fail"
+        );
+        assert_eq!(
+            result.unwrap_err(),
+            "File is too small to be a valid encrypted backup",
+            "Error message mismatch"
+        );
+    }
+
+    #[test]
+    fn test_encrypt_empty_plaintext() {
+        let plaintext: &[u8] = &[];
+        let password = "password";
+
+        let encrypted = encrypt_bytes(plaintext, password).expect("Encryption failed");
+        let decrypted = decrypt_bytes(&encrypted, password).expect("Decryption failed");
+
+        assert_eq!(decrypted, plaintext, "Empty plaintext roundtrip failed");
+    }
+
+    #[test]
+    fn test_encrypt_empty_password() {
+        let plaintext = b"test data";
+        let password = "";
+
+        let encrypted =
+            encrypt_bytes(plaintext, password).expect("Encryption with empty password should work");
+        let decrypted = decrypt_bytes(&encrypted, password)
+            .expect("Decryption with empty password should work");
+
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[test]
+    fn test_encrypt_large_data() {
+        let plaintext: Vec<u8> = (0..10000).map(|i| (i % 256) as u8).collect();
+        let password = "test-password";
+
+        let encrypted =
+            encrypt_bytes(&plaintext, password).expect("Encryption of large data failed");
+        let decrypted =
+            decrypt_bytes(&encrypted, password).expect("Decryption of large data failed");
+
+        assert_eq!(decrypted, plaintext, "Large data roundtrip failed");
+    }
+
+    #[test]
+    fn test_encrypt_with_special_characters() {
+        let plaintext = b"\x00\x01\x02\xFF\xFE\xFD";
+        let password = "password-with-special-chars: !@#$%^&*()";
+
+        let encrypted = encrypt_bytes(plaintext, password).expect("Encryption failed");
+        let decrypted = decrypt_bytes(&encrypted, password).expect("Decryption failed");
+
+        assert_eq!(
+            decrypted, plaintext,
+            "Special character encryption/decryption failed"
+        );
+    }
+
+    #[test]
+    fn test_encrypt_unicode_content() {
+        let plaintext = "Hello 世界 🌍 Ñoño".as_bytes();
+        let password = "password";
+
+        let encrypted = encrypt_bytes(plaintext, password).expect("Encryption failed");
+        let decrypted = decrypt_bytes(&encrypted, password).expect("Decryption failed");
+
+        assert_eq!(decrypted, plaintext, "Unicode content roundtrip failed");
+    }
+
+    // Key Derivation Tests
+
+    #[test]
+    fn test_key_derivation_deterministic() {
+        let password = "test-password";
+        let salt = [0u8; SALT_LEN];
+
+        let key1 = derive_key(password, &salt).expect("Key derivation failed");
+        let key2 = derive_key(password, &salt).expect("Key derivation failed");
+
+        assert_eq!(key1, key2, "Same password and salt should produce same key");
+    }
+
+    #[test]
+    fn test_key_derivation_different_salts() {
+        let password = "test-password";
+        let salt1 = [0u8; SALT_LEN];
+        let salt2 = [1u8; SALT_LEN];
+
+        let key1 = derive_key(password, &salt1).expect("Key derivation failed");
+        let key2 = derive_key(password, &salt2).expect("Key derivation failed");
+
+        assert_ne!(key1, key2, "Different salts should produce different keys");
+    }
+
+    #[test]
+    fn test_key_derivation_different_passwords() {
+        let salt = [0u8; SALT_LEN];
+        let password1 = "password1";
+        let password2 = "password2";
+
+        let key1 = derive_key(password1, &salt).expect("Key derivation failed");
+        let key2 = derive_key(password2, &salt).expect("Key derivation failed");
+
+        assert_ne!(
+            key1, key2,
+            "Different passwords should produce different keys"
+        );
+    }
+
+    #[test]
+    fn test_key_derivation_correct_length() {
+        let password = "test-password";
+        let salt = [0u8; SALT_LEN];
+
+        let key = derive_key(password, &salt).expect("Key derivation failed");
+        assert_eq!(
+            key.len(),
+            KEY_LEN,
+            "Key should be correct length (32 bytes for XChaCha20-Poly1305)"
+        );
+    }
+
+    // Encrypted Container Format Tests
+
+    #[test]
+    fn test_tnbk_container_structure() {
+        let plaintext = b"test data";
+        let password = "password";
+
+        let encrypted = encrypt_bytes(plaintext, password).expect("Encryption failed");
+
+        let total_len = encrypted.len();
+        let header_len = TNBK_MAGIC.len() + SALT_LEN + NONCE_LEN;
+
+        assert!(
+            total_len > header_len,
+            "Encrypted data should be larger than header"
+        );
+
+        assert_eq!(
+            &encrypted[0..TNBK_MAGIC.len()],
+            TNBK_MAGIC,
+            "Magic bytes at start"
+        );
+
+        let salt_start = TNBK_MAGIC.len();
+        let salt_end = salt_start + SALT_LEN;
+        assert_eq!(
+            encrypted[salt_start..salt_end].len(),
+            SALT_LEN,
+            "Salt should be correct length"
+        );
+
+        let nonce_start = salt_end;
+        let nonce_end = nonce_start + NONCE_LEN;
+        assert_eq!(
+            encrypted[nonce_start..nonce_end].len(),
+            NONCE_LEN,
+            "Nonce should be correct length"
+        );
+
+        let ciphertext = &encrypted[nonce_end..];
+        assert!(!ciphertext.is_empty(), "Ciphertext should not be empty");
+    }
+
+    #[test]
+    fn test_container_magic_bytes() {
+        assert_eq!(TNBK_MAGIC.len(), 8, "Magic bytes should be 8 bytes");
+        assert_eq!(
+            TNBK_MAGIC, b"tnbk\x00\x01\x00\x00",
+            "Magic bytes should be 'tnbk\\x00\\x01\\x00\\x00'"
+        );
+    }
+
+    #[test]
+    fn test_auto_detect_encrypted_container() {
+        let plaintext = b"test";
+        let password = "password";
+        let encrypted = encrypt_bytes(plaintext, password).expect("Encryption failed");
+
+        assert_eq!(
+            &encrypted[..TNBK_MAGIC.len()],
+            TNBK_MAGIC,
+            "Encrypted container should have magic bytes"
+        );
+
+        assert!(
+            encrypted.len() >= TNBK_MAGIC.len() + SALT_LEN + NONCE_LEN,
+            "Encrypted container should have complete header"
+        );
+    }
+
+    // Constants Tests
+
+    #[test]
+    fn test_constants_values() {
+        assert_eq!(
+            TNBK_MAGIC, b"tnbk\x00\x01\x00\x00",
+            "Magic bytes should identify tnbk format"
+        );
+        assert_eq!(SALT_LEN, 16, "Salt length should be 16 bytes for Argon2id");
+        assert_eq!(
+            NONCE_LEN, 24,
+            "Nonce length should be 24 bytes for XChaCha20-Poly1305"
+        );
+        assert_eq!(
+            KEY_LEN, 32,
+            "Key length should be 32 bytes (256 bits) for XChaCha20-Poly1305"
+        );
+        assert_eq!(
+            ARGON2_M_COST,
+            32 * 1024,
+            "Argon2 memory cost should be 32 MiB"
+        );
+        assert_eq!(
+            ARGON2_T_COST, 3,
+            "Argon2 time cost (iterations) should be 3"
+        );
+        assert_eq!(ARGON2_P_COST, 4, "Argon2 parallelism should be 4");
+    }
+
+    // ImportReport Tests
+
+    #[test]
+    fn test_import_report_structure() {
+        let report = ImportReport {
+            imported: 5,
+            skipped: 2,
+            errors: vec!["Error 1".to_string(), "Error 2".to_string()],
+        };
+
+        let json = serde_json::to_string(&report).expect("Failed to serialize report");
+        let deserialized: ImportReport =
+            serde_json::from_str(&json).expect("Failed to deserialize report");
+
+        assert_eq!(
+            deserialized.imported, report.imported,
+            "Imported count should match"
+        );
+        assert_eq!(
+            deserialized.skipped, report.skipped,
+            "Skipped count should match"
+        );
+        assert_eq!(deserialized.errors, report.errors, "Errors should match");
+    }
+
+    #[test]
+    fn test_import_report_empty() {
+        let report = ImportReport {
+            imported: 0,
+            skipped: 0,
+            errors: vec![],
+        };
+
+        assert!(report.errors.is_empty(), "Errors should be empty");
+        assert_eq!(report.imported, 0, "Imported count should be 0");
+        assert_eq!(report.skipped, 0, "Skipped count should be 0");
+    }
+
+    #[test]
+    fn test_import_report_with_errors() {
+        let errors = vec![
+            "Failed to read file: permission denied".to_string(),
+            "Invalid filename: contains path traversal".to_string(),
+            "Unsupported file type: .txt".to_string(),
+        ];
+
+        let report = ImportReport {
+            imported: 10,
+            skipped: 5,
+            errors,
+        };
+
+        assert_eq!(report.errors.len(), 3, "Should have 3 errors");
+        assert!(
+            report.errors[0].contains("permission denied"),
+            "First error should contain 'permission denied'"
+        );
+        assert!(
+            report.errors[1].contains("path traversal"),
+            "Second error should contain 'path traversal'"
+        );
+        assert!(
+            report.errors[2].contains(".txt"),
+            "Third error should contain '.txt'"
+        );
+    }
+
+    // Edge Cases and Error Handling Tests
+
+    #[test]
+    fn test_decrypt_with_empty_data() {
+        let empty_data: &[u8] = &[];
+        let password = "password";
+
+        let result = decrypt_bytes(empty_data, password);
+        assert!(result.is_err(), "Decrypting empty data should fail");
+    }
+
+    #[test]
+    fn test_decrypt_with_incomplete_header() {
+        let incomplete_header = b"tnbk\x00\x01\x00\x00";
+        let password = "password";
+
+        let result = decrypt_bytes(incomplete_header, password);
+        assert!(
+            result.is_err(),
+            "Decrypting with incomplete header should fail"
+        );
+    }
+
+    #[test]
+    fn test_encrypt_decrypt_with_long_password() {
+        let plaintext = b"test data";
+        let long_password = "a".repeat(1000);
+
+        let encrypted = encrypt_bytes(plaintext, &long_password)
+            .expect("Encryption with long password should work");
+        let decrypted = decrypt_bytes(&encrypted, &long_password)
+            .expect("Decryption with long password should work");
+
+        assert_eq!(
+            decrypted, plaintext,
+            "Long password encryption/decryption should work"
+        );
+    }
+
+    #[test]
+    fn test_encrypt_decrypt_with_unicode_password() {
+        let plaintext = b"test data";
+        let unicode_password = "密码123 🔑 пароль";
+
+        let encrypted = encrypt_bytes(plaintext, unicode_password)
+            .expect("Encryption with unicode password should work");
+        let decrypted = decrypt_bytes(&encrypted, unicode_password)
+            .expect("Decryption with unicode password should work");
+
+        assert_eq!(
+            decrypted, plaintext,
+            "Unicode password encryption/decryption should work"
+        );
+    }
+
+    #[test]
+    fn test_derive_key_with_empty_password() {
+        let empty_password = "";
+        let salt = [0u8; SALT_LEN];
+
+        let result = derive_key(empty_password, &salt);
+        assert!(
+            result.is_ok(),
+            "Key derivation with empty password should succeed"
+        );
+        let key = result.unwrap();
+        assert_eq!(key.len(), KEY_LEN, "Key should still be correct length");
+    }
+
+    #[test]
+    fn test_multiple_encryption_operations_produce_different_ciphertexts() {
+        let plaintext = b"same plaintext";
+        let password = "same password";
+
+        let encrypted1 = encrypt_bytes(plaintext, password).expect("First encryption failed");
+        let encrypted2 = encrypt_bytes(plaintext, password).expect("Second encryption failed");
+
+        assert_ne!(
+            encrypted1, encrypted2,
+            "Each encryption should produce different ciphertext (different salt/nonce)"
+        );
+
+        let decrypted1 = decrypt_bytes(&encrypted1, password).expect("First decryption failed");
+        let decrypted2 = decrypt_bytes(&encrypted2, password).expect("Second decryption failed");
+
+        assert_eq!(
+            decrypted1, plaintext,
+            "First decryption should match plaintext"
+        );
+        assert_eq!(
+            decrypted2, plaintext,
+            "Second decryption should match plaintext"
+        );
+    }
+
+    // Container Format Validation Tests
+
+    #[test]
+    fn test_container_header_boundaries() {
+        let plaintext = b"test";
+        let password = "password";
+
+        let encrypted = encrypt_bytes(plaintext, password).expect("Encryption failed");
+
+        let magic_end = TNBK_MAGIC.len();
+        let salt_end = magic_end + SALT_LEN;
+        let nonce_end = salt_end + NONCE_LEN;
+
+        assert_eq!(magic_end, 8, "Magic bytes end at position 8");
+        assert_eq!(salt_end, 24, "Salt ends at position 24 (8 + 16)");
+        assert_eq!(nonce_end, 48, "Nonce ends at position 48 (24 + 24)");
+
+        let _magic: &[u8] = &encrypted[0..magic_end];
+        let _salt: &[u8] = &encrypted[magic_end..salt_end];
+        let _nonce: &[u8] = &encrypted[salt_end..nonce_end];
+        let _ciphertext: &[u8] = &encrypted[nonce_end..];
+
+        assert_eq!(_magic.len(), TNBK_MAGIC.len());
+        assert_eq!(_salt.len(), SALT_LEN);
+        assert_eq!(_nonce.len(), NONCE_LEN);
+        assert!(_ciphertext.len() > 0);
+    }
+}
