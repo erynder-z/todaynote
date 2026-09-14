@@ -549,3 +549,214 @@ pub async fn toggle_thread_pin(
     })
     .await
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    ///
+    /// extract_frontmatter Tests
+    ///
+    #[test]
+    fn test_extract_frontmatter_with_valid_frontmatter() {
+        let content = "---\ntitle: test\n---\n# Heading\nContent";
+        let (count, frontmatter) = extract_frontmatter(content);
+        assert_eq!(count, 3);
+        assert_eq!(frontmatter, "---\ntitle: test\n---");
+    }
+
+    #[test]
+    fn test_extract_frontmatter_without_frontmatter() {
+        let content = "# Heading\nContent";
+        let (count, frontmatter) = extract_frontmatter(content);
+        assert_eq!(count, 0);
+        assert_eq!(frontmatter, "");
+    }
+
+    #[test]
+    fn test_extract_frontmatter_empty_content() {
+        let content = "";
+        let (count, frontmatter) = extract_frontmatter(content);
+        assert_eq!(count, 0);
+        assert_eq!(frontmatter, "");
+    }
+
+    #[test]
+    fn test_extract_frontmatter_single_delimiter() {
+        let content = "---\nContent";
+        let (count, frontmatter) = extract_frontmatter(content);
+        assert_eq!(count, 0);
+        assert_eq!(frontmatter, "");
+    }
+
+    #[test]
+    fn test_extract_frontmatter_with_whitespace() {
+        let content = "  ---\n  title: test\n  ---\n# Heading";
+        let (count, frontmatter) = extract_frontmatter(content);
+        assert_eq!(count, 3);
+        assert!(frontmatter.contains("title: test"));
+    }
+    ///
+    /// reconstruct_full_content Tests
+    ///
+    #[test]
+    fn test_reconstruct_full_content_with_frontmatter() {
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "---\ntitle: test\n---\n# Original").unwrap();
+        let path = file.path().to_path_buf();
+
+        let result = reconstruct_full_content(&path, "# New Content").unwrap();
+        assert!(result.contains("---"));
+        assert!(result.contains("title: test"));
+        assert!(result.contains("# New Content"));
+    }
+
+    #[test]
+    fn test_reconstruct_full_content_without_frontmatter() {
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "# Original Content").unwrap();
+        let path = file.path().to_path_buf();
+
+        let result = reconstruct_full_content(&path, "# New Content").unwrap();
+        assert_eq!(result, "# New Content");
+    }
+
+    ///
+    /// rename_primary_thread Tests
+    ///
+    #[test]
+    fn test_rename_primary_thread() {
+        let content = "# Thread 1\n!!! OldName\nContent";
+        let result = rename_primary_thread(content, "NewName");
+        assert!(result.is_some());
+        assert!(result.unwrap().contains("!!! NewName"));
+    }
+
+    #[test]
+    fn test_rename_primary_thread_no_thread() {
+        let content = "Just content\nNo threads here";
+        let result = rename_primary_thread(content, "NewName");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_rename_primary_thread_same_name() {
+        let content = "!!! AlreadyNamed\nContent";
+        let result = rename_primary_thread(content, "AlreadyNamed");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_rename_primary_thread_with_frontmatter() {
+        let content = "---\ntitle: test\n---\n!!! OldName\nContent";
+        let result = rename_primary_thread(content, "NewName");
+        assert!(result.is_some());
+        let result_str = result.unwrap();
+        assert!(result_str.contains("!!! NewName"));
+        assert!(result_str.contains("---"));
+    }
+
+    #[test]
+    fn test_rename_primary_thread_only_first() {
+        let content = "!!! First\nContent\n!!! Second\nMore";
+        let result = rename_primary_thread(content, "Renamed");
+        assert!(result.is_some());
+        let result_content = result.unwrap();
+        assert!(result_content.contains("!!! Renamed"));
+        assert!(result_content.contains("!!! Second"));
+    }
+
+    ///
+    /// get_last_available_note_path Tests (helper function behavior via integration)
+    ///
+    #[test]
+    fn test_get_note_path_by_offset_today() {
+        let notes_folder = PathBuf::from("/tmp/notes");
+        let path = crate::utils::date::get_note_path_by_offset(&notes_folder, 0);
+        let filename = path.file_name().unwrap().to_string_lossy();
+        let date = crate::utils::date::get_current_date();
+        assert!(filename.contains(&date));
+        assert!(filename.ends_with(".md"));
+    }
+
+    #[test]
+    fn test_get_note_path_by_offset_yesterday() {
+        let notes_folder = PathBuf::from("/tmp/notes");
+        let path = crate::utils::date::get_note_path_by_offset(&notes_folder, -1);
+        let filename = path.file_name().unwrap().to_string_lossy();
+        assert!(filename.ends_with(".md"));
+    }
+    ///
+    /// Thread Detection Tests
+    ///
+    #[tokio::test]
+    async fn test_detect_threads_from_content() {
+        let content = "!!! Thread1\nContent\n!!! Thread2\nMore";
+        let threads = detect_threads(content.to_string(), None).await.unwrap();
+        assert_eq!(threads.len(), 2);
+        assert_eq!(threads[0].name, "Thread1");
+        assert_eq!(threads[1].name, "Thread2");
+    }
+
+    #[tokio::test]
+    async fn test_detect_threads_empty_content() {
+        let content = "";
+        let threads = detect_threads(content.to_string(), None).await.unwrap();
+        assert_eq!(threads.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_detect_threads_no_threads() {
+        let content = "Just regular content\nNo threads";
+        let threads = detect_threads(content.to_string(), None).await.unwrap();
+        assert_eq!(threads.len(), 0);
+    }
+    ///
+    /// Content Structure Tests
+    ///
+    #[test]
+    fn test_frontmatter_multi_line() {
+        let content = "---\nkey1: value1\nkey2: value2\nkey3: value3\n---\n# Heading";
+        let (count, frontmatter) = extract_frontmatter(content);
+        assert_eq!(count, 5);
+        assert!(frontmatter.contains("key1: value1"));
+        assert!(frontmatter.contains("key3: value3"));
+    }
+
+    #[test]
+    fn test_frontmatter_with_empty_lines() {
+        let content = "---\n\nkey: value\n\n---\n# Heading";
+        let (count, frontmatter) = extract_frontmatter(content);
+        assert!(count > 0);
+        assert!(frontmatter.contains("key: value"));
+    }
+
+    ///
+    /// Edge Cases
+    ///
+    #[test]
+    fn test_extract_frontmatter_only_delimiters() {
+        let content = "---\n---";
+        let (count, frontmatter) = extract_frontmatter(content);
+        assert_eq!(count, 2);
+        assert_eq!(frontmatter, "---\n---");
+    }
+
+    #[test]
+    fn test_rename_thread_preserves_rest() {
+        let content = "Some\nlines\n!!! Old\nmore\n!!! Other\ncontent";
+        let result = rename_primary_thread(content, "New");
+        assert!(result.is_some());
+        let result_content = result.unwrap();
+        assert!(result_content.contains("Some"));
+        assert!(result_content.contains("lines"));
+        assert!(result_content.contains("more"));
+        assert!(result_content.contains("!!! Other"));
+        assert!(result_content.contains("content"));
+    }
+}
