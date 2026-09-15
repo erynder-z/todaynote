@@ -283,3 +283,273 @@ pub async fn switch_notes_folder(
 
     setup::get_initial_state(config, state)
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use crate::models::config::{AppConfig, ShortcutConfig};
+    use crate::models::response_types::ConfigResponse;
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+
+    ///
+    /// AppConfig Defaults tests
+    ///
+    #[test]
+    fn test_config_defaults() {
+        let config = AppConfig::default();
+
+        assert_eq!(config.locale, "en");
+        assert_eq!(config.theme, "lobby");
+        assert_eq!(config.search_mode, "notes");
+        assert!(config.search_is_fuzzy);
+        assert!(config.sidebar_open);
+        assert_eq!(config.control_center_width, 22.0);
+        assert_eq!(config.notes_list_layout, "list");
+        assert!(config.remember_app_layout);
+        assert!(config.remember_settings);
+        assert!(config.use_default_thread_name);
+        assert_eq!(config.identicon_style, "dotmatrix");
+        assert_eq!(config.thread_shortcuts_mode, "navigation");
+        assert_eq!(config.date_format_style, "medium");
+        assert_eq!(config.text_copy_mode, "markdown");
+        assert!(config.floating_toolbar_enabled);
+        assert!(!config.use_custom_font);
+        assert!(config.font_family.is_none());
+        assert!(config.search_selected_tag.is_none());
+        assert!(config.default_thread_name.is_none());
+    }
+
+    #[test]
+    fn test_config_default_shortcuts_populated() {
+        let config = AppConfig::default();
+
+        assert!(
+            !config.shortcuts.is_empty(),
+            "Default shortcuts should be populated"
+        );
+        assert!(config.shortcuts.contains_key("toggleSearch"));
+        assert!(config.shortcuts.contains_key("toggleSidebar"));
+        assert!(config.shortcuts.contains_key("toggleBold"));
+    }
+
+    ///
+    /// Serialization tests
+    ///
+    #[test]
+    fn test_config_serialization_roundtrip() {
+        let mut config = AppConfig::default();
+        config.locale = "de".to_string();
+        config.theme = "dark".to_string();
+        config.search_mode = "threads".to_string();
+        config.search_is_fuzzy = false;
+        config.sidebar_open = false;
+        config.control_center_width = 30.0;
+        config.search_selected_tag = Some("rust".to_string());
+        config.default_thread_name = Some("Daily".to_string());
+        config.font_family = Some("Fira Code".to_string());
+        config.use_custom_font = true;
+
+        let json = serde_json::to_string(&config).expect("Failed to serialize config");
+        let deserialized: AppConfig =
+            serde_json::from_str(&json).expect("Failed to deserialize config");
+
+        assert_eq!(deserialized.locale, "de");
+        assert_eq!(deserialized.theme, "dark");
+        assert_eq!(deserialized.search_mode, "threads");
+        assert!(!deserialized.search_is_fuzzy);
+        assert!(!deserialized.sidebar_open);
+        assert_eq!(deserialized.control_center_width, 30.0);
+        assert_eq!(deserialized.search_selected_tag, Some("rust".to_string()));
+        assert_eq!(deserialized.default_thread_name, Some("Daily".to_string()));
+        assert_eq!(deserialized.font_family, Some("Fira Code".to_string()));
+        assert!(deserialized.use_custom_font);
+    }
+
+    #[test]
+    fn test_config_uses_camel_case() {
+        let config = AppConfig::default();
+        let json = serde_json::to_string(&config).expect("Failed to serialize config");
+
+        assert!(json.contains("rememberAppLayout"), "Should use camelCase");
+        assert!(json.contains("searchIsFuzzy"), "Should use camelCase");
+        assert!(json.contains("controlCenterWidth"), "Should use camelCase");
+        assert!(
+            json.contains("useDefaultThreadName"),
+            "Should use camelCase"
+        );
+        assert!(json.contains("dateFormatStyle"), "Should use camelCase");
+        assert!(
+            json.contains("floatingToolbarEnabled"),
+            "Should use camelCase"
+        );
+        assert!(
+            !json.contains("remember_app_layout"),
+            "Should not use snake_case"
+        );
+    }
+
+    #[test]
+    fn test_shortcut_config_serialization() {
+        let shortcut = ShortcutConfig {
+            key: "K".to_string(),
+            primary: true,
+            secondary: false,
+            shift: true,
+            description: "Toggle search".to_string(),
+        };
+
+        let json = serde_json::to_string(&shortcut).expect("Failed to serialize");
+        let deserialized: ShortcutConfig =
+            serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(deserialized.key, "K");
+        assert!(deserialized.primary);
+        assert!(!deserialized.secondary);
+        assert!(deserialized.shift);
+        assert_eq!(deserialized.description, "Toggle search");
+    }
+
+    ///
+    /// ConfigResponse tests
+    ///
+    #[test]
+    fn test_config_response_serialization() {
+        let response = ConfigResponse {
+            notes_folder: "/tmp/notes".to_string(),
+            locale: "en".to_string(),
+            theme: "lobby".to_string(),
+            remember_app_layout: true,
+            notes_list_layout: "list".to_string(),
+            remember_settings: true,
+            search_mode: "notes".to_string(),
+            search_is_fuzzy: true,
+            search_selected_tag: None,
+            sidebar_open: true,
+            control_center_width: 22.0,
+            default_thread_name: None,
+            use_default_thread_name: true,
+            identicon_style: "dotmatrix".to_string(),
+            thread_shortcuts_mode: "navigation".to_string(),
+            date_format_style: "medium".to_string(),
+            text_copy_mode: "markdown".to_string(),
+            floating_toolbar_enabled: true,
+            shortcuts: HashMap::new(),
+            font_family: None,
+            use_custom_font: false,
+        };
+
+        let json = serde_json::to_string(&response).expect("Failed to serialize");
+        let deserialized: ConfigResponse =
+            serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(deserialized.notes_folder, "/tmp/notes");
+        assert_eq!(deserialized.locale, "en");
+        assert_eq!(deserialized.control_center_width, 22.0);
+        assert!(deserialized.search_is_fuzzy);
+        assert!(json.contains("notesFolder"), "Should use camelCase");
+        assert!(json.contains("controlCenterWidth"), "Should use camelCase");
+    }
+
+    ///
+    /// Reset Logic tests
+    ///
+    #[test]
+    fn test_reset_preserves_notes_folder_and_locale() {
+        let mut config = AppConfig::default();
+        config.notes_folder = PathBuf::from("/custom/notes");
+        config.locale = "ja".to_string();
+        let original_folder = config.notes_folder.clone();
+        let original_locale = config.locale.clone();
+
+        let default_config = AppConfig::default();
+        config.theme = default_config.theme;
+        config.search_mode = default_config.search_mode;
+        config.sidebar_open = default_config.sidebar_open;
+        config.search_is_fuzzy = default_config.search_is_fuzzy;
+
+        assert_eq!(
+            config.notes_folder, original_folder,
+            "notes_folder should be preserved"
+        );
+        assert_eq!(config.locale, original_locale, "locale should be preserved");
+        assert_eq!(config.theme, "lobby", "theme should be reset to default");
+        assert_eq!(config.search_mode, "notes", "search_mode should be reset");
+    }
+
+    #[test]
+    fn test_reset_preserves_remember_settings() {
+        let mut config = AppConfig::default();
+        config.remember_settings = false;
+
+        let default_config = AppConfig::default();
+        // reset_config_to_defaults intentionally does NOT reset remember_settings
+
+        assert!(
+            !config.remember_settings,
+            "remember_settings should be preserved (not reset)"
+        );
+        assert!(
+            default_config.remember_settings,
+            "default remember_settings is true, proving the difference"
+        );
+    }
+
+    #[test]
+    fn test_reset_restores_all_resettable_fields() {
+        let mut config = AppConfig::default();
+        config.theme = "custom".to_string();
+        config.search_mode = "threads".to_string();
+        config.search_is_fuzzy = false;
+        config.sidebar_open = false;
+        config.control_center_width = 50.0;
+        config.notes_list_layout = "masonry".to_string();
+        config.use_default_thread_name = false;
+        config.identicon_style = "none".to_string();
+        config.thread_shortcuts_mode = "actions".to_string();
+        config.date_format_style = "narrow".to_string();
+        config.text_copy_mode = "plain".to_string();
+        config.floating_toolbar_enabled = false;
+        config.use_custom_font = true;
+        config.font_family = Some("Arial".to_string());
+        config.search_selected_tag = Some("tag".to_string());
+        config.default_thread_name = Some("Name".to_string());
+
+        let default_config = AppConfig::default();
+        config.theme = default_config.theme;
+        config.remember_app_layout = default_config.remember_app_layout;
+        config.notes_list_layout = default_config.notes_list_layout.clone();
+        config.search_mode = default_config.search_mode.clone();
+        config.search_is_fuzzy = default_config.search_is_fuzzy;
+        config.search_selected_tag = default_config.search_selected_tag.clone();
+        config.sidebar_open = default_config.sidebar_open;
+        config.control_center_width = default_config.control_center_width;
+        config.default_thread_name = default_config.default_thread_name.clone();
+        config.use_default_thread_name = default_config.use_default_thread_name;
+        config.identicon_style = default_config.identicon_style.clone();
+        config.thread_shortcuts_mode = default_config.thread_shortcuts_mode.clone();
+        config.date_format_style = default_config.date_format_style.clone();
+        config.floating_toolbar_enabled = default_config.floating_toolbar_enabled;
+        config.shortcuts = default_config.shortcuts.clone();
+        config.font_family = default_config.font_family.clone();
+        config.use_custom_font = default_config.use_custom_font;
+
+        assert_eq!(config.theme, "lobby");
+        assert_eq!(config.search_mode, "notes");
+        assert!(config.search_is_fuzzy);
+        assert!(config.sidebar_open);
+        assert_eq!(config.control_center_width, 22.0);
+        assert_eq!(config.notes_list_layout, "list");
+        assert!(config.use_default_thread_name);
+        assert_eq!(config.identicon_style, "dotmatrix");
+        assert_eq!(config.thread_shortcuts_mode, "navigation");
+        assert_eq!(config.date_format_style, "medium");
+        assert!(config.floating_toolbar_enabled);
+        assert!(!config.use_custom_font);
+        assert!(config.font_family.is_none());
+        assert!(config.search_selected_tag.is_none());
+        assert!(config.default_thread_name.is_none());
+    }
+}
