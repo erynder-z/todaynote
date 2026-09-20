@@ -166,3 +166,120 @@ pub fn count_words(content: &str) -> (usize, bool) {
 
     (word_count, has_code)
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+    ///
+    /// generate_excerpt tests
+    ///
+    #[test]
+    fn test_excerpt_short_line_unchanged() {
+        let (excerpt, indices) = generate_excerpt("abc", &[0, 1], 10);
+        assert_eq!(excerpt, "abc");
+        assert_eq!(indices, vec![0, 1]);
+    }
+
+    #[test]
+    fn test_excerpt_centers_around_match() {
+        let line = "abcdefghij";
+        let (excerpt, indices) = generate_excerpt(line, &[5, 6], 4);
+        assert_eq!(excerpt, "...efgh...");
+        assert_eq!(indices, vec![4, 5]);
+    }
+
+    #[test]
+    fn test_excerpt_match_longer_than_max_starts_at_first() {
+        let line = "abcdefghij";
+        let (excerpt, indices) = generate_excerpt(line, &[3, 4, 5, 6, 7], 3);
+        assert_eq!(excerpt, "...def...");
+        assert_eq!(indices, vec![3, 4, 5]);
+    }
+
+    #[test]
+    fn test_excerpt_match_at_start_no_prefix() {
+        let line = "abcdefghij";
+        let (excerpt, indices) = generate_excerpt(line, &[0, 1], 4);
+        assert_eq!(excerpt, "abcd...");
+        assert_eq!(indices, vec![0, 1]);
+    }
+
+    #[test]
+    fn test_excerpt_match_at_end_no_suffix() {
+        let line = "abcdefghij";
+        let (excerpt, indices) = generate_excerpt(line, &[8, 9], 4);
+        assert_eq!(excerpt, "...ghij");
+        assert_eq!(indices, vec![5, 6]);
+    }
+
+    #[test]
+    fn test_excerpt_no_indices_defaults_to_start() {
+        let line = "abcdefghij";
+        let (excerpt, indices) = generate_excerpt(line, &[], 4);
+        assert_eq!(excerpt, "abcd...");
+        assert!(indices.is_empty());
+    }
+    ///
+    /// count_words tests
+    ///
+    #[test]
+    fn test_count_words_simple() {
+        let (count, has_code) = count_words("hello world foo");
+        assert_eq!(count, 3);
+        assert!(!has_code);
+    }
+
+    #[test]
+    fn test_count_words_skips_frontmatter() {
+        let content = "---\ntitle: Test\ntags: [a, b]\n---\nhello world";
+        let (count, has_code) = count_words(content);
+        assert_eq!(count, 2);
+        assert!(!has_code);
+    }
+
+    #[test]
+    fn test_count_words_detects_fenced_code_block() {
+        let content = "```\ncode here\n```\nhello";
+        let (count, has_code) = count_words(content);
+        assert_eq!(count, 1);
+        assert!(has_code);
+    }
+
+    #[test]
+    fn test_count_words_detects_indented_code() {
+        let (count, has_code) = count_words("    code line\nhello world");
+        assert_eq!(count, 2);
+        assert!(has_code);
+    }
+
+    #[test]
+    fn test_count_words_strips_markdown_markers() {
+        let content = "# Heading\n- item\n> quote\n**bold** word";
+        let (count, has_code) = count_words(content);
+        assert_eq!(count, 5);
+        assert!(!has_code);
+    }
+
+    #[test]
+    fn test_count_words_filters_single_char_and_punctuation() {
+        let (count, _) = count_words("a I hello ... world");
+        assert_eq!(count, 2);
+    }
+
+    #[test]
+    fn test_count_words_skips_html_and_thread_markers() {
+        let content = "<div>stuff</div>\n!!! Thread\nhello world";
+        let (count, _) = count_words(content);
+        assert_eq!(count, 2);
+    }
+
+    #[test]
+    fn test_count_words_empty() {
+        let (count, has_code) = count_words("");
+        assert_eq!(count, 0);
+        assert!(!has_code);
+    }
+}
