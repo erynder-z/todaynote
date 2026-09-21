@@ -339,9 +339,7 @@ impl NoteSession {
                             if let Ok(line_num) = parts[1].parse() {
                                 let pinned = parts
                                     .get(2)
-                                    .map(|&f| {
-                                        f == "pinned" || f == "p" || f == "true" || f == "1"
-                                    })
+                                    .map(|&f| f == "pinned" || f == "p" || f == "true" || f == "1")
                                     .unwrap_or(false);
                                 return Some(FrontmatterThread {
                                     id: parts[0].to_string(),
@@ -390,5 +388,306 @@ impl NoteSession {
                 .insert(end, format!("{} {}", last_modified_key, current_date));
             self.frontmatter_range = Some((start, end + 1));
         }
+    }
+}
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::date::get_current_date;
+
+    /// Builds a session with frontmatter already present so that line operations
+    /// (which auto-trigger detect_threads → ensure_frontmatter) don't shift indices.
+    fn make_session(content_lines: &[&str]) -> NoteSession {
+        let mut lines = vec![
+            "---".to_string(),
+            "threads: ".to_string(),
+            "---".to_string(),
+        ];
+        lines.extend(content_lines.iter().map(|s| s.to_string()));
+        NoteSession {
+            path: None,
+            lines,
+            frontmatter_range: Some((0, 2)),
+            threads: Vec::new(),
+        }
+    }
+    ///
+    /// new / get_full_content tests
+    ///
+    #[test]
+    fn test_new_is_empty() {
+        let session = NoteSession::new();
+
+        assert!(session.path.is_none());
+        assert!(session.lines.is_empty());
+        assert!(session.frontmatter_range.is_none());
+        assert!(session.threads.is_empty());
+        assert_eq!(session.get_full_content(), "");
+    }
+    ///
+    /// load tests
+    ///
+    #[test]
+    fn test_load_detects_frontmatter_and_threads() {
+        let content = "---\ntags: [work]\n---\n!!! Work\nsome task\n!!! Personal\nanother task";
+        let mut session = NoteSession::new();
+        session.load(PathBuf::from("/tmp/note.md"), content.to_string());
+
+        assert_eq!(session.path, Some(PathBuf::from("/tmp/note.md")));
+        // detect_threads inserts a threads: line, expanding frontmatter.
+        assert_eq!(session.frontmatter_range, Some((0, 3)));
+        assert_eq!(session.threads.len(), 2);
+        assert_eq!(session.threads[0].name, "Work");
+        assert_eq!(session.threads[1].name, "Personal");
+        // Thread end_line should be set to the next thread's start.
+        assert_eq!(session.threads[0].end_line, session.threads[1].start_line);
+    }
+    ///
+    /// detect_frontmatter tests
+    ///
+    #[test]
+    fn test_detect_frontmatter_present() {
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: [a]".into(),
+            "---".into(),
+            "body".into(),
+        ];
+        session.detect_frontmatter();
+        assert_eq!(session.frontmatter_range, Some((0, 2)));
+    }
+
+    #[test]
+    fn test_detect_frontmatter_absent() {
+        let mut session = NoteSession::new();
+        session.lines = vec!["just body".into()];
+        session.detect_frontmatter();
+        assert!(session.frontmatter_range.is_none());
+    }
+    ///
+    /// ensure_frontmatter tests
+    ///
+    #[test]
+    fn test_ensure_frontmatter_creates_if_missing() {
+        let mut session = NoteSession::new();
+        session.lines = vec!["body".into()];
+        session.ensure_frontmatter();
+        assert_eq!(session.frontmatter_range, Some((0, 1)));
+        assert_eq!(session.lines[0], "---");
+        assert_eq!(session.lines[1], "---");
+    }
+
+    #[test]
+    fn test_ensure_frontmatter_noop_if_present() {
+        let mut session = NoteSession::new();
+        session.lines = vec!["---".into(), "tags: [a]".into(), "---".into()];
+        session.frontmatter_range = Some((0, 2));
+        session.ensure_frontmatter();
+        assert_eq!(session.lines.len(), 3);
+    }
+    ///
+    /// get_metadata / find_metadata_line tests
+    ///
+    #[test]
+    fn test_get_metadata_and_find() {
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: [work]".into(),
+            "title: My Note".into(),
+            "---".into(),
+        ];
+        session.frontmatter_range = Some((0, 3));
+
+        let metadata = session.get_metadata();
+        assert_eq!(metadata.get("tags"), Some(&"[work]".to_string()));
+        assert_eq!(metadata.get("title"), Some(&"My Note".to_string()));
+
+        assert_eq!(session.find_metadata_line("tags"), Some(1));
+        assert_eq!(session.find_metadata_line("missing"), None);
+    }
+
+    #[test]
+    fn test_get_metadata_empty_without_frontmatter() {
+        let session = NoteSession::new();
+        assert!(session.get_metadata().is_empty());
+        assert!(session.find_metadata_line("tags").is_none());
+    }
+    ///
+    /// line operations tests
+    ///
+    #[test]
+    fn test_update_insert_delete_line() {
+        let mut session = make_session(&["a", "b", "c"]);
+
+        session.update_line(4, "B".into());
+        assert_eq!(session.lines[4], "B");
+
+        session.insert_line(3, "first".into());
+        assert_eq!(session.lines[3], "first");
+        assert_eq!(session.lines.len(), 7);
+
+        session.delete_line(3);
+        assert_eq!(session.lines[3], "a");
+    }
+
+    #[test]
+    fn test_delete_line_range() {
+        let mut session = make_session(&["a", "b", "c", "d"]);
+        session.delete_line_range(4, 6);
+        assert_eq!(session.lines[3], "a");
+        assert_eq!(session.lines[4], "d");
+    }
+    ///
+    /// relative index operations tests
+    ///
+    #[test]
+    fn test_content_relative_indexing() {
+        let mut session = make_session(&["body"]);
+
+        assert_eq!(session.get_content_start_index(), 3);
+        assert_eq!(session.to_absolute_index(0), 3);
+
+        session.insert_content_line(0, "new".into());
+        assert_eq!(session.lines[3], "new");
+
+        session.update_content_line(1, "updated".into());
+        assert_eq!(session.lines[4], "updated");
+
+        session.delete_content_line(0);
+        assert_eq!(session.lines[3], "updated");
+    }
+    ///
+    /// ensure_trailing_empty_line tests
+    ///
+    #[test]
+    fn test_ensure_trailing_empty_line_adds_padding() {
+        let mut session = NoteSession::new();
+        session.lines = vec!["content".into()];
+        session.ensure_trailing_empty_line();
+        assert!(session.lines.len() >= 3);
+        assert_eq!(session.lines[0], "content");
+    }
+
+    #[test]
+    fn test_ensure_trailing_empty_line_noop_when_sufficient() {
+        let mut session = NoteSession::new();
+        session.lines = vec!["content".into(), "".into(), "".into()];
+        session.ensure_trailing_empty_line();
+        assert_eq!(session.lines.len(), 3);
+    }
+    ///
+    /// detect_threads tests
+    ///
+    #[test]
+    fn test_detect_threads_assigns_uuid_ids() {
+        let mut session = make_session(&["!!! Work", "task", "!!! Personal", "task2"]);
+        session.detect_threads();
+
+        assert_eq!(session.threads.len(), 2);
+        assert!(!session.threads[0].id.is_empty());
+        assert_ne!(session.threads[0].id, session.threads[1].id);
+        assert_eq!(session.threads[1].end_line, session.lines.len());
+    }
+
+    #[test]
+    fn test_detect_threads_ignores_empty_name() {
+        let mut session = NoteSession::new();
+        session.lines = vec!["!!! ".into(), "!!! Real".into()];
+        session.detect_threads();
+        assert_eq!(session.threads.len(), 1);
+        assert_eq!(session.threads[0].name, "Real");
+    }
+    ///
+    /// parse_threads_from_frontmatter / update_threads_in_frontmatter tests
+    ///
+    #[test]
+    fn test_parse_threads_from_frontmatter() {
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "threads: abc:0,def:2:pinned".into(),
+            "---".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+
+        let threads = session.parse_threads_from_frontmatter();
+        assert_eq!(threads.len(), 2);
+        assert_eq!(threads[0].id, "abc");
+        assert_eq!(threads[0].relative_line, 0);
+        assert!(!threads[0].pinned);
+        assert_eq!(threads[1].id, "def");
+        assert_eq!(threads[1].relative_line, 2);
+        assert!(threads[1].pinned);
+    }
+
+    #[test]
+    fn test_parse_threads_from_frontmatter_empty() {
+        let session = NoteSession::new();
+        assert!(session.parse_threads_from_frontmatter().is_empty());
+    }
+
+    #[test]
+    fn test_update_threads_in_frontmatter_writes_line() {
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: [a]".into(),
+            "---".into(),
+            "!!! Work".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+        session.detect_threads();
+
+        let threads_line = session.lines.iter().find(|l| l.starts_with("threads:"));
+        assert!(threads_line.is_some(), "threads: line should be added");
+    }
+    ///
+    /// find_thread_by_id tests
+    ///
+    #[test]
+    fn test_find_thread_by_id() {
+        let mut session = NoteSession::new();
+        session.lines = vec!["!!! Work".into(), "task".into()];
+        session.detect_threads();
+
+        let id = session.threads[0].id.clone();
+        let found = session.find_thread_by_id(&id);
+        assert!(found.is_some());
+        assert_eq!(found.unwrap().name, "Work");
+
+        assert!(session.find_thread_by_id("nonexistent").is_none());
+    }
+    ///
+    /// update_last_modified tests
+    ///
+    #[test]
+    fn test_update_last_modified_adds_and_updates() {
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: [a]".into(),
+            "---".into(),
+            "body".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+
+        session.update_last_modified();
+        let found = session.find_metadata_line("last-modified");
+        assert!(found.is_some(), "last-modified should be added");
+        assert_eq!(
+            session.lines[found.unwrap()],
+            format!("last-modified: {}", get_current_date())
+        );
+
+        // A second call should update in place, not duplicate.
+        let len_before = session.lines.len();
+        session.update_last_modified();
+        assert_eq!(session.lines.len(), len_before);
     }
 }

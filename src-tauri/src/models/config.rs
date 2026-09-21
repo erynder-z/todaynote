@@ -447,3 +447,93 @@ impl AppConfig {
         }
     }
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_values() {
+        let config = AppConfig::default();
+
+        assert_eq!(config.locale, "en");
+        assert_eq!(config.theme, "lobby");
+        assert_eq!(config.notes_list_layout, "list");
+        assert!(config.remember_app_layout);
+        assert!(config.search_is_fuzzy);
+        assert!(config.sidebar_open);
+        assert!(!config.use_custom_font);
+        assert!(config.font_family.is_none());
+        assert!(config.search_selected_tag.is_none());
+    }
+
+    #[test]
+    fn test_default_notes_folder_under_home() {
+        let config = AppConfig::default();
+        let home = crate::utils::app_data::get_home_dir();
+
+        assert_eq!(config.notes_folder, home.join("notes"));
+    }
+
+    #[test]
+    fn test_default_shortcuts_populated() {
+        let config = AppConfig::default();
+
+        assert!(config.shortcuts.contains_key("toggleSearch"));
+        assert!(config.shortcuts.contains_key("toggleSettings"));
+        assert!(config.shortcuts.contains_key("copySelection"));
+
+        let search = &config.shortcuts["toggleSearch"];
+        assert_eq!(search.key, "K");
+        assert!(search.primary);
+        assert!(!search.secondary);
+
+        let close = &config.shortcuts["closePopup"];
+        assert_eq!(close.key, "Escape");
+        assert!(!close.primary);
+    }
+
+    #[test]
+    fn test_config_path_ends_with_config_json() {
+        let path = AppConfig::get_config_path();
+
+        assert_eq!(path.file_name(), Some(std::ffi::OsStr::new("config.json")));
+    }
+
+    #[test]
+    fn test_config_serde_roundtrip() {
+        let config = AppConfig::default();
+
+        let json = serde_json::to_string(&config).expect("Failed to serialize");
+        let restored: AppConfig = serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(restored.locale, config.locale);
+        assert_eq!(restored.theme, config.theme);
+        assert_eq!(restored.notes_folder, config.notes_folder);
+        assert_eq!(restored.search_is_fuzzy, config.search_is_fuzzy);
+        assert_eq!(restored.shortcuts.len(), config.shortcuts.len());
+    }
+
+    #[test]
+    fn test_shortcut_config_serde_roundtrip() {
+        let shortcut = ShortcutConfig {
+            key: "X".to_string(),
+            primary: true,
+            secondary: true,
+            shift: false,
+            description: "Test shortcut".to_string(),
+        };
+
+        let json = serde_json::to_string(&shortcut).expect("Failed to serialize");
+        let restored: ShortcutConfig = serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(restored.key, shortcut.key);
+        assert_eq!(restored.primary, shortcut.primary);
+        assert_eq!(restored.secondary, shortcut.secondary);
+        assert_eq!(restored.shift, shortcut.shift);
+        assert_eq!(restored.description, shortcut.description);
+    }
+}

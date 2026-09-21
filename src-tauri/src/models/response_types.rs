@@ -327,3 +327,168 @@ impl NoteContentResponse {
         }
     }
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::note_session::NoteSession;
+    use crate::services::note_manager::NoteManager;
+    use crate::services::tag_manager::TagManager;
+    use std::path::PathBuf;
+
+    ///
+    /// NoteContentResponse::from_session test
+    ///
+    #[test]
+    fn test_from_session_extracts_path_and_content() {
+        let mut session = NoteSession::new();
+        let content = "---\ntags: [work]\n---\n!!! Work\nsome task";
+        session.load(PathBuf::from("/tmp/2024-01-01.md"), content.to_string());
+
+        let note_manager = NoteManager::new(PathBuf::from("/tmp"), "en".into());
+        let tag_manager = TagManager::new();
+
+        let resp = NoteContentResponse::from_session(&session, &note_manager, &tag_manager);
+
+        assert_eq!(resp.path, "/tmp/2024-01-01.md");
+        // Content excludes frontmatter.
+        assert!(!resp.content.contains("---"));
+        assert!(resp.content.contains("!!! Work"));
+    }
+
+    #[test]
+    fn test_from_session_extracts_tags_and_metadata() {
+        let mut session = NoteSession::new();
+        let content = "---\ntags: [work, urgent]\ntitle: My Note\n---\nbody";
+        session.load(PathBuf::from("/tmp/2024-01-01.md"), content.to_string());
+
+        let note_manager = NoteManager::new(PathBuf::from("/tmp"), "en".into());
+        let tag_manager = TagManager::new();
+
+        let resp = NoteContentResponse::from_session(&session, &note_manager, &tag_manager);
+
+        assert_eq!(resp.metadata.tags, vec!["work", "urgent"]);
+        assert_eq!(resp.metadata.raw.get("title"), Some(&"My Note".to_string()));
+    }
+
+    #[test]
+    fn test_from_session_maps_thread_indices_relative() {
+        let mut session = NoteSession::new();
+        let content = "---\ntags: []\n---\n!!! Work\ntask";
+        session.load(PathBuf::from("/tmp/2024-01-01.md"), content.to_string());
+
+        let note_manager = NoteManager::new(PathBuf::from("/tmp"), "en".into());
+        let tag_manager = TagManager::new();
+
+        let resp = NoteContentResponse::from_session(&session, &note_manager, &tag_manager);
+
+        assert_eq!(resp.threads.len(), 1);
+        // Relative start_line should be 0 since the absolute index (set before
+        // the threads: line was inserted) is now below the shifted content_start.
+        assert_eq!(resp.threads[0].start_line, 0);
+    }
+
+    #[test]
+    fn test_from_session_empty_path() {
+        let session = NoteSession::new();
+        let note_manager = NoteManager::new(PathBuf::from("/tmp"), "en".into());
+        let tag_manager = TagManager::new();
+
+        let resp = NoteContentResponse::from_session(&session, &note_manager, &tag_manager);
+
+        assert_eq!(resp.path, "");
+        assert!(resp.threads.is_empty());
+    }
+
+    ///
+    /// Serde roundtrips (camelCase) tests
+    ///
+    #[test]
+    fn test_folder_validation_serde_roundtrip() {
+        let fv = FolderValidation {
+            is_valid: true,
+            is_writable: false,
+            exists: true,
+            note_count: 3,
+            error: Some("oops".into()),
+        };
+
+        let json = serde_json::to_string(&fv).expect("serialize");
+        assert!(json.contains("isValid"), "should use camelCase: {}", json);
+        let restored: FolderValidation = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(restored.note_count, 3);
+        assert_eq!(restored.error, Some("oops".into()));
+    }
+
+    #[test]
+    fn test_app_statistics_serde_roundtrip() {
+        let stats = AppStatistics {
+            total_notes: 10,
+            total_tags: 5,
+            total_threads: 3,
+            total_characters: 1000,
+            total_words: 200,
+            current_streak: 4,
+            best_streak: 7,
+            top_tags: vec![TagStat {
+                name: "work".into(),
+                count: 5,
+            }],
+            top_threads: vec![ThreadStat {
+                name: "Work".into(),
+                count: 3,
+            }],
+            daily_stats: vec![DailyStat {
+                date: "2024-01-01".into(),
+                character_count: 100,
+                word_count: 20,
+            }],
+            weekday_distribution: vec![1, 2, 3, 4, 5, 6, 7],
+            insights: vec![InsightResponse {
+                key: "streak".into(),
+                params: HashMap::from([("days".into(), "4".into())]),
+            }],
+        };
+
+        let json = serde_json::to_string(&stats).expect("serialize");
+        assert!(
+            json.contains("totalNotes"),
+            "should use camelCase: {}",
+            json
+        );
+        assert!(json.contains("weekdayDistribution"));
+        let restored: AppStatistics = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(restored.total_notes, 10);
+        assert_eq!(restored.top_tags[0].name, "work");
+        assert_eq!(restored.weekday_distribution.len(), 7);
+    }
+
+    #[test]
+    fn test_note_list_response_serde_roundtrip() {
+        let resp = NoteListResponse {
+            notes: vec![FormattedNote {
+                filename: "2024-01-01.md".into(),
+                formatted_name: "Jan 1".into(),
+                preview: "hello".into(),
+                tags: vec!["work".into()],
+                threads: vec!["Work".into()],
+                word_count: 5,
+                has_code: false,
+            }],
+            total_count: 1,
+        };
+
+        let json = serde_json::to_string(&resp).expect("serialize");
+        assert!(
+            json.contains("totalCount"),
+            "should use camelCase: {}",
+            json
+        );
+        let restored: NoteListResponse = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(restored.total_count, 1);
+        assert_eq!(restored.notes[0].word_count, 5);
+    }
+}

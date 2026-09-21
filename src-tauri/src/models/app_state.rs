@@ -50,3 +50,79 @@ impl AppState {
             .map_err(|_| "Note session is currently unavailable (poisoned lock)".to_string())
     }
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+    use std::sync::Arc;
+
+    fn make_state() -> AppState {
+        AppState {
+            note_manager: Mutex::new(NoteManager::new(PathBuf::from("/tmp/notes"), "en".into())),
+            tag_manager: Mutex::new(TagManager::new()),
+            note_session: Mutex::new(NoteSession::new()),
+            config: Mutex::new(AppConfig::default()),
+        }
+    }
+
+    #[test]
+    fn test_accessors_return_guard() {
+        let state = make_state();
+
+        assert_eq!(state.config().unwrap().locale, "en");
+        assert_eq!(state.note_manager().unwrap().locale, "en");
+        assert!(state.tag_manager().unwrap().cached_tags.is_none());
+        assert!(state.note_session().unwrap().path.is_none());
+    }
+
+    #[test]
+    fn test_accessors_poisoned_error() {
+        let state = Arc::new(make_state());
+
+        // Poison each mutex by panicking while holding the lock in a spawned thread.
+        // The guard must still be live when the panic occurs.
+        let poisons: &[fn(&Arc<AppState>)] = &[
+            |s| {
+                let _g = s.config.lock().unwrap();
+                panic!("poison");
+            },
+            |s| {
+                let _g = s.note_manager.lock().unwrap();
+                panic!("poison");
+            },
+            |s| {
+                let _g = s.tag_manager.lock().unwrap();
+                panic!("poison");
+            },
+            |s| {
+                let _g = s.note_session.lock().unwrap();
+                panic!("poison");
+            },
+        ];
+        for poison in poisons {
+            let state = state.clone();
+            let _ = std::thread::spawn(move || poison(&state)).join();
+        }
+
+        assert_eq!(
+            state.config().err().unwrap(),
+            "Configuration is currently unavailable (poisoned lock)"
+        );
+        assert_eq!(
+            state.note_manager().err().unwrap(),
+            "Note manager is currently unavailable (poisoned lock)"
+        );
+        assert_eq!(
+            state.tag_manager().err().unwrap(),
+            "Tag manager is currently unavailable (poisoned lock)"
+        );
+        assert_eq!(
+            state.note_session().err().unwrap(),
+            "Note session is currently unavailable (poisoned lock)"
+        );
+    }
+}
