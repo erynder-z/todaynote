@@ -368,3 +368,603 @@ pub fn get_statistics(
         insights,
     })
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+    use std::collections::HashMap;
+
+    ///
+    /// Streak Calculation Tests
+    ///
+
+    #[test]
+    fn test_calculate_streaks_empty_dates() {
+        let dates: Vec<NaiveDate> = vec![];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        assert_eq!(current, 0);
+        assert_eq!(best, 0);
+    }
+
+    #[test]
+    fn test_calculate_streaks_single_date_today() {
+        let dates = vec![NaiveDate::from_ymd_opt(2024, 1, 15).unwrap()];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        assert_eq!(current, 1);
+        assert_eq!(best, 1);
+    }
+
+    #[test]
+    fn test_calculate_streaks_single_date_yesterday() {
+        let dates = vec![NaiveDate::from_ymd_opt(2024, 1, 14).unwrap()];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        // Yesterday is 1 day before today, so streak is 1
+        assert_eq!(current, 1);
+        assert_eq!(best, 1);
+    }
+
+    #[test]
+    fn test_calculate_streaks_two_consecutive_days() {
+        let dates = vec![
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 14).unwrap(),
+        ];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        assert_eq!(current, 2);
+        assert_eq!(best, 2);
+    }
+
+    #[test]
+    fn test_calculate_streaks_five_consecutive_days() {
+        let dates = vec![
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 14).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 13).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 12).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 11).unwrap(),
+        ];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        assert_eq!(current, 5);
+        assert_eq!(best, 5);
+    }
+
+    #[test]
+    fn test_calculate_streaks_broken_streak() {
+        // Dates: today, yesterday, 3 days ago
+        let dates = vec![
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 14).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 12).unwrap(),
+        ];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        // Current streak is 2 (today + yesterday)
+        assert_eq!(current, 2);
+        // Best streak is also 2 (no consecutive pair including the gap)
+        assert_eq!(best, 2);
+    }
+
+    #[test]
+    fn test_calculate_streaks_gap_in_middle() {
+        // Dates: today, yesterday, 2 days ago, 4 days ago, 5 days ago
+        let dates = vec![
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 14).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 13).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 11).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 10).unwrap(),
+        ];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        // Current streak is 3 (today, yesterday, 2 days ago)
+        assert_eq!(current, 3);
+        // Best streak is also 3
+        assert_eq!(best, 3);
+    }
+
+    #[test]
+    fn test_calculate_streaks_best_streak_not_current() {
+        // Current streak: today, yesterday (2 days)
+        // Best streak: 5,4,3,2,1 (5 days)
+        let dates = vec![
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 14).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 10).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 9).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 8).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 7).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 6).unwrap(),
+        ];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        assert_eq!(current, 2);
+        assert_eq!(best, 5);
+    }
+
+    #[test]
+    fn test_calculate_streaks_old_dates_not_counted() {
+        // Dates are from last month, gap to today is > 1
+        let dates = vec![
+            NaiveDate::from_ymd_opt(2023, 12, 31).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 12, 30).unwrap(),
+            NaiveDate::from_ymd_opt(2023, 12, 29).unwrap(),
+        ];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        // Gap is 15 days, so no current streak
+        assert_eq!(current, 0);
+        // Best streak is 3 (the consecutive dates)
+        assert_eq!(best, 3);
+    }
+
+    ///
+    /// Process Tag and Thread Stats Tests
+    ///
+    #[test]
+    fn test_process_tag_and_thread_stats_empty() {
+        let tag_counts: HashMap<String, usize> = HashMap::new();
+        let thread_counts: HashMap<String, usize> = HashMap::new();
+        let (top_tags, top_threads) = process_tag_and_thread_stats(&tag_counts, &thread_counts);
+        assert!(top_tags.is_empty());
+        assert!(top_threads.is_empty());
+    }
+
+    #[test]
+    fn test_process_tag_and_thread_stats_single_tag() {
+        let mut tag_counts = HashMap::new();
+        tag_counts.insert("rust".to_string(), 5);
+        let thread_counts: HashMap<String, usize> = HashMap::new();
+        let (top_tags, top_threads) = process_tag_and_thread_stats(&tag_counts, &thread_counts);
+        assert_eq!(top_tags.len(), 1);
+        assert_eq!(top_tags[0].name, "rust");
+        assert_eq!(top_tags[0].count, 5);
+        assert!(top_threads.is_empty());
+    }
+
+    #[test]
+    fn test_process_tag_and_thread_stats_multiple_tags() {
+        let mut tag_counts = HashMap::new();
+        tag_counts.insert("rust".to_string(), 5);
+        tag_counts.insert("python".to_string(), 10);
+        tag_counts.insert("javascript".to_string(), 3);
+        let thread_counts: HashMap<String, usize> = HashMap::new();
+        let (top_tags, _) = process_tag_and_thread_stats(&tag_counts, &thread_counts);
+        assert_eq!(top_tags.len(), 3);
+        // Sorted by count descending
+        assert_eq!(top_tags[0].name, "python");
+        assert_eq!(top_tags[0].count, 10);
+        assert_eq!(top_tags[1].name, "rust");
+        assert_eq!(top_tags[1].count, 5);
+        assert_eq!(top_tags[2].name, "javascript");
+        assert_eq!(top_tags[2].count, 3);
+    }
+
+    #[test]
+    fn test_process_tag_and_thread_stats_same_count_sorted_by_name() {
+        let mut tag_counts = HashMap::new();
+        tag_counts.insert("zebra".to_string(), 5);
+        tag_counts.insert("apple".to_string(), 5);
+        tag_counts.insert("mango".to_string(), 5);
+        let thread_counts: HashMap<String, usize> = HashMap::new();
+        let (top_tags, _) = process_tag_and_thread_stats(&tag_counts, &thread_counts);
+        assert_eq!(top_tags.len(), 3);
+        // Sorted by count (all same), then by name ascending
+        assert_eq!(top_tags[0].name, "apple");
+        assert_eq!(top_tags[1].name, "mango");
+        assert_eq!(top_tags[2].name, "zebra");
+    }
+
+    #[test]
+    fn test_process_tag_and_thread_stats_truncates_to_10() {
+        let mut tag_counts = HashMap::new();
+        for i in 0..15 {
+            tag_counts.insert(format!("tag{}", i), i + 1);
+        }
+        let thread_counts: HashMap<String, usize> = HashMap::new();
+        let (top_tags, _) = process_tag_and_thread_stats(&tag_counts, &thread_counts);
+        assert_eq!(top_tags.len(), 10);
+    }
+
+    #[test]
+    fn test_process_tag_and_thread_stats_threads() {
+        let tag_counts: HashMap<String, usize> = HashMap::new();
+        let mut thread_counts = HashMap::new();
+        thread_counts.insert("Main".to_string(), 8);
+        thread_counts.insert("Work".to_string(), 12);
+        thread_counts.insert("Personal".to_string(), 5);
+        let (_, top_threads) = process_tag_and_thread_stats(&tag_counts, &thread_counts);
+        assert_eq!(top_threads.len(), 3);
+        assert_eq!(top_threads[0].name, "Work");
+        assert_eq!(top_threads[0].count, 12);
+        assert_eq!(top_threads[1].name, "Main");
+        assert_eq!(top_threads[1].count, 8);
+        assert_eq!(top_threads[2].name, "Personal");
+        assert_eq!(top_threads[2].count, 5);
+    }
+
+    ///
+    /// Generate Insights Tests
+    ///
+    #[test]
+    fn test_generate_insights_empty() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let insights = generate_insights(
+            0,
+            0,
+            &vec![0; 7],
+            &vec![],
+            0,
+            0,
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        assert!(insights.is_empty());
+    }
+
+    #[test]
+    fn test_generate_insights_current_streak() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let insights = generate_insights(
+            5,
+            3,
+            &vec![10; 7],
+            &vec![],
+            10,
+            1000,
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        assert!(!insights.is_empty());
+        let streak_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.streak.current");
+        assert!(streak_insight.is_some());
+        let params = &streak_insight.unwrap().params;
+        assert_eq!(params.get("count"), Some(&"5".to_string()));
+    }
+
+    #[test]
+    fn test_generate_insights_best_streak() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let insights = generate_insights(
+            1,
+            5,
+            &vec![10; 7],
+            &vec![],
+            10,
+            1000,
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        assert!(!insights.is_empty());
+        let streak_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.streak.best");
+        assert!(streak_insight.is_some());
+    }
+
+    #[test]
+    fn test_generate_insights_weekday_max() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        // Wednesday has the most words
+        let mut weekday_dist = vec![0; 7];
+        weekday_dist[2] = 500; // Wednesday (index 2 = Wednesday if Monday is 0)
+        let insights = generate_insights(
+            0,
+            0,
+            &weekday_dist,
+            &vec![],
+            10,
+            1000,
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        let weekday_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.weekday.max");
+        assert!(weekday_insight.is_some());
+        let params = &weekday_insight.unwrap().params;
+        assert_eq!(params.get("day_index"), Some(&"2".to_string()));
+    }
+
+    #[test]
+    fn test_generate_insights_trend_increasing() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        // Last 7 days: all high word counts
+        let mut daily_stats = Vec::new();
+        for i in 0..14 {
+            let date =
+                NaiveDate::from_ymd_opt(2024, 1, 1).unwrap() + chrono::Duration::days(i as i64);
+            daily_stats.push(DailyStat {
+                date: date.to_string(),
+                character_count: 100,
+                word_count: if i < 7 { 50 } else { 100 }, // Last 7 days have double
+            });
+        }
+        let insights = generate_insights(
+            0,
+            0,
+            &vec![0; 7],
+            &daily_stats,
+            10,
+            1000,
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        let trend_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.trend.longer");
+        assert!(trend_insight.is_some());
+    }
+
+    #[test]
+    fn test_generate_insights_trend_decreasing() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        // Last 7 days: all low word counts
+        let mut daily_stats = Vec::new();
+        for i in 0..14 {
+            let date =
+                NaiveDate::from_ymd_opt(2024, 1, 1).unwrap() + chrono::Duration::days(i as i64);
+            daily_stats.push(DailyStat {
+                date: date.to_string(),
+                character_count: 100,
+                word_count: if i < 7 { 100 } else { 50 }, // Last 7 days have half
+            });
+        }
+        let insights = generate_insights(
+            0,
+            0,
+            &vec![0; 7],
+            &daily_stats,
+            10,
+            1000,
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        let trend_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.trend.shorter");
+        assert!(trend_insight.is_some());
+    }
+
+    #[test]
+    fn test_generate_insights_languishing_tag() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let mut tag_counts = HashMap::new();
+        tag_counts.insert("old-tag".to_string(), 5);
+        let mut tag_last_used = HashMap::new();
+        // Last used 10 days ago
+        tag_last_used.insert(
+            "old-tag".to_string(),
+            NaiveDate::from_ymd_opt(2024, 1, 5).unwrap(),
+        );
+        let insights = generate_insights(
+            0,
+            0,
+            &vec![0; 7],
+            &vec![],
+            10,
+            1000,
+            &tag_counts,
+            &tag_last_used,
+            &vec![],
+            today,
+        );
+        let languishing_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.languishing.tag");
+        assert!(languishing_insight.is_some());
+    }
+
+    #[test]
+    fn test_generate_insights_thread_consistency() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let top_threads = vec![ThreadStat {
+            name: "Main".to_string(),
+            count: 12,
+        }];
+        let insights = generate_insights(
+            0,
+            0,
+            &vec![0; 7],
+            &vec![],
+            20, // 20 total notes
+            1000,
+            &HashMap::new(),
+            &HashMap::new(),
+            &top_threads,
+            today,
+        );
+        let consistency_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.consistency.thread");
+        assert!(consistency_insight.is_some());
+    }
+
+    #[test]
+    fn test_generate_insights_word_count_milestone() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let insights = generate_insights(
+            0,
+            0,
+            &vec![0; 7],
+            &vec![],
+            10,
+            15000, // > 5000 words
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        let milestone_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.milestone.words");
+        assert!(milestone_insight.is_some());
+    }
+
+    #[test]
+    fn test_generate_insights_not_below_milestone() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let insights = generate_insights(
+            0,
+            0,
+            &vec![0; 7],
+            &vec![],
+            10,
+            1000, // < 5000 words
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        let milestone_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.milestone.words");
+        assert!(milestone_insight.is_none());
+    }
+
+    ///
+    /// Edge Cases
+    ///
+    #[test]
+    fn test_calculate_streaks_single_date_not_today() {
+        let dates = vec![NaiveDate::from_ymd_opt(2024, 1, 10).unwrap()];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        // 5 days gap, so no current streak
+        assert_eq!(current, 0);
+        assert_eq!(best, 1);
+    }
+
+    #[test]
+    fn test_calculate_streaks_all_same_date() {
+        let dates = vec![
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+        ];
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let (current, best) = calculate_streaks(&dates, today);
+        assert_eq!(current, 1);
+        assert_eq!(best, 1);
+    }
+
+    #[test]
+    fn test_process_tag_and_thread_stats_exactly_10() {
+        let mut tag_counts = HashMap::new();
+        for i in 0..10 {
+            tag_counts.insert(format!("tag{}", i), i + 1);
+        }
+        let thread_counts: HashMap<String, usize> = HashMap::new();
+        let (top_tags, _) = process_tag_and_thread_stats(&tag_counts, &thread_counts);
+        assert_eq!(top_tags.len(), 10);
+    }
+
+    #[test]
+    fn test_generate_insights_no_current_streak_no_best_streak() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let insights = generate_insights(
+            1,
+            1,
+            &vec![0; 7],
+            &vec![],
+            10,
+            1000,
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        // No streak insights for streaks <= 1
+        let current_streak = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.streak.current");
+        let best_streak = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.streak.best");
+        assert!(current_streak.is_none());
+        assert!(best_streak.is_none());
+    }
+
+    #[test]
+    fn test_generate_insights_weekday_zero_values() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        let insights = generate_insights(
+            0,
+            0,
+            &vec![0; 7],
+            &vec![],
+            10,
+            1000,
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        // No weekday insight when all values are 0
+        let weekday_insight = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.weekday.max");
+        assert!(weekday_insight.is_none());
+    }
+
+    #[test]
+    fn test_generate_insights_not_enough_daily_stats() {
+        let today = NaiveDate::from_ymd_opt(2024, 1, 15).unwrap();
+        // Only 2 daily stats, need at least 6 for trend analysis (3 + 3)
+        let daily_stats = vec![
+            DailyStat {
+                date: "2024-01-14".to_string(),
+                character_count: 100,
+                word_count: 50,
+            },
+            DailyStat {
+                date: "2024-01-13".to_string(),
+                character_count: 100,
+                word_count: 40,
+            },
+        ];
+        let insights = generate_insights(
+            0,
+            0,
+            &vec![0; 7],
+            &daily_stats,
+            10,
+            1000,
+            &HashMap::new(),
+            &HashMap::new(),
+            &vec![],
+            today,
+        );
+        // No trend insights
+        let trend_longer = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.trend.longer");
+        let trend_shorter = insights
+            .iter()
+            .find(|i| i.key == "statistics.insight.trend.shorter");
+        assert!(trend_longer.is_none());
+        assert!(trend_shorter.is_none());
+    }
+}

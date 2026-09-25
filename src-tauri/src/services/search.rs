@@ -792,3 +792,728 @@ impl<'a> SearchService<'a> {
         }
     }
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::tempdir;
+
+    ///
+    /// Frontmatter Extraction Tests
+    ///
+
+    #[test]
+    fn test_extract_frontmatter_no_frontmatter() {
+        let content = "This is just regular content\nWith multiple lines";
+        let (count, frontmatter) = SearchService::extract_frontmatter(content);
+        assert_eq!(count, 0);
+        assert_eq!(frontmatter, "");
+    }
+
+    #[test]
+    fn test_extract_frontmatter_with_frontmatter() {
+        let content = "---\ntitle: Test\ncreated: 2024-01-01\n---\n\nThis is the body";
+        let (count, frontmatter) = SearchService::extract_frontmatter(content);
+        assert_eq!(count, 4);
+        assert!(frontmatter.contains("---"));
+        assert!(frontmatter.contains("title: Test"));
+        assert!(frontmatter.contains("created: 2024-01-01"));
+    }
+
+    #[test]
+    fn test_extract_frontmatter_incomplete() {
+        let content = "---\ntitle: Test\n";
+        let (count, frontmatter) = SearchService::extract_frontmatter(content);
+        assert_eq!(count, 0);
+        assert_eq!(frontmatter, "");
+    }
+
+    ///
+    /// Exact Match Tests
+    ///
+
+    #[test]
+    fn test_find_exact_match_indices_found() {
+        let line = "This is a test line";
+        let query = "test";
+        let result = SearchService::find_exact_match_indices(line, query);
+        assert!(result.is_some());
+        let (score, indices) = result.unwrap();
+        assert_eq!(score, 0);
+        assert!(!indices.is_empty());
+    }
+
+    #[test]
+    fn test_find_exact_match_indices_not_found() {
+        let line = "This is a test line";
+        let query = "missing";
+        let result = SearchService::find_exact_match_indices(line, query);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_find_exact_match_indices_case_insensitive() {
+        let line = "This is a TEST line";
+        let query = "test";
+        let result = SearchService::find_exact_match_indices(line, query);
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn test_find_exact_match_indices_multibyte_characters() {
+        let line = "Hello 世界";
+        let query = "世界";
+        let result = SearchService::find_exact_match_indices(line, query);
+        assert!(result.is_some());
+        let (_, indices) = result.unwrap();
+        assert_eq!(indices.len(), 2); // 2 characters in "世界"
+    }
+
+    ///
+    /// Thread Name Extraction Tests
+    ///
+
+    #[test]
+    fn test_extract_thread_names_empty_content() {
+        let content = "";
+        let result = SearchService::extract_thread_names(content);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_extract_thread_names_no_threads() {
+        let content = "---\ntitle: Test\n---\nThis is just content\nNo threads here";
+        let result = SearchService::extract_thread_names(content);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_extract_thread_names_single_thread() {
+        let content = "---\ntitle: Test\n---\n!!! Main Thread\nSome content";
+        let result = SearchService::extract_thread_names(content);
+        assert_eq!(result, vec!["Main Thread"]);
+    }
+
+    #[test]
+    fn test_extract_thread_names_multiple_threads() {
+        let content = "---\ntitle: Test\n---\n!!! Thread 1\nContent 1\n!!! Thread 2\nContent 2";
+        let result = SearchService::extract_thread_names(content);
+        assert_eq!(result, vec!["Thread 1", "Thread 2"]);
+    }
+
+    #[test]
+    fn test_extract_thread_names_skips_empty() {
+        let content = "!!! \n!!! Valid\n!!!   \n!!! Also Valid";
+        let result = SearchService::extract_thread_names(content);
+        assert_eq!(result, vec!["Valid", "Also Valid"]);
+    }
+
+    #[test]
+    fn test_extract_thread_names_with_frontmatter() {
+        let content = "---
+title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thread B\nMore";
+        let result = SearchService::extract_thread_names(content);
+        assert_eq!(result, vec!["Thread A", "Thread B"]);
+    }
+
+    ///
+    /// Thread Map Parsing Tests
+    ///
+
+    #[test]
+    fn test_parse_thread_map_from_frontmatter_empty() {
+        let frontmatter = "---\ntitle: Test\n---";
+        let result = SearchService::parse_thread_map_from_frontmatter(frontmatter);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_parse_thread_map_from_frontmatter_no_threads() {
+        let frontmatter = "---\ntitle: Test\ncreated: 2024-01-01\n---";
+        let result = SearchService::parse_thread_map_from_frontmatter(frontmatter);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_parse_thread_map_from_frontmatter_single() {
+        let frontmatter = "---\ntitle: Test\nthreads: ThreadA:5\n---";
+        let result = SearchService::parse_thread_map_from_frontmatter(frontmatter);
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.get(&5), Some(&"ThreadA".to_string()));
+    }
+
+    #[test]
+    fn test_parse_thread_map_from_frontmatter_multiple() {
+        let frontmatter = "---\ntitle: Test\nthreads: ThreadA:5,ThreadB:10,ThreadC:15\n---";
+        let result = SearchService::parse_thread_map_from_frontmatter(frontmatter);
+        assert_eq!(result.len(), 3);
+        assert_eq!(result.get(&5), Some(&"ThreadA".to_string()));
+        assert_eq!(result.get(&10), Some(&"ThreadB".to_string()));
+        assert_eq!(result.get(&15), Some(&"ThreadC".to_string()));
+    }
+
+    #[test]
+    fn test_parse_thread_map_from_frontmatter_with_spaces() {
+        let frontmatter = "---\ntitle: Test\nthreads: Thread A:5, Thread B:10\n---";
+        let result = SearchService::parse_thread_map_from_frontmatter(frontmatter);
+        assert_eq!(result.len(), 2);
+        assert_eq!(result.get(&5), Some(&"Thread A".to_string()));
+        assert_eq!(result.get(&10), Some(&"Thread B".to_string()));
+    }
+
+    ///
+    /// Filter and Sort Tests
+    ///
+
+    #[test]
+    fn test_filter_search_results_empty() {
+        let results: Vec<SearchResult> = vec![];
+        let filtered =
+            SearchService::filter_search_results(results, Some(50), Some(10), Some("test"));
+        assert!(filtered.is_empty());
+    }
+
+    #[test]
+    fn test_filter_search_results_by_min_score() {
+        let results = vec![
+            SearchResult {
+                filename: "note1.md".to_string(),
+                formatted_name: "Note 1".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 80,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "note2.md".to_string(),
+                formatted_name: "Note 2".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 60,
+                indices: vec![],
+            },
+        ];
+        let filtered = SearchService::filter_search_results(results, Some(70), None, None);
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].filename, "note1.md");
+    }
+
+    #[test]
+    fn test_filter_search_results_by_filename() {
+        let results = vec![
+            SearchResult {
+                filename: "test-note.md".to_string(),
+                formatted_name: "Test Note".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "other-note.md".to_string(),
+                formatted_name: "Other Note".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+        ];
+        let filtered = SearchService::filter_search_results(results, None, None, Some("test"));
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].filename, "test-note.md");
+    }
+
+    #[test]
+    fn test_filter_search_results_by_max_results() {
+        let results = vec![
+            SearchResult {
+                filename: "note1.md".to_string(),
+                formatted_name: "Note 1".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "note2.md".to_string(),
+                formatted_name: "Note 2".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "note3.md".to_string(),
+                formatted_name: "Note 3".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+        ];
+        let filtered = SearchService::filter_search_results(results, None, Some(2), None);
+        assert_eq!(filtered.len(), 2);
+    }
+
+    #[test]
+    fn test_sort_search_results_by_score() {
+        let results = vec![
+            SearchResult {
+                filename: "note1.md".to_string(),
+                formatted_name: "Note 1".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 60,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "note2.md".to_string(),
+                formatted_name: "Note 2".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 80,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "note3.md".to_string(),
+                formatted_name: "Note 3".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 70,
+                indices: vec![],
+            },
+        ];
+        let sorted = SearchService::sort_search_results(results, "score");
+        assert_eq!(sorted.len(), 3);
+        assert_eq!(sorted[0].filename, "note2.md"); // Highest score first
+        assert_eq!(sorted[0].score, 80);
+        assert_eq!(sorted[1].filename, "note3.md");
+        assert_eq!(sorted[1].score, 70);
+        assert_eq!(sorted[2].filename, "note1.md");
+        assert_eq!(sorted[2].score, 60);
+    }
+
+    #[test]
+    fn test_sort_search_results_by_filename() {
+        let results = vec![
+            SearchResult {
+                filename: "b-note.md".to_string(),
+                formatted_name: "B Note".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "a-note.md".to_string(),
+                formatted_name: "A Note".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "c-note.md".to_string(),
+                formatted_name: "C Note".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+        ];
+        let sorted = SearchService::sort_search_results(results, "filename");
+        assert_eq!(sorted.len(), 3);
+        assert_eq!(sorted[0].filename, "a-note.md");
+        assert_eq!(sorted[1].filename, "b-note.md");
+        assert_eq!(sorted[2].filename, "c-note.md");
+    }
+
+    #[test]
+    fn test_sort_search_results_by_date() {
+        let results = vec![
+            SearchResult {
+                filename: "2024-01-01_test.md".to_string(),
+                formatted_name: "2024-01-01".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "2024-01-03_test.md".to_string(),
+                formatted_name: "2024-01-03".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "2024-01-02_test.md".to_string(),
+                formatted_name: "2024-01-02".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 0,
+                indices: vec![],
+            },
+        ];
+        let sorted = SearchService::sort_search_results(results, "date");
+        assert_eq!(sorted.len(), 3);
+        // Newest first
+        assert_eq!(sorted[0].filename, "2024-01-03_test.md");
+        assert_eq!(sorted[1].filename, "2024-01-02_test.md");
+        assert_eq!(sorted[2].filename, "2024-01-01_test.md");
+    }
+
+    #[test]
+    fn test_sort_search_results_default() {
+        let results = vec![
+            SearchResult {
+                filename: "note1.md".to_string(),
+                formatted_name: "Note 1".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 60,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "note2.md".to_string(),
+                formatted_name: "Note 2".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 80,
+                indices: vec![],
+            },
+        ];
+        let sorted = SearchService::sort_search_results(results, "unknown");
+        assert_eq!(sorted.len(), 2);
+        // Default is by score descending
+        assert_eq!(sorted[0].filename, "note2.md");
+        assert_eq!(sorted[0].score, 80);
+    }
+
+    ///
+    /// Filter Tag Results Tests
+    ///
+
+    #[test]
+    fn test_filter_tag_results_empty_query() {
+        let mut tag_counts = HashMap::new();
+        tag_counts.insert("rust".to_string(), 5);
+        tag_counts.insert("python".to_string(), 3);
+
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service.filter_tag_results(tag_counts, "", true);
+        assert_eq!(results.len(), 2);
+    }
+
+    #[test]
+    fn test_filter_tag_results_with_query() {
+        let mut tag_counts = HashMap::new();
+        tag_counts.insert("rust".to_string(), 5);
+        tag_counts.insert("python".to_string(), 3);
+        tag_counts.insert("javascript".to_string(), 2);
+
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service.filter_tag_results(tag_counts, "rust", false);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].name, "rust");
+        assert_eq!(results[0].note_count, 5);
+    }
+
+    #[test]
+    fn test_filter_tag_results_sorted_by_count() {
+        let mut tag_counts = HashMap::new();
+        tag_counts.insert("rust".to_string(), 5);
+        tag_counts.insert("python".to_string(), 10);
+        tag_counts.insert("javascript".to_string(), 2);
+
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service.filter_tag_results(tag_counts, "", false);
+        assert_eq!(results.len(), 3);
+        // Sorted by count descending
+        assert_eq!(results[0].name, "python");
+        assert_eq!(results[0].note_count, 10);
+        assert_eq!(results[1].name, "rust");
+        assert_eq!(results[1].note_count, 5);
+        assert_eq!(results[2].name, "javascript");
+        assert_eq!(results[2].note_count, 2);
+    }
+
+    ///
+    /// Filter Thread Results Tests
+    ///
+
+    #[test]
+    fn test_filter_thread_results_empty_query() {
+        let mut thread_counts = HashMap::new();
+        thread_counts.insert("ThreadA".to_string(), 5);
+        thread_counts.insert("ThreadB".to_string(), 3);
+
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service.filter_thread_results(thread_counts, "", true);
+        assert_eq!(results.len(), 2);
+    }
+
+    #[test]
+    fn test_filter_thread_results_with_query() {
+        let mut thread_counts = HashMap::new();
+        thread_counts.insert("ThreadA".to_string(), 5);
+        thread_counts.insert("ThreadB".to_string(), 3);
+        thread_counts.insert("OtherItem".to_string(), 2);
+
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service.filter_thread_results(thread_counts, "Thread", false);
+        assert_eq!(results.len(), 2);
+        // Both ThreadA and ThreadB contain "Thread"
+        assert!(results.iter().any(|r| r.name == "ThreadA"));
+        assert!(results.iter().any(|r| r.name == "ThreadB"));
+    }
+
+    #[test]
+    fn test_filter_thread_results_sorted() {
+        let mut thread_counts = HashMap::new();
+        thread_counts.insert("Alpha".to_string(), 5);
+        thread_counts.insert("Beta".to_string(), 10);
+        thread_counts.insert("Gamma".to_string(), 2);
+
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service.filter_thread_results(thread_counts, "", false);
+        assert_eq!(results.len(), 3);
+        // Sorted by count descending, then by name
+        assert_eq!(results[0].name, "Beta");
+        assert_eq!(results[0].note_count, 10);
+        assert_eq!(results[1].name, "Alpha");
+        assert_eq!(results[1].note_count, 5);
+        assert_eq!(results[2].name, "Gamma");
+        assert_eq!(results[2].note_count, 2);
+    }
+
+    ///
+    /// Get Note Files Tests
+    ///
+
+    #[test]
+    fn test_get_note_files_empty_directory() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let result = search_service.get_note_files();
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_get_note_files_non_existent_directory() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().join("nonexistent");
+
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let result = search_service.get_note_files();
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_get_note_files_filters_markdown() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+
+        fs::write(notes_path.join("2024-01-01.md"), "# Note 1").expect("Failed to write file");
+        fs::write(notes_path.join("2024-01-02.md"), "# Note 2").expect("Failed to write file");
+        fs::write(notes_path.join("readme.txt"), "not a markdown file")
+            .expect("Failed to write file");
+
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let result = search_service.get_note_files();
+        assert!(result.is_ok());
+        let files = result.unwrap();
+        assert_eq!(files.len(), 2);
+    }
+
+    #[test]
+    fn test_get_note_files_sorts_descending() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+
+        fs::write(notes_path.join("2024-01-01.md"), "# Note 1").expect("Failed to write file");
+        fs::write(notes_path.join("2024-01-02.md"), "# Note 2").expect("Failed to write file");
+        fs::write(notes_path.join("2024-01-03.md"), "# Note 3").expect("Failed to write file");
+
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let result = search_service.get_note_files();
+        assert!(result.is_ok());
+        let files = result.unwrap();
+        assert_eq!(files.len(), 3);
+        // Sorted descending (newest first)
+        assert_eq!(
+            files[0].file_name().unwrap().to_string_lossy(),
+            "2024-01-03.md"
+        );
+        assert_eq!(
+            files[1].file_name().unwrap().to_string_lossy(),
+            "2024-01-02.md"
+        );
+        assert_eq!(
+            files[2].file_name().unwrap().to_string_lossy(),
+            "2024-01-01.md"
+        );
+    }
+
+    ///
+    /// Process Search Results Tests
+    ///
+
+    #[test]
+    fn test_process_search_results_applies_filters_and_sort() {
+        let results = vec![
+            SearchResult {
+                filename: "note1.md".to_string(),
+                formatted_name: "Note 1".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 80,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "note2.md".to_string(),
+                formatted_name: "Note 2".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 60,
+                indices: vec![],
+            },
+        ];
+
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let processed =
+            search_service.process_search_results(results, Some(70), None, None, "score");
+        assert_eq!(processed.len(), 1);
+        assert_eq!(processed[0].filename, "note1.md");
+    }
+
+    ///
+    /// Edge Cases
+    ///
+
+    #[test]
+    fn test_extract_frontmatter_empty_content() {
+        let content = "";
+        let (count, frontmatter) = SearchService::extract_frontmatter(content);
+        assert_eq!(count, 0);
+        assert_eq!(frontmatter, "");
+    }
+
+    #[test]
+    fn test_extract_thread_names_empty_lines() {
+        let content = "!!! \n\n!!! Valid\n\n!!!   \n";
+        let result = SearchService::extract_thread_names(content);
+        assert_eq!(result, vec!["Valid"]);
+    }
+
+    #[test]
+    fn test_filter_search_results_combined_filters() {
+        let results = vec![
+            SearchResult {
+                filename: "test-note1.md".to_string(),
+                formatted_name: "Test Note 1".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 80,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "test-note2.md".to_string(),
+                formatted_name: "Test Note 2".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 85,
+                indices: vec![],
+            },
+            SearchResult {
+                filename: "other-note.md".to_string(),
+                formatted_name: "Other Note".to_string(),
+                excerpt: "content".to_string(),
+                line_number: 0,
+                score: 90,
+                indices: vec![],
+            },
+        ];
+        let filtered =
+            SearchService::filter_search_results(results, Some(70), Some(2), Some("test"));
+        assert_eq!(filtered.len(), 2);
+        assert_eq!(filtered[0].filename, "test-note1.md");
+        assert_eq!(filtered[1].filename, "test-note2.md");
+    }
+
+    #[test]
+    fn test_sort_search_results_empty() {
+        let results: Vec<SearchResult> = vec![];
+        let sorted = SearchService::sort_search_results(results, "score");
+        assert!(sorted.is_empty());
+    }
+
+    #[test]
+    fn test_parse_thread_map_from_frontmatter_malformed() {
+        let frontmatter = "---\ntitle: Test\nthreads: ThreadA:not_a_number\n---";
+        let result = SearchService::parse_thread_map_from_frontmatter(frontmatter);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_parse_thread_map_from_frontmatter_no_colon() {
+        let frontmatter = "---\ntitle: Test\nthreads: ThreadA ThreadB\n---";
+        let result = SearchService::parse_thread_map_from_frontmatter(frontmatter);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_extract_thread_names_with_frontmatter_and_content() {
+        let content = "---\ntitle: Test\ntags: [a, b]\n---\n!!! Thread 1\nContent line 1\n!!! Thread 2\nContent line 2";
+        let result = SearchService::extract_thread_names(content);
+        assert_eq!(result, vec!["Thread 1", "Thread 2"]);
+    }
+}

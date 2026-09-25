@@ -132,3 +132,386 @@ impl TagManager {
         }
     }
 }
+
+///
+/// Unit Tests
+///
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::tempdir;
+
+    ///
+    /// Construction tests
+    ///
+    #[test]
+    fn test_new_tag_manager() {
+        let manager = TagManager::new();
+        assert!(manager.cached_tags.is_none());
+    }
+
+    ///
+    /// Cache invalidation tests
+    ///
+    #[test]
+    fn test_invalidate_cache_clears_tags() {
+        let mut manager = TagManager::new();
+        manager.cached_tags = Some(vec!["tag1".to_string(), "tag2".to_string()]);
+        manager.invalidate_cache();
+        assert!(manager.cached_tags.is_none());
+    }
+
+    ///
+    /// get_all_tags tests
+    ///
+    #[test]
+    fn test_get_all_tags_nonexistent_folder() {
+        let mut manager = TagManager::new();
+        let path = Path::new("/nonexistent/path");
+        let result = manager.get_all_tags(path);
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_get_all_tags_empty_folder() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+        let result = manager.get_all_tags(path);
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_get_all_tags_with_markdown_files() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(
+            path.join("2024-01-01.md"),
+            "---\ntags: [work, urgent]\n---\ncontent",
+        )
+        .unwrap();
+        fs::write(
+            path.join("2024-01-02.md"),
+            "---\ntags: [work, personal]\n---\ncontent",
+        )
+        .unwrap();
+
+        let result = manager.get_all_tags(path);
+        assert!(result.is_ok());
+        let tags = result.unwrap();
+        assert_eq!(tags.len(), 3);
+        assert!(tags.contains(&"work".to_string()));
+        assert!(tags.contains(&"urgent".to_string()));
+        assert!(tags.contains(&"personal".to_string()));
+    }
+
+    #[test]
+    fn test_get_all_tags_sorted_by_frequency() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(path.join("2024-01-01.md"), "---\ntags: [work]\n---\n").unwrap();
+        fs::write(path.join("2024-01-02.md"), "---\ntags: [work]\n---\n").unwrap();
+        fs::write(
+            path.join("2024-01-03.md"),
+            "---\ntags: [work, personal]\n---\n",
+        )
+        .unwrap();
+        fs::write(path.join("2024-01-04.md"), "---\ntags: [personal]\n---\n").unwrap();
+
+        let result = manager.get_all_tags(path);
+        assert!(result.is_ok());
+        let tags = result.unwrap();
+        assert_eq!(tags.len(), 2);
+        assert_eq!(tags[0], "work");
+        assert_eq!(tags[1], "personal");
+    }
+
+    #[test]
+    fn test_get_all_tags_alphabetical_tiebreaker() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(path.join("2024-01-01.md"), "---\ntags: [zebra]\n---\n").unwrap();
+        fs::write(path.join("2024-01-02.md"), "---\ntags: [apple]\n---\n").unwrap();
+
+        let result = manager.get_all_tags(path);
+        assert!(result.is_ok());
+        let tags = result.unwrap();
+        assert_eq!(tags.len(), 2);
+        assert_eq!(tags[0], "apple");
+        assert_eq!(tags[1], "zebra");
+    }
+
+    #[test]
+    fn test_get_all_tags_ignores_non_md_files() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(path.join("2024-01-01.md"), "---\ntags: [work]\n---\n").unwrap();
+        fs::write(path.join("2024-01-02.txt"), "---\ntags: [personal]\n---\n").unwrap();
+        fs::write(path.join(".hidden.md"), "---\ntags: [hidden]\n---\n").unwrap();
+
+        let result = manager.get_all_tags(path);
+        assert!(result.is_ok());
+        let tags = result.unwrap();
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0], "work");
+    }
+
+    #[test]
+    fn test_get_all_tags_caches_results() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(path.join("2024-01-01.md"), "---\ntags: [work]\n---\n").unwrap();
+
+        let result1 = manager.get_all_tags(path);
+        assert!(result1.is_ok());
+        assert!(manager.cached_tags.is_some());
+
+        let result2 = manager.get_all_tags(path);
+        assert!(result2.is_ok());
+        assert_eq!(result1.unwrap(), result2.unwrap());
+    }
+
+    ///
+    /// suggest_tags tests
+    ///
+    #[test]
+    fn test_suggest_tags_empty_query() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(
+            path.join("2024-01-01.md"),
+            "---\ntags: [work, personal]\n---\n",
+        )
+        .unwrap();
+
+        let suggestions = manager.suggest_tags(path, "", &[], 10);
+        assert_eq!(suggestions.len(), 2);
+        assert!(suggestions.contains(&"work".to_string()));
+        assert!(suggestions.contains(&"personal".to_string()));
+    }
+
+    #[test]
+    fn test_suggest_tags_with_query() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(
+            path.join("2024-01-01.md"),
+            "---\ntags: [work, personal]\n---\n",
+        )
+        .unwrap();
+
+        let suggestions = manager.suggest_tags(path, "work", &[], 10);
+        assert_eq!(suggestions.len(), 1);
+        assert_eq!(suggestions[0], "work");
+    }
+
+    #[test]
+    fn test_suggest_tags_excludes_tags() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(
+            path.join("2024-01-01.md"),
+            "---\ntags: [work, personal]\n---\n",
+        )
+        .unwrap();
+
+        let suggestions = manager.suggest_tags(path, "", &["work".to_string()], 10);
+        assert_eq!(suggestions.len(), 1);
+        assert_eq!(suggestions[0], "personal");
+    }
+
+    #[test]
+    fn test_suggest_tags_respects_limit() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(
+            path.join("2024-01-01.md"),
+            "---\ntags: [a, b, c, d, e]\n---\n",
+        )
+        .unwrap();
+
+        let suggestions = manager.suggest_tags(path, "", &[], 3);
+        assert!(suggestions.len() <= 3);
+    }
+
+    #[test]
+    fn test_suggest_tags_case_insensitive() {
+        let mut manager = TagManager::new();
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(path.join("2024-01-01.md"), "---\ntags: [Work]\n---\n").unwrap();
+
+        let suggestions = manager.suggest_tags(path, "WORK", &[], 10);
+        assert_eq!(suggestions.len(), 1);
+        assert_eq!(suggestions[0], "Work");
+    }
+
+    ///
+    /// Session tag operations tests
+    ///
+    #[test]
+    fn test_get_tags_from_session_with_tags() {
+        let manager = TagManager::new();
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: [work, personal]".into(),
+            "---".into(),
+            "content".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+
+        let tags = manager.get_tags_from_session(&session);
+        assert_eq!(tags.len(), 2);
+        assert!(tags.contains(&"work".to_string()));
+        assert!(tags.contains(&"personal".to_string()));
+    }
+
+    #[test]
+    fn test_get_tags_from_session_no_tags() {
+        let manager = TagManager::new();
+        let session = NoteSession::new();
+
+        let tags = manager.get_tags_from_session(&session);
+        assert!(tags.is_empty());
+    }
+
+    #[test]
+    fn test_get_tags_from_session_no_frontmatter() {
+        let manager = TagManager::new();
+        let mut session = NoteSession::new();
+        session.lines = vec!["content".into()];
+
+        let tags = manager.get_tags_from_session(&session);
+        assert!(tags.is_empty());
+    }
+
+    #[test]
+    fn test_add_tag_to_session_new_tag() {
+        let manager = TagManager::new();
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "title: Test".into(),
+            "---".into(),
+            "content".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+
+        manager.add_tag_to_session(&mut session, "work".to_string());
+
+        let tags = manager.get_tags_from_session(&session);
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0], "work");
+    }
+
+    #[test]
+    fn test_add_tag_to_session_existing_tag() {
+        let manager = TagManager::new();
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: [work]".into(),
+            "---".into(),
+            "content".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+
+        manager.add_tag_to_session(&mut session, "work".to_string());
+
+        let tags = manager.get_tags_from_session(&session);
+        assert_eq!(tags.len(), 1);
+    }
+
+    #[test]
+    fn test_add_tag_to_session_no_frontmatter() {
+        let manager = TagManager::new();
+        let mut session = NoteSession::new();
+
+        manager.add_tag_to_session(&mut session, "work".to_string());
+
+        let tags = manager.get_tags_from_session(&session);
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0], "work");
+        assert!(session.frontmatter_range.is_some());
+    }
+
+    #[test]
+    fn test_remove_tag_from_session() {
+        let manager = TagManager::new();
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: [work, personal]".into(),
+            "---".into(),
+            "content".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+
+        manager.remove_tag_from_session(&mut session, "work".to_string());
+
+        let tags = manager.get_tags_from_session(&session);
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0], "personal");
+    }
+
+    #[test]
+    fn test_remove_tag_from_session_nonexistent() {
+        let manager = TagManager::new();
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: [work]".into(),
+            "---".into(),
+            "content".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+
+        manager.remove_tag_from_session(&mut session, "nonexistent".to_string());
+
+        let tags = manager.get_tags_from_session(&session);
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0], "work");
+    }
+
+    #[test]
+    fn test_remove_tag_from_session_last_tag() {
+        let manager = TagManager::new();
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: [work]".into(),
+            "---".into(),
+            "content".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+
+        manager.remove_tag_from_session(&mut session, "work".to_string());
+
+        let tags = manager.get_tags_from_session(&session);
+        assert!(tags.is_empty());
+        assert!(session.find_metadata_line("tags").is_none());
+    }
+}
