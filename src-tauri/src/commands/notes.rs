@@ -303,6 +303,25 @@ pub async fn purge_empty_notes(state: State<'_, AppState>) -> Result<usize, Stri
     note_manager.purge_empty_notes()
 }
 
+/// Deletes a note file at the specified path.
+/// Also clears the active session if the deleted note is currently open.
+#[tauri::command]
+pub async fn delete_note(path: String, state: State<'_, AppState>) -> Result<(), String> {
+    let path_buf = PathBuf::from(&path);
+    let note_manager = state.note_manager()?;
+
+    // Clear the session if it's the currently open note
+    let mut session = state.note_session()?;
+    if session.path.as_ref() == Some(&path_buf) {
+        session.clear();
+    }
+    drop(session);
+
+    note_manager.delete_note(&path_buf)?;
+
+    Ok(())
+}
+
 /// Gathers comprehensive statistics across all notes in the configured folder.
 #[tauri::command]
 pub async fn get_statistics(state: State<'_, AppState>) -> Result<AppStatistics, String> {

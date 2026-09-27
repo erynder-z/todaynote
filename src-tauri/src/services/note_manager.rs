@@ -262,6 +262,18 @@ impl NoteManager {
     pub fn get_statistics(&self) -> Result<AppStatistics, String> {
         crate::services::statistics::get_statistics(self)
     }
+
+    /// Deletes a note file from the filesystem.
+    /// Also clears the active session if the deleted note is currently open.
+    pub fn delete_note(&self, path: &PathBuf) -> Result<(), String> {
+        if !path.exists() {
+            return Err(format!("Note file does not exist: {}", path.display()));
+        }
+
+        fs::remove_file(path).map_err(|e| format!("Failed to delete note file: {}", e))?;
+
+        Ok(())
+    }
 }
 
 ///
@@ -897,5 +909,56 @@ mod tests {
 
         assert!(result.is_ok());
         assert!(result.unwrap().is_empty());
+    }
+
+    ///
+    /// delete_note Tests
+    ///
+    #[test]
+    fn test_delete_note_success() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note_path = notes_path.join("2024-01-01.md");
+
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+        fs::write(&note_path, "# Test note").expect("Failed to create note file");
+
+        let manager = NoteManager::new(notes_path, "en".to_string());
+        let result = manager.delete_note(&note_path);
+
+        assert!(result.is_ok());
+        assert!(!note_path.exists());
+    }
+
+    #[test]
+    fn test_delete_note_file_not_found() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note_path = notes_path.join("nonexistent.md");
+
+        let manager = NoteManager::new(notes_path, "en".to_string());
+        let result = manager.delete_note(&note_path);
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("does not exist"));
+    }
+
+    #[test]
+    fn test_delete_note_removes_correct_file() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let note1_path = notes_path.join("2024-01-01.md");
+        let note2_path = notes_path.join("2024-01-02.md");
+
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+        fs::write(&note1_path, "# Note 1").expect("Failed to create note 1");
+        fs::write(&note2_path, "# Note 2").expect("Failed to create note 2");
+
+        let manager = NoteManager::new(notes_path.clone(), "en".to_string());
+        let result = manager.delete_note(&note1_path);
+
+        assert!(result.is_ok());
+        assert!(!note1_path.exists());
+        assert!(note2_path.exists());
     }
 }

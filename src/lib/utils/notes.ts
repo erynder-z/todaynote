@@ -357,6 +357,34 @@ export class NotesService {
 
 		return localized;
 	}
+
+	/**
+	 * Deletes a note file at the specified path.
+	 */
+	async deleteNote(path: string): Promise<boolean> {
+		try {
+			await invoke("delete_note", { path });
+			return true;
+		} catch (error) {
+			console.error(`Error deleting note at ${path}:`, error);
+			return false;
+		}
+	}
+
+	/**
+	 * Reads the last available note (most recent note that is not today's).
+	 */
+	async readLastAvailableNote(): Promise<NoteContentResponse | null> {
+		try {
+			const response = (await invoke(
+				"read_last_available_note",
+			)) as NoteContentResponse;
+			return response;
+		} catch (error) {
+			console.error("Error reading last available note:", error);
+			return null;
+		}
+	}
 }
 
 /**

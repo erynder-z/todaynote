@@ -4,7 +4,9 @@
    */
 
   import { fade } from 'svelte/transition';
+  import { toast } from '$lib';
   import type { NoteContentResponse } from '$lib/interfaces/notes';
+  import { notesService } from '$lib/utils/notes';
   import { settings, t } from '../index';
   import { EditorStore } from '../stores/editor.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
@@ -59,6 +61,25 @@
 
     // Close sidebar in vertical layout after jumping
     if (window.innerWidth <= 1024) sessionState.sidebarOpen = false;
+  };
+
+  /**
+   * Handles note deletion.
+   * After deletion, navigates to the last available note or shows a message.
+   */
+  const handleNoteDeleted = async () => {
+    const lastNote = await notesService.readLastAvailableNote();
+
+    if (lastNote) {
+      // Navigate to the last available note
+      sessionState.todayNotePath = lastNote.path;
+      sessionState.todayNoteContent = lastNote;
+    } else {
+      // No notes left, clear the current note
+      sessionState.todayNotePath = null;
+      sessionState.todayNoteContent = null;
+      toast.info($t('notes.list.empty'));
+    }
   };
 
   /**
@@ -153,8 +174,10 @@
     <div class="sidebar-wrapper" class:open={sessionState.sidebarOpen}>
       <Sidebar
         {noteContent}
+        {notePath}
         threads={editor.threads}
         onSelect={handleJump}
+        onNoteDeleted={handleNoteDeleted}
         width={settings.controlCenterWidth}
         {isResizing}
       />

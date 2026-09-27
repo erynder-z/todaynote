@@ -2,12 +2,14 @@
   /**
    * Control Center sidebar containing date, tags, and thread shortcuts.
    */
+
   import { slide } from 'svelte/transition';
   import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
   import { t } from '$lib/utils/i18n';
   import { useShortcuts } from '$lib/utils/shortcuts';
   import { sessionState } from '../stores/sessionState.svelte';
   import NoteDate from './NoteDate.svelte';
+  import NoteDeleteButton from './NoteDeleteButton.svelte';
   import NoteTags from './NoteTags.svelte';
   import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';
   import ThreadShortcutsModeToggle from './ThreadShortcutsModeToggle.svelte';
@@ -15,19 +17,35 @@
   let {
     noteContent,
     threads,
+    notePath,
     onSelect,
+    onNoteDeleted,
     width = 22, // rem
     isResizing = false,
   } = $props<{
     noteContent: NoteContentResponse | null;
     threads: NoteThread[];
+    notePath: string | null;
     onSelect: (threadId: string) => void;
+    onNoteDeleted: () => void;
     width?: number;
     isResizing?: boolean;
   }>();
 
+  let noteOptionsOpen = $state(false);
+
   const toggleSidebar = () => {
     sessionState.sidebarOpen = !sessionState.sidebarOpen;
+  };
+
+  const toggleNoteOptions = (e: Event) => {
+    e.stopPropagation();
+    noteOptionsOpen = !noteOptionsOpen;
+  };
+
+  const closeNoteOptions = (e?: Event) => {
+    if (e) e.stopPropagation();
+    noteOptionsOpen = false;
   };
 
   const handleThreadSelect = (threadId: string) => {
@@ -49,12 +67,15 @@
   });
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="sidebar"
   class:closed={!sessionState.sidebarOpen}
   class:resizing={isResizing}
   transition:slide={{ duration: 200, axis: 'x' }}
   style="width: {width}rem; --content-width: {width - 3}rem;"
+  onclick={() => (noteOptionsOpen = false)}
 >
   <button
     class="toggle-btn horizontal-only"
@@ -72,10 +93,46 @@
   </button>
 
   <div class="sidebar-content">
-    <div class="sidebar-sectio">
-      <NoteDate {noteContent} />
+    <div class="sidebar-section">
+      <div class="note-header" onclick={(e) => e.stopPropagation()}>
+        <NoteDate {noteContent} />
+        <button
+          class="note-options-btn"
+          title={$t('note.options')}
+          onclick={toggleNoteOptions}
+          onkeydown={(e) => {
+            if (e.key === 'Enter') toggleNoteOptions(e);
+          }}
+          aria-haspopup="true"
+          aria-expanded={noteOptionsOpen}
+          ><svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="1.2rem"
+            viewBox="0 -960 960 960"
+            width="1.2rem"
+            fill="currentColor"
+            ><path
+              d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-440q0-33 23.5-56.5T480-520q33 0 56.5 23.5T560-440q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-640q0-33 23.5-56.5T480-720q33 0 56.5 23.5T560-640q0 33-23.5 56.5T480-560Z"
+            /></svg
+          >
+        </button>
+        {#if noteOptionsOpen}
+          <!-- svelte-ignore a11y_interactive_supports_focus -->
+          <div
+            class="note-options-dropdown"
+            role="menu"
+            onclick={(e) => e.stopPropagation()}
+          >
+            <NoteDeleteButton
+              {noteContent}
+              {notePath}
+              {onNoteDeleted}
+              closeDropdown={closeNoteOptions}
+            />
+          </div>
+        {/if}
+      </div>
     </div>
-
     <div class="sidebar-section">
       <h3 class="sidebar-title">{$t('search.tags')}</h3>
       <NoteTags {noteContent} />
@@ -155,6 +212,48 @@
   .threads-title-container {
     display: flex;
     justify-content: space-between;
+  }
+
+  .note-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+  }
+
+  .note-options-btn {
+    background: none;
+    border: none;
+    color: var(--text-ui-muted);
+    padding: 0.25rem;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .note-options-btn:hover {
+    background-color: color-mix(in srgb, var(--accent), transparent 85%);
+    color: var(--accent);
+  }
+
+  .note-options-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .note-options-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.25rem;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    overflow: hidden;
   }
 
   @media (min-width: 1025px) {

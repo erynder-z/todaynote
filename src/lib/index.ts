@@ -15,6 +15,7 @@ export { default as ModalFooter } from "./components/ModalFooter.svelte";
 export { default as Navigation } from "./components/Navigation.svelte";
 export { default as NoteBrowser } from "./components/NoteBrowser.svelte";
 export { default as NoteDate } from "./components/NoteDate.svelte";
+export { default as NoteDeleteButton } from "./components/NoteDeleteButton.svelte";
 export { default as NoteEditor } from "./components/NoteEditor.svelte";
 export { default as NoteTags } from "./components/NoteTags.svelte";
 export { default as NoteThreadShortcuts } from "./components/NoteThreadShortcuts.svelte";

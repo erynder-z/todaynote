@@ -62,6 +62,14 @@ impl NoteSession {
         self.detect_threads();
     }
 
+    /// Clears the session, resetting it to an empty state.
+    pub fn clear(&mut self) {
+        self.path = None;
+        self.lines.clear();
+        self.frontmatter_range = None;
+        self.threads.clear();
+    }
+
     /// Detects YAML frontmatter (delimited by '---' on the first line and another '---').
     pub fn detect_frontmatter(&mut self) {
         if self.lines.is_empty() {
@@ -689,5 +697,41 @@ mod tests {
         let len_before = session.lines.len();
         session.update_last_modified();
         assert_eq!(session.lines.len(), len_before);
+    }
+
+    ///
+    /// clear tests
+    ///
+    #[test]
+    fn test_clear_resets_session() {
+        let mut session = NoteSession::new();
+        session.path = Some(PathBuf::from("/tmp/note.md"));
+        session.lines = vec!["line1".into(), "line2".into()];
+        session.frontmatter_range = Some((0, 1));
+        session.threads = vec![NoteThread {
+            id: "test-id".to_string(),
+            name: "Test".to_string(),
+            start_line: 0,
+            end_line: 1,
+            pinned: false,
+        }];
+
+        session.clear();
+
+        assert!(session.path.is_none());
+        assert!(session.lines.is_empty());
+        assert!(session.frontmatter_range.is_none());
+        assert!(session.threads.is_empty());
+    }
+
+    #[test]
+    fn test_clear_on_empty_session() {
+        let mut session = NoteSession::new();
+        session.clear();
+
+        assert!(session.path.is_none());
+        assert!(session.lines.is_empty());
+        assert!(session.frontmatter_range.is_none());
+        assert!(session.threads.is_empty());
     }
 }

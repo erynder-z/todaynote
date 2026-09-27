@@ -8,11 +8,11 @@ use commands::folder::validate_folder;
 use commands::font::{get_system_fonts, set_font_family, set_use_custom_font};
 use commands::i18n::get_translations;
 use commands::notes::{
-    apply_default_thread_name, check_day_boundary, check_todays_note_exists, delete_note_line,
-    detect_threads, ensure_thread, get_last_available_note_path, get_note_path_by_offset,
-    get_statistics, insert_note_line, list_notes, open_todays_note, purge_empty_notes,
-    read_last_available_note, read_note_by_offset, read_note_content, remove_thread,
-    save_note_content, toggle_thread_pin, update_note_line,
+    apply_default_thread_name, check_day_boundary, check_todays_note_exists, delete_note,
+    delete_note_line, detect_threads, ensure_thread, get_last_available_note_path,
+    get_note_path_by_offset, get_statistics, insert_note_line, list_notes, open_todays_note,
+    purge_empty_notes, read_last_available_note, read_note_by_offset, read_note_content,
+    remove_thread, save_note_content, toggle_thread_pin, update_note_line,
 };
 use commands::search::{
     aggregate_thread, get_pinned_threads, get_thread_content, process_search_results, search_notes,
@@ -75,6 +75,8 @@ pub fn run() {
             apply_default_thread_name,
             check_day_boundary,
             check_todays_note_exists,
+            delete_note,
+            delete_note_line,
             detect_threads,
             export_notes_archive,
             import_notes_archive,
@@ -88,7 +90,6 @@ pub fn run() {
             save_note_content,
             update_note_line,
             insert_note_line,
-            delete_note_line,
             ensure_thread,
             remove_thread,
             toggle_thread_pin,
