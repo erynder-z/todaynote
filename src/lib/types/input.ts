@@ -1,6 +1,6 @@
 export type ShortcutCallback = (
 	e: KeyboardEvent,
-) => boolean | void | Promise<void>;
+) => boolean | void | Promise<boolean> | Promise<void>;
 
 export type ShortcutAction =
 	| "toggleSearch"
@@ -12,6 +12,7 @@ export type ShortcutAction =
 	| "toggleSidebar"
 	| "toggleNoteBrowserLayout"
 	| "manageTags"
+	| "deleteNote"
 	| "closePopup"
 	| "focusLastLine"
 	| "jumpByNumber"

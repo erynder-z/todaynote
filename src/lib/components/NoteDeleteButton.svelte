@@ -1,58 +1,30 @@
 <script lang="ts">
   /**
    * Button for deleting a note.
-   * Shows a native confirmation dialog before deletion.
-   * Handles all deletion logic including closing dropdown and navigation.
+   * Triggers the onDelete callback when clicked.
    */
-  import { ask } from '@tauri-apps/plugin-dialog';
-  import { get } from 'svelte/store';
-  import { locale, t, toast } from '$lib';
+  import { t } from '$lib';
   import type { NoteContentResponse } from '$lib/interfaces/notes';
-  import { notesService } from '$lib/utils/notes';
 
   let {
     noteContent,
     notePath,
-    onNoteDeleted,
+    onDelete,
     closeDropdown = () => {},
   } = $props<{
     noteContent: NoteContentResponse | null;
     notePath: string | null;
-    onNoteDeleted: () => void;
+    onDelete: () => void;
     closeDropdown?: () => void;
   }>();
 
   /**
-   * Handles the deletion of the current note via Tauri dialog
+   * Handles the click on the delete button
    */
-  const handleDelete = async (e: Event) => {
+  const handleDelete = (e: Event) => {
     e.stopPropagation();
-
-    if (!notePath) return;
-
-    const confirmed = await ask($t('note.delete_confirm_message'), {
-      title: $t('note.delete_confirm_title'),
-      kind: 'warning',
-      okLabel: $t('note.delete_confirm'),
-      cancelLabel: $t('note.delete_cancel'),
-    });
-
-    if (!confirmed) return;
-
-    try {
-      const success = await notesService.deleteNote(notePath);
-
-      if (success) {
-        closeDropdown();
-        onNoteDeleted();
-        toast.success($t('note.delete_success'));
-      } else {
-        toast.error($t('note.delete_error'));
-      }
-    } catch (error) {
-      console.error('Failed to delete note:', error);
-      toast.error($t('note.delete_error'));
-    }
+    closeDropdown();
+    onDelete();
   };
 </script>
 

@@ -151,6 +151,7 @@
 	"shortcuts.action.toggle_sidebar": "Seitenleiste umschalten",
 	"shortcuts.action.toggle_note_browser_layout": "Layout umschalten",
 	"shortcuts.action.manage_tags": "Tags verwalten",
+	"shortcuts.action.delete_note": "Notiz löschen",
 	"shortcuts.action.close_popup": "Popup schließen",
 	"shortcuts.action.focus_last_line": "Letzte Notizzeile fokussieren",
 	"shortcuts.action.jump_to_thread": "Zu Thread springen",

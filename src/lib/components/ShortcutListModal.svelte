@@ -16,6 +16,7 @@
     'togglePinnedThreads',
     'toggleSidebar',
     'manageTags',
+    'deleteNote',
     'closePopup',
     'focusLastLine',
     'jumpByNumber',

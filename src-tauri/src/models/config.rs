@@ -145,6 +145,15 @@ impl Default for AppConfig {
             },
         );
         shortcuts.insert(
+            "deleteNote".to_string(),
+            ShortcutConfig {
+                key: "X".to_string(),
+                primary: true,
+                secondary: true,
+                description: "Delete note".to_string(),
+            },
+        );
+        shortcuts.insert(
             "closePopup".to_string(),
             ShortcutConfig {
                 key: "Escape".to_string(),

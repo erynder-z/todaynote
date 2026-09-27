@@ -3,9 +3,12 @@
    * Control Center sidebar containing date, tags, and thread shortcuts.
    */
 
+  import { ask } from '@tauri-apps/plugin-dialog';
   import { slide } from 'svelte/transition';
   import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
+  import { toast } from '$lib/stores/toast.svelte';
   import { t } from '$lib/utils/i18n';
+  import { notesService } from '$lib/utils/notes';
   import { useShortcuts } from '$lib/utils/shortcuts';
   import { sessionState } from '../stores/sessionState.svelte';
   import NoteDate from './NoteDate.svelte';
@@ -34,20 +37,32 @@
 
   let noteOptionsOpen = $state(false);
 
+  /**
+   * Toggle sidebar visibility
+   */
   const toggleSidebar = () => {
     sessionState.sidebarOpen = !sessionState.sidebarOpen;
   };
 
+  /**
+   * Toggle note options visibility
+   */
   const toggleNoteOptions = (e: Event) => {
     e.stopPropagation();
     noteOptionsOpen = !noteOptionsOpen;
   };
 
+  /**
+   * Close note options
+   */
   const closeNoteOptions = (e?: Event) => {
     if (e) e.stopPropagation();
     noteOptionsOpen = false;
   };
 
+  /**
+   * Sets the with the provided id as the selected thread
+   */
   const handleThreadSelect = (threadId: string) => {
     if (sessionState.threadShortcutsMode === 'navigation') {
       onSelect(threadId);
@@ -62,8 +77,40 @@
     }
   };
 
+  /**
+   * Handles the deletion of the current note with confirmation.
+   * Used by both the delete button and keyboard shortcut.
+   */
+  const handleDeleteNote = async () => {
+    if (!notePath) return;
+
+    const confirmed = await ask($t('note.delete_confirm_message'), {
+      title: $t('note.delete_confirm_title'),
+      kind: 'warning',
+      okLabel: $t('note.delete_confirm'),
+      cancelLabel: $t('note.delete_cancel'),
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const success = await notesService.deleteNote(notePath);
+
+      if (success) {
+        onNoteDeleted();
+        toast.success($t('note.delete_success'));
+      } else {
+        toast.error($t('note.delete_error'));
+      }
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+      toast.error($t('note.delete_error'));
+    }
+  };
+
   useShortcuts({
     toggleSidebar: () => toggleSidebar(),
+    deleteNote: async () => await handleDeleteNote(),
   });
 </script>
 
@@ -126,7 +173,7 @@
             <NoteDeleteButton
               {noteContent}
               {notePath}
-              {onNoteDeleted}
+              onDelete={handleDeleteNote}
               closeDropdown={closeNoteOptions}
             />
           </div>
