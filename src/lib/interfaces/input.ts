@@ -4,7 +4,6 @@ export interface ShortcutConfig {
 	key: string;
 	primary?: boolean;
 	secondary?: boolean;
-	shift?: boolean;
 	description?: string;
 }
 

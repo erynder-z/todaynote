@@ -12,7 +12,6 @@ pub struct ShortcutConfig {
     pub key: String,
     pub primary: bool,
     pub secondary: bool,
-    pub shift: bool,
     pub description: String,
 }
 
@@ -79,7 +78,6 @@ impl Default for AppConfig {
                 key: "K".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle search".to_string(),
             },
         );
@@ -89,7 +87,6 @@ impl Default for AppConfig {
                 key: "L".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle note browser".to_string(),
             },
         );
@@ -99,7 +96,6 @@ impl Default for AppConfig {
                 key: ",".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle settings".to_string(),
             },
         );
@@ -109,7 +105,6 @@ impl Default for AppConfig {
                 key: "X".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle statistics".to_string(),
             },
         );
@@ -119,7 +114,6 @@ impl Default for AppConfig {
                 key: "I".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle pinned threads".to_string(),
             },
         );
@@ -129,7 +123,6 @@ impl Default for AppConfig {
                 key: "B".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Toggle sidebar".to_string(),
             },
         );
@@ -139,7 +132,6 @@ impl Default for AppConfig {
                 key: "L".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Toggle note browser layout".to_string(),
             },
         );
@@ -149,7 +141,6 @@ impl Default for AppConfig {
                 key: "T".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Manage tags".to_string(),
             },
         );
@@ -159,7 +150,6 @@ impl Default for AppConfig {
                 key: "Escape".to_string(),
                 primary: false,
                 secondary: false,
-                shift: false,
                 description: "Close popup".to_string(),
             },
         );
@@ -169,7 +159,6 @@ impl Default for AppConfig {
                 key: "0".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Focus last line".to_string(),
             },
         );
@@ -179,7 +168,6 @@ impl Default for AppConfig {
                 key: "1,2,3,4,5,6,7,8,9,B,C,D,G,H,I,J,K,N,P,R".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Jump to thread".to_string(),
             },
         );
@@ -189,7 +177,6 @@ impl Default for AppConfig {
                 key: "F".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Toggle fuzzy search".to_string(),
             },
         );
@@ -199,7 +186,6 @@ impl Default for AppConfig {
                 key: "M".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Toggle search mode".to_string(),
             },
         );
@@ -209,7 +195,6 @@ impl Default for AppConfig {
                 key: "F".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Find in note".to_string(),
             },
         );
@@ -219,7 +204,6 @@ impl Default for AppConfig {
                 key: "E".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Go to yesterday's note".to_string(),
             },
         );
@@ -229,7 +213,6 @@ impl Default for AppConfig {
                 key: "A".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Go to last available note".to_string(),
             },
         );
@@ -239,7 +222,6 @@ impl Default for AppConfig {
                 key: "O".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Go to today's note".to_string(),
             },
         );
@@ -249,7 +231,6 @@ impl Default for AppConfig {
                 key: "P".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Toggle thread options mode".to_string(),
             },
         );
@@ -259,7 +240,6 @@ impl Default for AppConfig {
                 key: "R".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Delete note-thread".to_string(),
             },
         );
@@ -269,7 +249,6 @@ impl Default for AppConfig {
                 key: "I".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Show linked threads".to_string(),
             },
         );
@@ -279,7 +258,6 @@ impl Default for AppConfig {
                 key: "C".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Copy thread content".to_string(),
             },
         );
@@ -289,7 +267,6 @@ impl Default for AppConfig {
                 key: "P".to_string(),
                 primary: true,
                 secondary: true,
-                shift: false,
                 description: "Pin/Unpin note-thread".to_string(),
             },
         );
@@ -299,7 +276,6 @@ impl Default for AppConfig {
                 key: "U".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Unpin thread".to_string(),
             },
         );
@@ -310,7 +286,6 @@ impl Default for AppConfig {
                 key: "B".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle bold formatting".to_string(),
             },
         );
@@ -320,7 +295,6 @@ impl Default for AppConfig {
                 key: "I".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle italic formatting".to_string(),
             },
         );
@@ -330,7 +304,6 @@ impl Default for AppConfig {
                 key: "S".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle strikethrough formatting".to_string(),
             },
         );
@@ -340,7 +313,6 @@ impl Default for AppConfig {
                 key: "O".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle code formatting".to_string(),
             },
         );
@@ -350,7 +322,6 @@ impl Default for AppConfig {
                 key: "K".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle blockquote formatting".to_string(),
             },
         );
@@ -360,7 +331,6 @@ impl Default for AppConfig {
                 key: "N".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Toggle link formatting".to_string(),
             },
         );
@@ -370,7 +340,6 @@ impl Default for AppConfig {
                 key: "C".to_string(),
                 primary: true,
                 secondary: false,
-                shift: false,
                 description: "Copy selected text".to_string(),
             },
         );
@@ -523,7 +492,6 @@ mod tests {
             key: "X".to_string(),
             primary: true,
             secondary: true,
-            shift: false,
             description: "Test shortcut".to_string(),
         };
 
@@ -533,7 +501,6 @@ mod tests {
         assert_eq!(restored.key, shortcut.key);
         assert_eq!(restored.primary, shortcut.primary);
         assert_eq!(restored.secondary, shortcut.secondary);
-        assert_eq!(restored.shift, shortcut.shift);
         assert_eq!(restored.description, shortcut.description);
     }
 }

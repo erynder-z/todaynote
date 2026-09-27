@@ -179,7 +179,7 @@ class InputManager {
 			let reqMeta = false;
 			let reqCtrl = false;
 			let reqAlt = false;
-			let reqShift = !!shortcut.shift;
+			let reqShift = false;
 
 			if (sessionState.isMac) {
 				if (shortcut.primary) reqMeta = true;

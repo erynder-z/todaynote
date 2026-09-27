@@ -397,7 +397,6 @@ mod tests {
             key: "K".to_string(),
             primary: true,
             secondary: false,
-            shift: true,
             description: "Toggle search".to_string(),
         };
 
@@ -408,7 +407,6 @@ mod tests {
         assert_eq!(deserialized.key, "K");
         assert!(deserialized.primary);
         assert!(!deserialized.secondary);
-        assert!(deserialized.shift);
         assert_eq!(deserialized.description, "Toggle search");
     }
 

@@ -37,8 +37,7 @@ shortcuts.insert(
     ShortcutConfig {
         key: "key".to_string(),          // The key to press (e.g., "n", "Escape", "F1")
         primary: true,                   // Whether primary modifier is required (⌘/Ctrl)
-        secondary: false,                 // Whether secondary modifier is required (⌥/Shift)
-        shift: false,                    // Whether Shift key is required (independent of secondary)
+        secondary: false,                // Whether secondary modifier is required (⌥/Shift)
         description: "Action description".to_string(), // User-friendly description
     },
 );
@@ -161,7 +160,6 @@ ShortcutConfig {
     key: "k".to_string(),
     primary: false,
     secondary: false,
-    shift: false,
     description: "Simple key press".to_string(),
 }
 
@@ -170,7 +168,6 @@ ShortcutConfig {
     key: "k".to_string(),
     primary: true,
     secondary: false,
-    shift: false,
     description: "Primary + Key".to_string(),
 }
 
@@ -179,17 +176,7 @@ ShortcutConfig {
     key: "k".to_string(),
     primary: true,
     secondary: true,
-    shift: false,
     description: "Primary + Secondary + Key".to_string(),
-}
-
-// With Shift (⌘+Shift/K or Ctrl+Shift+K)
-ShortcutConfig {
-    key: "k".to_string(),
-    primary: true,
-    secondary: false,
-    shift: true,
-    description: "Primary + Shift + Key".to_string(),
 }
 ```
 
@@ -211,8 +198,7 @@ The system handles special keys automatically:
 
 1. **Primary modifier (⌘/Ctrl)** - For main actions
 2. **Primary + Secondary (⌘+⌥/Ctrl+Shift)** - For secondary actions
-3. **Shift alone** - Currently not used
-4. **No modifiers** - Only for non-typing contexts or with explicit user intent
+3. **No modifiers** - Only for non-typing contexts or with explicit user intent
 
 
 ## Example: Adding a New Shortcut
@@ -230,7 +216,6 @@ shortcuts.insert(
         key: "z".to_string(),
         primary: true,
         secondary: true,  // ⌘+⌥+Z or Ctrl+Shift+Z
-        shift: false,
         description: "Toggle Zen Mode".to_string(),
     },
 );
