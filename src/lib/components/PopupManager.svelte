@@ -35,7 +35,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 {#if sessionState.activePopup && sessionState.activePopup !== 'threadOptions'}
   <div
-    transition:fade={{ duration: 150 }}
+    transition:fade={{ duration: sessionState.isLinux ? 0 : 150 }}
     class="overlay"
     onclick={() => (sessionState.activePopup = null)}
   >

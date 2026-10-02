@@ -80,6 +80,7 @@ pub fn get_initial_state(
         today_note_path: None,
         today_note_content: None,
         is_mac: cfg!(target_os = "macos"),
+        is_linux: cfg!(target_os = "linux"),
     };
 
     if response.notes_folder.is_some() {
@@ -381,6 +382,7 @@ mod tests {
             today_note_path: Some("/tmp/notes/today.md".to_string()),
             today_note_content: None,
             is_mac: false,
+            is_linux: false,
         };
 
         let json = serde_json::to_string(&payload).expect("Failed to serialize AppPayload");
@@ -390,12 +392,21 @@ mod tests {
         assert!(json.contains("rememberAppLayout"), "Should use camelCase");
         assert!(json.contains("searchIsFuzzy"), "Should use camelCase");
         assert!(json.contains("controlCenterWidth"), "Should use camelCase");
-        assert!(json.contains("useDefaultThreadName"), "Should use camelCase");
+        assert!(
+            json.contains("useDefaultThreadName"),
+            "Should use camelCase"
+        );
         assert!(json.contains("dateFormatStyle"), "Should use camelCase");
-        assert!(json.contains("floatingToolbarEnabled"), "Should use camelCase");
+        assert!(
+            json.contains("floatingToolbarEnabled"),
+            "Should use camelCase"
+        );
         assert!(json.contains("todayNotePath"), "Should use camelCase");
         assert!(json.contains("todayNoteContent"), "Should use camelCase");
-        assert!(!json.contains("remember_app_layout"), "Should not use snake_case");
+        assert!(
+            !json.contains("remember_app_layout"),
+            "Should not use snake_case"
+        );
 
         // Roundtrip preserves all fields
         let deserialized: AppPayload =

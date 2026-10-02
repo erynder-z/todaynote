@@ -97,7 +97,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="popup size-{size}"
-  transition:blur={{ duration: 300 }}
+  in:blur={{ duration: sessionState.isLinux ? 0 : 300 }}
   use:setupModal
   use:focusTrap
   tabindex="-1"

@@ -122,6 +122,7 @@ export class AppInitializer {
 	 */
 	syncSessionState(state: AppPayload, syncSession = false) {
 		sessionState.isMac = state.isMac;
+		sessionState.isLinux = state.isLinux;
 		if (state.notesFolder) {
 			if (syncSession || !sessionState.todayNotePath) {
 				sessionState.todayNotePath = state.todayNotePath;

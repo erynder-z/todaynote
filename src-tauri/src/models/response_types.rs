@@ -153,6 +153,7 @@ pub struct AppPayload {
     pub today_note_path: Option<String>,
     pub today_note_content: Option<NoteContentResponse>,
     pub is_mac: bool,
+    pub is_linux: bool,
 }
 
 /// Result of a folder validation check.

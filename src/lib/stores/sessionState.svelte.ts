@@ -12,6 +12,7 @@ export const sessionState = $state<SessionState>({
 	threadViewFilename: null,
 	activePopup: null,
 	isMac: false,
+	isLinux: false,
 	sidebarOpen: typeof window !== "undefined" ? window.innerWidth > 1024 : false,
 	selectedThreadForOptions: null,
 	threadShortcutsMode: "navigation",

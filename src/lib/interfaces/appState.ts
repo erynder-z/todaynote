@@ -20,6 +20,7 @@ export interface SessionState {
 	threadViewFilename: string | null;
 	activePopup: PopupType;
 	isMac: boolean;
+	isLinux: boolean;
 	sidebarOpen: boolean;
 	selectedThreadForOptions: NoteThread | null;
 	threadShortcutsMode: "navigation" | "actions";
@@ -54,6 +55,7 @@ export interface AppPayload {
 	todayNotePath: string | null;
 	todayNoteContent: NoteContentResponse | null;
 	isMac: boolean;
+	isLinux: boolean;
 	controlCenterWidth: number;
 	shortcuts: Partial<Record<ShortcutAction, ShortcutConfig>>;
 }
