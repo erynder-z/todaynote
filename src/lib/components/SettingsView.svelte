@@ -5,6 +5,7 @@
    */
   import type { Component } from 'svelte';
   import AboutSelector from './AboutSelector.svelte';
+  import AllowManualNoteCreationSelector from './AllowManualNoteCreationSelector.svelte';
   import BackupSelector from './BackupSelector.svelte';
   import DateFormatStyleSelector from './DateFormatStyleSelector.svelte';
   import DefaultThreadNameSelector from './DefaultThreadNameSelector.svelte';
@@ -45,6 +46,7 @@
     WindowSizeSelector,
     RememberSettingsSelector,
     FloatingToolbarSelector,
+    AllowManualNoteCreationSelector,
     TextCopyModeSelector,
     ShortcutSelector,
     PurgeEmptyNotesSelector,

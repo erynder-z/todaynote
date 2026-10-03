@@ -38,6 +38,7 @@ pub async fn update_config(
         config.date_format_style = new_config.date_format_style;
         config.text_copy_mode = new_config.text_copy_mode;
         config.floating_toolbar_enabled = new_config.floating_toolbar_enabled;
+        config.allow_manual_note_creation = new_config.allow_manual_note_creation;
         config.shortcuts = new_config.shortcuts;
         config.font_family = new_config.font_family;
         config.use_custom_font = new_config.use_custom_font;
@@ -73,6 +74,7 @@ pub async fn update_config(
             date_format_style: config.date_format_style.clone(),
             text_copy_mode: config.text_copy_mode.clone(),
             floating_toolbar_enabled: config.floating_toolbar_enabled,
+            allow_manual_note_creation: config.allow_manual_note_creation,
             shortcuts: config.shortcuts.clone(),
             font_family: config.font_family.clone(),
             use_custom_font: config.use_custom_font,
@@ -194,6 +196,7 @@ pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), 
     config.thread_shortcuts_mode = default_config.thread_shortcuts_mode;
     config.date_format_style = default_config.date_format_style;
     config.floating_toolbar_enabled = default_config.floating_toolbar_enabled;
+    config.allow_manual_note_creation = default_config.allow_manual_note_creation;
     config.shortcuts = default_config.shortcuts;
     config.font_family = default_config.font_family;
     config.use_custom_font = default_config.use_custom_font;
@@ -270,6 +273,7 @@ pub async fn switch_notes_folder(
             date_format_style: config.date_format_style.clone(),
             text_copy_mode: config.text_copy_mode.clone(),
             floating_toolbar_enabled: config.floating_toolbar_enabled,
+            allow_manual_note_creation: config.allow_manual_note_creation,
             shortcuts: config.shortcuts.clone(),
             font_family: config.font_family.clone(),
             use_custom_font: config.use_custom_font,
@@ -434,6 +438,7 @@ mod tests {
             date_format_style: "medium".to_string(),
             text_copy_mode: "markdown".to_string(),
             floating_toolbar_enabled: true,
+            allow_manual_note_creation: true,
             shortcuts: HashMap::new(),
             font_family: None,
             use_custom_font: false,

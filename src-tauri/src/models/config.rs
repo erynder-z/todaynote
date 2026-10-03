@@ -58,6 +58,8 @@ pub struct AppConfig {
     pub text_copy_mode: String,
     /// Whether the floating toolbar is enabled.
     pub floating_toolbar_enabled: bool,
+    /// Whether manual note creation is allowed.
+    pub allow_manual_note_creation: bool,
     /// Global keyboard shortcuts configuration.
     pub shortcuts: HashMap<String, ShortcutConfig>,
     /// Custom font family to use for the application.
@@ -372,6 +374,7 @@ impl Default for AppConfig {
             date_format_style: "medium".to_string(),
             text_copy_mode: "markdown".to_string(),
             floating_toolbar_enabled: true,
+            allow_manual_note_creation: true,
             shortcuts,
             font_family: None,
             use_custom_font: false,

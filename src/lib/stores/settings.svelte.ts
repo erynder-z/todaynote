@@ -29,6 +29,7 @@ export class SettingsStore {
 	dateFormatStyle = $state<"medium" | "narrow">("medium");
 	textCopyMode = $state<"plain" | "markdown">("markdown");
 	floatingToolbarEnabled = $state(true);
+	allowManualNoteCreation = $state(true);
 	fontFamily = $state<string | null>(null);
 	useCustomFont = $state(false);
 	shortcuts = $state<Partial<Record<ShortcutAction, ShortcutConfig>>>({});
@@ -61,6 +62,7 @@ export class SettingsStore {
 			dateFormatStyle: this.dateFormatStyle,
 			textCopyMode: this.textCopyMode,
 			floatingToolbarEnabled: this.floatingToolbarEnabled,
+			allowManualNoteCreation: this.allowManualNoteCreation,
 			fontFamily: this.fontFamily,
 			useCustomFont: this.useCustomFont,
 			shortcuts: this.shortcuts,

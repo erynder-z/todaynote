@@ -20,6 +20,7 @@ export interface AppSettings {
 	dateFormatStyle: "medium" | "narrow";
 	textCopyMode: "plain" | "markdown";
 	floatingToolbarEnabled: boolean;
+	allowManualNoteCreation: boolean;
 	shortcuts: Partial<Record<ShortcutAction, ShortcutConfig>>;
 	fontFamily: string | null;
 	useCustomFont: boolean;

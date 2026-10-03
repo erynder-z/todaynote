@@ -46,6 +46,7 @@ export interface AppPayload {
 	dateFormatStyle: "medium" | "narrow";
 	textCopyMode: "plain" | "markdown";
 	floatingToolbarEnabled: boolean;
+	allowManualNoteCreation: boolean;
 	fontFamily: string | null;
 	useCustomFont: boolean;
 	availableLocales: LocaleInfo[];

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { settings } from '$lib/stores/settings.svelte';
   /**
    * Navigation bar that provides access to the several app features.
    */
@@ -74,6 +75,24 @@
       /></svg
     >
   </button>
+  {#if settings.allowManualNoteCreation}
+    <button
+      onclick={() => {}}
+      class="nav-icon"
+      title={$t('navigation.create_note')}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="1.25rem"
+        viewBox="0 -960 960 960"
+        width="1.25rem"
+        fill="currentColor"
+        ><path
+          d="M440-240h80v-120h120v-80H520v-120h-80v120H320v80h120v120ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"
+        /></svg
+      >
+    </button>
+  {/if}
 
   <button
     onclick={() => togglePopup('settings')}

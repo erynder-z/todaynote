@@ -74,6 +74,10 @@ export class AppInitializer {
 		settings.rememberAppLayout = state.rememberAppLayout;
 		settings.notesListLayout = state.notesListLayout;
 		settings.rememberSettings = state.rememberSettings;
+		settings.allowManualNoteCreation =
+			state.allowManualNoteCreation !== undefined
+				? state.allowManualNoteCreation
+				: true;
 		settings.useDefaultThreadName = state.useDefaultThreadName;
 		settings.defaultThreadName = state.defaultThreadName;
 		settings.useDefaultThreadName =
