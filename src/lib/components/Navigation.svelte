@@ -17,7 +17,7 @@
   useShortcuts({
     toggleSearch: () => togglePopup('search'),
     toggleNoteBrowser: () => togglePopup('noteBrowser'),
-    toggleSettings: () => togglePopup('folderSelector'),
+    toggleSettings: () => togglePopup('settings'),
     toggleStatistics: () => togglePopup('statistics'),
     togglePinnedThreads: () => togglePopup('pinnedThreads'),
   });
@@ -76,7 +76,7 @@
   </button>
 
   <button
-    onclick={() => togglePopup('folderSelector')}
+    onclick={() => togglePopup('settings')}
     class="nav-icon"
     title={$t('navigation.settings')}
   >

@@ -39,7 +39,7 @@
     class="overlay"
     onclick={() => (sessionState.activePopup = null)}
   >
-    {#if sessionState.activePopup === 'folderSelector'}
+    {#if sessionState.activePopup === 'settings'}
       <Modal title={$t('settings.title')} size="xl">
         <SettingsView />
       </Modal>

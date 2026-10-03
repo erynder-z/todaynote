@@ -1,5 +1,5 @@
 export type PopupType =
-	| "folderSelector"
+	| "settings"
 	| "noteBrowser"
 	| "pinnedThreads"
 	| "search"

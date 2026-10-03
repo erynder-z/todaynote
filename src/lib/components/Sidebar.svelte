@@ -2,7 +2,6 @@
   /**
    * Control Center sidebar containing date, tags, and thread shortcuts.
    */
-
   import { ask } from '@tauri-apps/plugin-dialog';
   import { slide } from 'svelte/transition';
   import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
