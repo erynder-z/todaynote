@@ -282,9 +282,14 @@ impl NoteContentResponse {
             .and_then(|f| f.to_str())
             .unwrap_or("");
 
-        let formatted_date = note_manager.format_note_name(filename);
-        let tags = tag_manager.get_tags_from_session(session);
         let raw_metadata = session.get_metadata();
+
+        // Prefer the note's `created` date from its metadata; fall back to the filename.
+        let formatted_date = raw_metadata
+            .get("created")
+            .and_then(|created| note_manager.format_date(created))
+            .unwrap_or_else(|| note_manager.format_note_name(filename));
+        let tags = tag_manager.get_tags_from_session(session);
 
         let content_start = session.get_content_start_index();
 
@@ -392,6 +397,36 @@ mod tests {
         // Relative start_line should be 0 since the absolute index (set before
         // the threads: line was inserted) is now below the shifted content_start.
         assert_eq!(resp.threads[0].start_line, 0);
+    }
+
+    #[test]
+    fn test_from_session_formatted_date_prefers_created_metadata() {
+        let mut session = NoteSession::new();
+        let content = "---\ncreated: 2024-01-15\ntags: []\n---\nbody";
+        session.load(PathBuf::from("/tmp/my-note.md"), content.to_string());
+
+        let note_manager = NoteManager::new(PathBuf::from("/tmp"), "en".into());
+        let tag_manager = TagManager::new();
+
+        let resp = NoteContentResponse::from_session(&session, &note_manager, &tag_manager);
+
+        // The date comes from the created metadata, not the non-date filename.
+        assert_ne!(resp.metadata.formatted_date, "my-note");
+        assert!(resp.metadata.formatted_date.contains("January"));
+    }
+
+    #[test]
+    fn test_from_session_formatted_date_falls_back_to_filename() {
+        let mut session = NoteSession::new();
+        let content = "---\ntags: []\n---\nbody";
+        session.load(PathBuf::from("/tmp/2024-01-15.md"), content.to_string());
+
+        let note_manager = NoteManager::new(PathBuf::from("/tmp"), "en".into());
+        let tag_manager = TagManager::new();
+
+        let resp = NoteContentResponse::from_session(&session, &note_manager, &tag_manager);
+
+        assert!(resp.metadata.formatted_date.contains("January"));
     }
 
     #[test]

@@ -331,18 +331,17 @@ export class NotesService {
 	}
 
 	/**
-	 * Formats a note's filename into a human-readable, localized string.
+	 * Formats a raw `YYYY-MM-DD` date string into a human-readable, localized string.
+	 * Returns the input unchanged if it does not match the date pattern.
 	 */
-	formatNoteName(
-		filename: string,
+	formatNoteDate(
+		date: string,
 		currentLocale: string,
 		dateFormatStyle: "medium" | "narrow" = "medium",
 	): string {
-		const withoutExt = filename.replace(/.md$/, "");
-
 		const datePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
-		const match = withoutExt.match(datePattern);
-		if (!match) return withoutExt;
+		const match = date.match(datePattern);
+		if (!match) return date;
 
 		const year = Number.parseInt(match[1], 10);
 		const month = Number.parseInt(match[2], 10) - 1;
@@ -364,11 +363,20 @@ export class NotesService {
 						day: "2-digit" as const,
 					};
 
-		const localized = new Intl.DateTimeFormat(currentLocale, options).format(
-			dateObj,
-		);
+		return new Intl.DateTimeFormat(currentLocale, options).format(dateObj);
+	}
 
-		return localized;
+	/**
+	 * Formats a note's filename into a human-readable, localized string.
+	 */
+	formatNoteName(
+		filename: string,
+		currentLocale: string,
+		dateFormatStyle: "medium" | "narrow" = "medium",
+	): string {
+		const withoutExt = filename.replace(/.md$/, "");
+
+		return this.formatNoteDate(withoutExt, currentLocale, dateFormatStyle);
 	}
 
 	/**

@@ -204,28 +204,31 @@ impl NoteManager {
         preview
     }
 
+    /// Formats a raw `YYYY-MM-DD` date string into a human-readable, localized string.
+    ///
+    /// Returns `None` if the string cannot be parsed as a date.
+    pub fn format_date(&self, date_str: &str) -> Option<String> {
+        let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").ok()?;
+        let locale = match self.locale.as_str() {
+            "de" => Locale::de_DE,
+            "ja" => Locale::ja_JP,
+            _ => Locale::en_US,
+        };
+
+        Some(match self.locale.as_str() {
+            "de" => format!("{}", date.format_localized("%A, %e. %B %Y", locale)),
+            "ja" => format!("{}", date.format_localized("%Y年%m月%d日 (%A)", locale)),
+            _ => format!("{}", date.format_localized("%A, %B %e, %Y", locale)),
+        })
+    }
+
     /// Formats a note's filename into a human-readable, localized string.
     ///
     /// If the filename follows the `YYYY-MM-DD.md` pattern, it is transformed
     /// into a localized date string.
     pub fn format_note_name(&self, note_name: &str) -> String {
         let without_ext = note_name.replace(".md", "");
-
-        if let Ok(date) = NaiveDate::parse_from_str(&without_ext, "%Y-%m-%d") {
-            let locale = match self.locale.as_str() {
-                "de" => Locale::de_DE,
-                "ja" => Locale::ja_JP,
-                _ => Locale::en_US,
-            };
-
-            match self.locale.as_str() {
-                "de" => format!("{}", date.format_localized("%A, %e. %B %Y", locale)),
-                "ja" => format!("{}", date.format_localized("%Y年%m月%d日 (%A)", locale)),
-                _ => format!("{}", date.format_localized("%A, %B %e, %Y", locale)),
-            }
-        } else {
-            without_ext
-        }
+        self.format_date(&without_ext).unwrap_or(without_ext)
     }
 
     /// Reads the content of a note file from the specified path.
@@ -715,6 +718,23 @@ mod tests {
         assert!(!result.contains("**"));
         assert!(!result.contains("*"));
         assert!(!result.contains("#"));
+    }
+
+    #[test]
+    fn test_format_date_localizes_valid_date() {
+        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
+        let result = manager.format_date("2024-01-15");
+        assert!(result.is_some());
+        let formatted = result.unwrap();
+        assert!(!formatted.contains("2024-01-15"));
+        assert!(formatted.contains("January") || formatted.contains("15"));
+    }
+
+    #[test]
+    fn test_format_date_invalid_returns_none() {
+        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
+        assert!(manager.format_date("not-a-date").is_none());
+        assert!(manager.format_date("").is_none());
     }
 
     ///

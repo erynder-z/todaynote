@@ -12,15 +12,25 @@
     noteContent: NoteContentResponse | null;
   }>();
 
-  let date = $derived(
-    noteContent?.path
+  let date = $derived.by(() => {
+    // Prefer the note's `created` date from its metadata; fall back to the filename.
+    const created = noteContent?.metadata.raw['created'];
+    if (created && /^\d{4}-\d{2}-\d{2}$/.test(created)) {
+      return notesService.formatNoteDate(
+        created,
+        $locale,
+        settings.dateFormatStyle,
+      );
+    }
+
+    return noteContent?.path
       ? notesService.formatNoteName(
           noteContent.path.split(/[/\\]/).pop() || '',
           $locale,
           settings.dateFormatStyle,
         )
-      : '',
-  );
+      : '';
+  });
 </script>
 
 {#if date}
