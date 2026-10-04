@@ -5,7 +5,9 @@
    */
   import type { PopupType } from '$lib/types/ui';
   import { sessionState } from '../stores/sessionState.svelte';
+  import { toast } from '../stores/toast.svelte';
   import { t } from '../utils/i18n';
+  import { notesService } from '../utils/notes';
   import { useShortcuts } from '../utils/shortcuts';
 
   /**
@@ -15,12 +17,30 @@
     sessionState.activePopup = sessionState.activePopup === type ? null : type;
   };
 
+  /**
+   * Creates a new blank note and displays it in the editor.
+   * Returns false on failure so the key event can propagate.
+   */
+  const handleCreateNote = async () => {
+    const content = await notesService.createNote();
+    if (content) {
+      sessionState.todayNotePath = content.path;
+      sessionState.todayNoteContent = content;
+      sessionState.pendingThreadJump = null;
+      return true;
+    }
+    toast.error($t('notes.error.load'));
+    return false;
+  };
+
   useShortcuts({
     toggleSearch: () => togglePopup('search'),
     toggleNoteBrowser: () => togglePopup('noteBrowser'),
     toggleSettings: () => togglePopup('settings'),
     toggleStatistics: () => togglePopup('statistics'),
     togglePinnedThreads: () => togglePopup('pinnedThreads'),
+    createNote: () =>
+      settings.allowManualNoteCreation ? handleCreateNote() : false,
   });
 </script>
 
@@ -77,7 +97,7 @@
   </button>
   {#if settings.allowManualNoteCreation}
     <button
-      onclick={() => {}}
+      onclick={handleCreateNote}
       class="nav-icon"
       title={$t('navigation.create_note')}
     >

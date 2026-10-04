@@ -156,6 +156,15 @@ impl Default for AppConfig {
             },
         );
         shortcuts.insert(
+            "createNote".to_string(),
+            ShortcutConfig {
+                key: "U".to_string(),
+                primary: true,
+                secondary: true,
+                description: "Create note".to_string(),
+            },
+        );
+        shortcuts.insert(
             "closePopup".to_string(),
             ShortcutConfig {
                 key: "Escape".to_string(),
@@ -394,14 +403,19 @@ impl AppConfig {
 
         if config_path.exists() {
             match std::fs::read_to_string(&config_path) {
-                Ok(config_content) => match serde_json::from_str(&config_content) {
-                    Ok(config) => config,
-                    Err(_) => {
-                        let config = AppConfig::default();
-                        config.save();
-                        config
+                Ok(config_content) => {
+                    match serde_json::from_str::<AppConfig>(&config_content) {
+                        Ok(mut config) => {
+                            config.merge_missing_shortcuts();
+                            config
+                        }
+                        Err(_) => {
+                            let config = AppConfig::default();
+                            config.save();
+                            config
+                        }
                     }
-                },
+                }
                 Err(_) => {
                     let config = AppConfig::default();
                     config.save();
@@ -412,6 +426,17 @@ impl AppConfig {
             let config = AppConfig::default();
             config.save();
             config
+        }
+    }
+
+    /// Adds default shortcuts that are missing from a loaded configuration.
+    ///
+    /// This lets newly introduced shortcuts work for existing users without
+    /// overwriting their customized ones.
+    pub fn merge_missing_shortcuts(&mut self) {
+        let defaults = AppConfig::default();
+        for (action, shortcut) in defaults.shortcuts {
+            self.shortcuts.entry(action).or_insert(shortcut);
         }
     }
 
@@ -482,6 +507,35 @@ mod tests {
         let path = AppConfig::get_config_path();
 
         assert_eq!(path.file_name(), Some(std::ffi::OsStr::new("config.json")));
+    }
+
+    #[test]
+    fn test_merge_missing_shortcuts_adds_missing_keeps_custom() {
+        let mut config = AppConfig::default();
+
+        // Simulate a user-customized shortcut and a config saved before
+        // createNote existed
+        config.shortcuts.insert(
+            "toggleSearch".to_string(),
+            ShortcutConfig {
+                key: "S".to_string(),
+                primary: true,
+                secondary: false,
+                description: "Custom".to_string(),
+            },
+        );
+        config.shortcuts.remove("createNote");
+
+        config.merge_missing_shortcuts();
+
+        // Custom shortcut is untouched
+        assert_eq!(config.shortcuts["toggleSearch"].key, "S");
+
+        // Missing shortcut is restored with its default
+        let create = &config.shortcuts["createNote"];
+        assert_eq!(create.key, "U");
+        assert!(create.primary);
+        assert!(create.secondary);
     }
 
     #[test]

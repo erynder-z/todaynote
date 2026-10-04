@@ -257,6 +257,29 @@ pub async fn open_todays_note(state: State<'_, AppState>) -> Result<NoteContentR
     ))
 }
 
+/// Creates a new blank note with a unique filename and returns its loaded content.
+#[tauri::command]
+pub async fn create_note(state: State<'_, AppState>) -> Result<NoteContentResponse, String> {
+    let note_manager = state.note_manager()?;
+    let created_path = note_manager.create_blank_note()?;
+    drop(note_manager);
+
+    let path_buf = PathBuf::from(&created_path);
+    let note_manager = state.note_manager()?;
+    let content = note_manager.read_note_content(&path_buf)?;
+
+    let mut session = state.note_session()?;
+    session.load(path_buf.clone(), content);
+
+    let tag_manager = state.tag_manager()?;
+
+    Ok(NoteContentResponse::from_session(
+        &session,
+        &*note_manager,
+        &*tag_manager,
+    ))
+}
+
 /// Reads the content of a note file from the specified path.
 ///
 /// If the note file does not exist, returns an error.

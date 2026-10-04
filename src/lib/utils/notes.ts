@@ -125,6 +125,19 @@ export class NotesService {
 	}
 
 	/**
+	 * Creates a new blank note with a unique filename and returns its content.
+	 */
+	async createNote(): Promise<NoteContentResponse | null> {
+		try {
+			const content = (await invoke("create_note")) as NoteContentResponse;
+			return content;
+		} catch (error) {
+			console.error("Error creating note:", error);
+			return null;
+		}
+	}
+
+	/**
 	 * Reads the full markdown content of a note file from the given path.
 	 */
 	async readNoteContent(path: string): Promise<NoteContentResponse | null> {

@@ -17,6 +17,7 @@
     'toggleSidebar',
     'manageTags',
     'deleteNote',
+    'createNote',
     'closePopup',
     'focusLastLine',
     'jumpByNumber',

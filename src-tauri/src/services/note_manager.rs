@@ -79,6 +79,32 @@ impl NoteManager {
         Ok(file_path)
     }
 
+    /// Creates a new blank note with a unique filename based on today's date.
+    /// If `YYYY-MM-DD.md` is still free, that name is used; otherwise a
+    /// counter suffix is appended (`YYYY-MM-DD-1.md`, `-2`, ...).
+    pub fn create_blank_note(&self) -> Result<PathBuf, String> {
+        self.ensure_notes_folder_exists()?;
+
+        let current_date = utils::date::get_current_date();
+        let mut file_path = self.get_today_note_path();
+        let mut counter = 0;
+
+        while file_path.exists() {
+            counter += 1;
+            let file_name = format!("{}-{}.md", current_date, counter);
+            file_path = self.notes_folder.join(file_name);
+        }
+
+        let note_content = format!(
+            "---\ncreated: {}\nlast-modified: {}\ntags: []\n---\n",
+            current_date, current_date
+        );
+
+        fs::write(&file_path, note_content).map_err(|e| format!("Failed to create note: {}", e))?;
+
+        Ok(file_path)
+    }
+
     /// Retrieves all valid Markdown note filenames from the notes folder,
     /// sorted by name descending (most recent first).
     pub fn get_sorted_note_files(&self) -> Result<Vec<String>, String> {
@@ -451,6 +477,70 @@ mod tests {
 
         let manager = NoteManager::new(notes_path.clone(), "en".to_string());
         let result = manager.create_todays_note("");
+        assert!(result.is_ok());
+
+        assert!(notes_path.exists());
+        assert!(notes_path.is_dir());
+    }
+
+    #[test]
+    fn test_create_blank_note_uses_today_name_when_free() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+
+        let manager = NoteManager::new(notes_path.clone(), "en".to_string());
+        let result = manager.create_blank_note();
+
+        assert!(result.is_ok());
+        let file_path = result.unwrap();
+        assert_eq!(
+            file_path,
+            notes_path.join(format!("{}.md", crate::utils::date::get_current_date()))
+        );
+
+        let content = fs::read_to_string(&file_path).expect("Failed to read created note");
+        let current_date = crate::utils::date::get_current_date();
+        let expected = format!(
+            "---\ncreated: {}\nlast-modified: {}\ntags: []\n---\n",
+            current_date, current_date
+        );
+        assert_eq!(content, expected);
+    }
+
+    #[test]
+    fn test_create_blank_note_appends_counter_when_name_taken() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        let current_date = crate::utils::date::get_current_date();
+
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+        fs::write(notes_path.join(format!("{}.md", current_date)), "existing")
+            .expect("Failed to write today's note");
+        fs::write(
+            notes_path.join(format!("{}-1.md", current_date)),
+            "existing",
+        )
+        .expect("Failed to write suffixed note");
+
+        let manager = NoteManager::new(notes_path.clone(), "en".to_string());
+        let result = manager.create_blank_note();
+
+        assert!(result.is_ok());
+        assert_eq!(
+            result.unwrap(),
+            notes_path.join(format!("{}-2.md", current_date))
+        );
+    }
+
+    #[test]
+    fn test_create_blank_note_creates_folder_if_not_exists() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().join("notes");
+
+        assert!(!notes_path.exists());
+
+        let manager = NoteManager::new(notes_path.clone(), "en".to_string());
+        let result = manager.create_blank_note();
         assert!(result.is_ok());
 
         assert!(notes_path.exists());

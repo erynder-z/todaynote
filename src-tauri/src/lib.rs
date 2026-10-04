@@ -8,8 +8,8 @@ use commands::folder::validate_folder;
 use commands::font::{get_system_fonts, set_font_family, set_use_custom_font};
 use commands::i18n::get_translations;
 use commands::notes::{
-    apply_default_thread_name, check_day_boundary, check_todays_note_exists, delete_note,
-    delete_note_line, detect_threads, ensure_thread, get_last_available_note_path,
+    apply_default_thread_name, check_day_boundary, check_todays_note_exists, create_note,
+    delete_note, delete_note_line, detect_threads, ensure_thread, get_last_available_note_path,
     get_note_path_by_offset, get_statistics, insert_note_line, list_notes, open_todays_note,
     purge_empty_notes, read_last_available_note, read_note_by_offset, read_note_content,
     remove_thread, save_note_content, toggle_thread_pin, update_note_line,
@@ -75,6 +75,7 @@ pub fn run() {
             apply_default_thread_name,
             check_day_boundary,
             check_todays_note_exists,
+            create_note,
             delete_note,
             delete_note_line,
             detect_threads,

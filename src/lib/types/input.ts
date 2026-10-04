@@ -13,6 +13,7 @@ export type ShortcutAction =
 	| "toggleNoteBrowserLayout"
 	| "manageTags"
 	| "deleteNote"
+	| "createNote"
 	| "closePopup"
 	| "focusLastLine"
 	| "jumpByNumber"
