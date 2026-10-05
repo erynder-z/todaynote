@@ -18,7 +18,8 @@
     `https://todaynote.internal/open/${encodeURIComponent(filename)}/${encodeURIComponent(threadId)}`;
 
   const renderItem = (item: AggregatedThreadItem) => {
-    const formattedDate = notesService.formatNoteName(
+    const formattedDate = notesService.formatNoteDateFromMetadata(
+      item.created,
       item.filename,
       $locale,
       settings.dateFormatStyle,

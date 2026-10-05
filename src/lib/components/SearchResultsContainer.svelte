@@ -94,7 +94,8 @@
   <div class="list-note-item">
     <div class="result-meta">
       <span class="date"
-        >{notesService.formatNoteName(
+        >{notesService.formatNoteDateFromMetadata(
+          result.created,
           result.filename,
           $locale,
           settings.dateFormatStyle,
@@ -114,7 +115,8 @@
   <div class="masonry-note-item">
     <div class="card-header">
       <span class="note-name"
-        >{notesService.formatNoteName(
+        >{notesService.formatNoteDateFromMetadata(
+          result.created,
           result.filename,
           $locale,
           settings.dateFormatStyle,

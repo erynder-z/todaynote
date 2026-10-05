@@ -27,6 +27,7 @@ const mockResults: SearchResult[] = [
 	{
 		filename: "2024-01-15_test.md",
 		formattedName: "Jan 15, 2024",
+		created: null,
 		excerpt: "This is a test note",
 		lineNumber: 1,
 		score: 95,
@@ -35,6 +36,7 @@ const mockResults: SearchResult[] = [
 	{
 		filename: "2024-01-10_another.md",
 		formattedName: "Jan 10, 2024",
+		created: null,
 		excerpt: "Another note here",
 		lineNumber: 1,
 		score: 80,
@@ -43,6 +45,7 @@ const mockResults: SearchResult[] = [
 	{
 		filename: "2024-01-20_recent.md",
 		formattedName: "Jan 20, 2024",
+		created: null,
 		excerpt: "Most recent note",
 		lineNumber: 1,
 		score: 90,
@@ -51,6 +54,7 @@ const mockResults: SearchResult[] = [
 	{
 		filename: "2024-01-05_old.md",
 		formattedName: "Jan 5, 2024",
+		created: null,
 		excerpt: "Old note",
 		lineNumber: 1,
 		score: 60,

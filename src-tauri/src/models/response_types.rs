@@ -49,6 +49,7 @@ pub struct ConfigResponse {
 pub struct FormattedNote {
     pub filename: String,
     pub formatted_name: String,
+    pub created: Option<String>,
     pub preview: String,
     pub tags: Vec<String>,
     pub threads: Vec<String>,
@@ -70,6 +71,7 @@ pub struct NoteListResponse {
 pub struct SearchResult {
     pub filename: String,
     pub formatted_name: String,
+    pub created: Option<String>,
     pub excerpt: String,
     pub line_number: usize,
     pub score: i64,
@@ -106,6 +108,7 @@ pub struct ThreadAggregationResult {
 pub struct ThreadAggregationItem {
     pub filename: String,
     pub formatted_date: String,
+    pub created: Option<String>,
     pub content: String,
     pub thread_id: String,
 }
@@ -510,6 +513,7 @@ mod tests {
             notes: vec![FormattedNote {
                 filename: "2024-01-01.md".into(),
                 formatted_name: "Jan 1".into(),
+                created: None,
                 preview: "hello".into(),
                 tags: vec!["work".into()],
                 threads: vec!["Work".into()],

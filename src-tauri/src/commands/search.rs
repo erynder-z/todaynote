@@ -137,6 +137,7 @@ mod tests {
         SearchResult {
             filename: filename.to_string(),
             formatted_name: filename.to_string(),
+            created: None,
             excerpt: "excerpt".to_string(),
             line_number: 0,
             score,
@@ -152,6 +153,7 @@ mod tests {
         let result = SearchResult {
             filename: "2024-01-15.md".to_string(),
             formatted_name: "January 15, 2024".to_string(),
+            created: None,
             excerpt: "This is a match".to_string(),
             line_number: 5,
             score: 42,
@@ -180,6 +182,7 @@ mod tests {
             items: vec![ThreadAggregationItem {
                 filename: "2024-01-01.md".to_string(),
                 formatted_date: "January 1, 2024".to_string(),
+                created: None,
                 content: "Entry content".to_string(),
                 thread_id: "abc-123".to_string(),
             }],

@@ -380,6 +380,23 @@ export class NotesService {
 	}
 
 	/**
+	 * Formats a note's display date, preferring the `created` metadata date
+	 * over the filename-derived date.
+	 */
+	formatNoteDateFromMetadata(
+		created: string | null,
+		filename: string,
+		currentLocale: string,
+		dateFormatStyle: "medium" | "narrow" = "medium",
+	): string {
+		if (created && /^\d{4}-\d{2}-\d{2}$/.test(created)) {
+			return this.formatNoteDate(created, currentLocale, dateFormatStyle);
+		}
+
+		return this.formatNoteName(filename, currentLocale, dateFormatStyle);
+	}
+
+	/**
 	 * Deletes a note file at the specified path.
 	 */
 	async deleteNote(path: string): Promise<boolean> {

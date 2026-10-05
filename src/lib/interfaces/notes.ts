@@ -1,6 +1,7 @@
 export interface FormattedNote {
 	filename: string;
 	formattedName: string;
+	created: string | null;
 	preview: string;
 	tags: string[];
 	threads: string[];
@@ -39,6 +40,7 @@ export interface NoteContentResponse {
 export interface SearchResult {
 	filename: string;
 	formattedName: string;
+	created: string | null;
 	excerpt: string;
 	lineNumber: number;
 	score: number;
@@ -63,6 +65,7 @@ export interface ThreadAggregationResult {
 export interface ThreadAggregationItem {
 	filename: string;
 	formattedDate: string;
+	created: string | null;
 	content: string;
 	threadId: string;
 }
@@ -107,6 +110,7 @@ export interface AggregatedThreadItem {
 	filename: string;
 	threadId: string;
 	content: string;
+	created: string | null;
 }
 
 export interface PinnedThreadItem {

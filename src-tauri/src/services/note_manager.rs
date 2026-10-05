@@ -128,6 +128,33 @@ impl NoteManager {
         Ok(files)
     }
 
+    /// Extracts the `created` date from a note's YAML frontmatter.
+    ///
+    /// Returns `Some(YYYY-MM-DD)` only if the frontmatter contains a `created`
+    /// key whose value parses as a date; otherwise `None`.
+    pub fn extract_created_date(&self, content: &str) -> Option<String> {
+        let lines: Vec<&str> = content.lines().collect();
+        if lines.first().map(|l| l.trim()) != Some("---") {
+            return None;
+        }
+
+        for line in lines.iter().skip(1) {
+            let trimmed = line.trim();
+            if trimmed == "---" {
+                break;
+            }
+            if let Some(value) = trimmed.strip_prefix("created:") {
+                let created = value.trim();
+                if NaiveDate::parse_from_str(created, "%Y-%m-%d").is_ok() {
+                    return Some(created.to_string());
+                }
+                return None;
+            }
+        }
+
+        None
+    }
+
     /// Transforms a note filename into a FormattedNote by reading and processing its content.
     fn format_note_file(&self, file_name: &str) -> Option<FormattedNote> {
         let path = self.notes_folder.join(file_name);
@@ -135,6 +162,7 @@ impl NoteManager {
         Some(FormattedNote {
             filename: file_name.to_string(),
             formatted_name: self.format_note_name(file_name),
+            created: self.extract_created_date(&content),
             preview: self.extract_preview(&content),
             tags: crate::utils::tag_parser::parse_tags_from_content(&content),
             threads: self.extract_threads(&content, 5),
@@ -735,6 +763,55 @@ mod tests {
         let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
         assert!(manager.format_date("not-a-date").is_none());
         assert!(manager.format_date("").is_none());
+    }
+
+    #[test]
+    fn test_extract_created_date_from_frontmatter() {
+        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
+
+        let valid = "---\ncreated: 2024-01-15\nlast-modified: 2024-01-16\ntags: []\n---\nbody";
+        assert_eq!(
+            manager.extract_created_date(valid),
+            Some("2024-01-15".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extract_created_date_missing_or_invalid() {
+        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
+
+        // No frontmatter
+        assert_eq!(manager.extract_created_date("just body"), None);
+        // No created key
+        assert_eq!(
+            manager.extract_created_date("---\ntags: []\n---\nbody"),
+            None
+        );
+        // Invalid date value
+        assert_eq!(
+            manager.extract_created_date("---\ncreated: yesterday\n---\nbody"),
+            None
+        );
+    }
+
+    #[test]
+    fn test_format_note_file_uses_created_date() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+        fs::write(
+            notes_path.join("my-note.md"),
+            "---\ncreated: 2024-01-15\ntags: []\n---\nbody",
+        )
+        .expect("Failed to write note");
+
+        let manager = NoteManager::new(notes_path, "en".to_string());
+        let result = manager.list_notes(None);
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.notes[0].created, Some("2024-01-15".to_string()));
     }
 
     ///

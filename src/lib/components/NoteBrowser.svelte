@@ -140,7 +140,8 @@
 {#snippet listSnippet(note: FormattedNote, i: number)}
   <div class="result-content">
     <span class="note-name"
-      >{notesService.formatNoteName(
+      >{notesService.formatNoteDateFromMetadata(
+        note.created,
         note.filename,
         $locale,
         settings.dateFormatStyle,
@@ -159,7 +160,8 @@
 {#snippet masonrySnippet(note: FormattedNote, i: number)}
   <div class="card-header">
     <span class="note-name"
-      >{notesService.formatNoteName(
+      >{notesService.formatNoteDateFromMetadata(
+        note.created,
         note.filename,
         $locale,
         settings.dateFormatStyle,

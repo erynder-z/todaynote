@@ -93,6 +93,7 @@ impl<'a> SearchService<'a> {
             .and_then(|n| n.to_str())
             .unwrap_or_default();
         let formatted_name = self.note_manager.format_note_name(&filename);
+        let created = self.note_manager.extract_created_date(&content);
         let mut results = Vec::new();
 
         for (i, line) in content.lines().enumerate().skip(frontmatter_len) {
@@ -109,6 +110,7 @@ impl<'a> SearchService<'a> {
                 results.push(SearchResult {
                     filename: filename.to_string(),
                     formatted_name: formatted_name.clone(),
+                    created: created.clone(),
                     excerpt,
                     line_number: i,
                     score,
@@ -604,6 +606,7 @@ impl<'a> SearchService<'a> {
                 results.push(SearchResult {
                     filename: filename.to_string(),
                     formatted_name,
+                    created: self.note_manager.extract_created_date(&content),
                     excerpt: first_line,
                     line_number: fm_len,
                     score: 0,
@@ -654,6 +657,7 @@ impl<'a> SearchService<'a> {
                 items.push(ThreadAggregationItem {
                     filename: filename.clone(),
                     formatted_date: self.note_manager.format_note_name(&filename),
+                    created: self.note_manager.extract_created_date(&content),
                     content: block_content,
                     thread_id,
                 });
@@ -805,7 +809,6 @@ mod tests {
     ///
     /// Frontmatter Extraction Tests
     ///
-
     #[test]
     fn test_extract_frontmatter_no_frontmatter() {
         let content = "This is just regular content\nWith multiple lines";
@@ -835,7 +838,6 @@ mod tests {
     ///
     /// Exact Match Tests
     ///
-
     #[test]
     fn test_find_exact_match_indices_found() {
         let line = "This is a test line";
@@ -876,7 +878,6 @@ mod tests {
     ///
     /// Thread Name Extraction Tests
     ///
-
     #[test]
     fn test_extract_thread_names_empty_content() {
         let content = "";
@@ -923,7 +924,6 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
     ///
     /// Thread Map Parsing Tests
     ///
-
     #[test]
     fn test_parse_thread_map_from_frontmatter_empty() {
         let frontmatter = "---\ntitle: Test\n---";
@@ -968,7 +968,6 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
     ///
     /// Filter and Sort Tests
     ///
-
     #[test]
     fn test_filter_search_results_empty() {
         let results: Vec<SearchResult> = vec![];
@@ -983,6 +982,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note1.md".to_string(),
                 formatted_name: "Note 1".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 80,
@@ -991,6 +991,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note2.md".to_string(),
                 formatted_name: "Note 2".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 60,
@@ -1008,6 +1009,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "test-note.md".to_string(),
                 formatted_name: "Test Note".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1016,6 +1018,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "other-note.md".to_string(),
                 formatted_name: "Other Note".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1033,6 +1036,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note1.md".to_string(),
                 formatted_name: "Note 1".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1041,6 +1045,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note2.md".to_string(),
                 formatted_name: "Note 2".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1049,6 +1054,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note3.md".to_string(),
                 formatted_name: "Note 3".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1065,6 +1071,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note1.md".to_string(),
                 formatted_name: "Note 1".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 60,
@@ -1073,6 +1080,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note2.md".to_string(),
                 formatted_name: "Note 2".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 80,
@@ -1081,6 +1089,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note3.md".to_string(),
                 formatted_name: "Note 3".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 70,
@@ -1103,6 +1112,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "b-note.md".to_string(),
                 formatted_name: "B Note".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1111,6 +1121,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "a-note.md".to_string(),
                 formatted_name: "A Note".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1119,6 +1130,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "c-note.md".to_string(),
                 formatted_name: "C Note".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1138,6 +1150,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "2024-01-01_test.md".to_string(),
                 formatted_name: "2024-01-01".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1146,6 +1159,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "2024-01-03_test.md".to_string(),
                 formatted_name: "2024-01-03".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1154,6 +1168,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "2024-01-02_test.md".to_string(),
                 formatted_name: "2024-01-02".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 0,
@@ -1174,6 +1189,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note1.md".to_string(),
                 formatted_name: "Note 1".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 60,
@@ -1182,6 +1198,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note2.md".to_string(),
                 formatted_name: "Note 2".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 80,
@@ -1198,7 +1215,6 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
     ///
     /// Filter Tag Results Tests
     ///
-
     #[test]
     fn test_filter_tag_results_empty_query() {
         let mut tag_counts = HashMap::new();
@@ -1258,7 +1274,6 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
     ///
     /// Filter Thread Results Tests
     ///
-
     #[test]
     fn test_filter_thread_results_empty_query() {
         let mut thread_counts = HashMap::new();
@@ -1319,7 +1334,6 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
     ///
     /// Get Note Files Tests
     ///
-
     #[test]
     fn test_get_note_files_empty_directory() {
         let temp_dir = tempdir().expect("Failed to create temp dir");
@@ -1402,13 +1416,13 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
     ///
     /// Process Search Results Tests
     ///
-
     #[test]
     fn test_process_search_results_applies_filters_and_sort() {
         let results = vec![
             SearchResult {
                 filename: "note1.md".to_string(),
                 formatted_name: "Note 1".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 80,
@@ -1417,6 +1431,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "note2.md".to_string(),
                 formatted_name: "Note 2".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 60,
@@ -1438,7 +1453,6 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
     ///
     /// Edge Cases
     ///
-
     #[test]
     fn test_extract_frontmatter_empty_content() {
         let content = "";
@@ -1460,6 +1474,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "test-note1.md".to_string(),
                 formatted_name: "Test Note 1".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 80,
@@ -1468,6 +1483,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "test-note2.md".to_string(),
                 formatted_name: "Test Note 2".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 85,
@@ -1476,6 +1492,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             SearchResult {
                 filename: "other-note.md".to_string(),
                 formatted_name: "Other Note".to_string(),
+                created: None,
                 excerpt: "content".to_string(),
                 line_number: 0,
                 score: 90,
