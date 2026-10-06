@@ -1,16 +1,9 @@
 //! Transient state for the active note being edited.
 
+use crate::models::note_header::{keys, NoteHeader, ThreadRef};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-
-/// Represents parsed thread metadata from frontmatter.
-#[derive(Debug, Clone)]
-pub struct FrontmatterThread {
-    pub id: String,
-    pub relative_line: usize,
-    pub pinned: bool,
-}
 
 /// Represents a named block or thread within a note, defined by a `!!!` thread marker.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -99,11 +92,11 @@ impl NoteSession {
         // Try to parse thread IDs from frontmatter first
         let frontmatter_threads = self.parse_threads_from_frontmatter();
 
-        // Build a map of line -> FrontmatterThread from frontmatter
-        let mut id_map: std::collections::HashMap<usize, &FrontmatterThread> =
+        // Build a map of line -> ThreadRef from frontmatter
+        let mut id_map: std::collections::HashMap<usize, &ThreadRef> =
             std::collections::HashMap::new();
         for meta in &frontmatter_threads {
-            let absolute_line = content_start + meta.relative_line;
+            let absolute_line = content_start + meta.line;
             id_map.insert(absolute_line, meta);
         }
 
@@ -281,38 +274,39 @@ impl NoteSession {
     }
 
     /// Updates the threads metadata in the frontmatter.
-    /// Stores thread IDs, relative line positions, and optional pinned flags.
+    /// Stores thread IDs, relative line positions, and optional pinned flags
+    /// as a YAML array (see `NoteHeader::render_threads_value`).
     pub fn update_threads_in_frontmatter(&mut self) {
         self.ensure_frontmatter();
         let (start, end) = self.frontmatter_range.unwrap();
         let content_start = self.get_content_start_index();
 
-        // Build the threads metadata as a comma-separated list of id:line[:pinned] pairs
-        let threads_meta: String = self
+        let thread_refs: Vec<ThreadRef> = self
             .threads
             .iter()
             .map(|t| {
-                let relative_line = if t.start_line >= content_start {
-                    t.start_line - content_start
-                } else {
-                    0
-                };
-                if t.pinned {
-                    format!("{}:{}:pinned", t.id, relative_line)
-                } else {
-                    format!("{}:{}", t.id, relative_line)
+                let line = t.start_line.saturating_sub(content_start);
+                ThreadRef {
+                    id: t.id.clone(),
+                    line,
+                    pinned: t.pinned,
                 }
             })
-            .collect::<Vec<_>>()
-            .join(",");
+            .collect();
+
+        let threads_line = format!(
+            "{}: {}",
+            keys::THREADS,
+            NoteHeader::render_threads_value(&thread_refs)
+        );
 
         // Find and update or add the threads line in frontmatter
-        let threads_key = "threads:";
+        let threads_key = format!("{}:", keys::THREADS);
         let mut found = false;
 
         for i in (start + 1)..end {
-            if self.lines[i].trim().starts_with(threads_key) {
-                self.lines[i] = format!("{} {}", threads_key, threads_meta);
+            if self.lines[i].trim().starts_with(&threads_key) {
+                self.lines[i] = threads_line.clone();
                 found = true;
                 break;
             }
@@ -320,49 +314,24 @@ impl NoteSession {
 
         // If not found, add it before the closing ---
         if !found && end > start + 1 {
-            self.lines
-                .insert(end, format!("{} {}", threads_key, threads_meta));
+            self.lines.insert(end, threads_line);
             self.frontmatter_range = Some((start, end + 1));
         }
     }
 
     /// Parses thread metadata from the frontmatter.
-    /// Expected format: threads: id1:line1,id2:line2:pinned,...
-    pub fn parse_threads_from_frontmatter(&self) -> Vec<FrontmatterThread> {
-        let (start, end) = match self.frontmatter_range {
-            Some(range) => range,
-            None => return Vec::new(),
-        };
-
-        for i in (start + 1)..end {
-            let line = self.lines[i].trim();
-            if line.starts_with("threads:") {
-                let value = line[8..].trim();
-                return value
-                    .split(',')
-                    .filter(|s| !s.is_empty())
-                    .filter_map(|s| {
-                        let parts: Vec<&str> = s.split(':').collect();
-                        if parts.len() >= 2 {
-                            if let Ok(line_num) = parts[1].parse() {
-                                let pinned = parts
-                                    .get(2)
-                                    .map(|&f| f == "pinned" || f == "p" || f == "true" || f == "1")
-                                    .unwrap_or(false);
-                                return Some(FrontmatterThread {
-                                    id: parts[0].to_string(),
-                                    relative_line: line_num,
-                                    pinned,
-                                });
-                            }
-                        }
-                        None
-                    })
-                    .collect();
-            }
-        }
-
-        Vec::new()
+    ///
+    /// Expected format: the `threads` array; see `NoteHeader::parse_threads_value`.
+    pub fn parse_threads_from_frontmatter(&self) -> Vec<ThreadRef> {
+        self.find_metadata_line(keys::THREADS)
+            .map(|index| {
+                let value = self.lines[index]
+                    .trim()
+                    .strip_prefix(&format!("{}:", keys::THREADS))
+                    .unwrap_or("");
+                NoteHeader::parse_threads_value(value)
+            })
+            .unwrap_or_default()
     }
 
     /// Finds a thread by its ID.
@@ -615,11 +584,11 @@ mod tests {
     /// parse_threads_from_frontmatter / update_threads_in_frontmatter tests
     ///
     #[test]
-    fn test_parse_threads_from_frontmatter() {
+    fn test_parse_threads_from_frontmatter_array() {
         let mut session = NoteSession::new();
         session.lines = vec![
             "---".into(),
-            "threads: abc:0,def:2:pinned".into(),
+            "threads: [{id: abc, line: 0}, {id: def, line: 2, pinned: true}]".into(),
             "---".into(),
         ];
         session.frontmatter_range = Some((0, 2));
@@ -627,11 +596,46 @@ mod tests {
         let threads = session.parse_threads_from_frontmatter();
         assert_eq!(threads.len(), 2);
         assert_eq!(threads[0].id, "abc");
-        assert_eq!(threads[0].relative_line, 0);
+        assert_eq!(threads[0].line, 0);
         assert!(!threads[0].pinned);
         assert_eq!(threads[1].id, "def");
-        assert_eq!(threads[1].relative_line, 2);
+        assert_eq!(threads[1].line, 2);
         assert!(threads[1].pinned);
+    }
+
+    #[test]
+    fn test_update_threads_in_frontmatter_writes_array_format() {
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "threads: [{id: abc, line: 0}]".into(),
+            "---".into(),
+            "!!! Work".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+        session.detect_threads();
+
+        // The frontmatter ID is kept stable and re-rendered as an array
+        assert_eq!(session.threads[0].id, "abc");
+        let threads_line = session
+            .lines
+            .iter()
+            .find(|l| l.starts_with("threads:"))
+            .expect("threads: line should exist");
+        assert_eq!(threads_line, "threads: [{id: abc, line: 0}]");
+    }
+
+    #[test]
+    fn test_load_preserves_thread_ids() {
+        let content = "---\ncreated: 2024-01-15\ntags: []\nthreads: [{id: abc, line: 0}, {id: def, line: 2, pinned: true}]\n---\n!!! Work\ntask\n!!! Personal\nother";
+        let mut session = NoteSession::new();
+        session.load(PathBuf::from("/tmp/note.md"), content.to_string());
+
+        // IDs and pin state from the frontmatter are kept stable
+        assert_eq!(session.threads.len(), 2);
+        assert_eq!(session.threads[0].id, "abc");
+        assert_eq!(session.threads[1].id, "def");
+        assert!(session.threads[1].pinned);
     }
 
     #[test]

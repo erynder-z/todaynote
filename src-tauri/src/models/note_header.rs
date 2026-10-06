@@ -4,13 +4,26 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fmt;
 
+/// The canonical frontmatter keys.
 pub mod keys {
     pub const CREATED: &str = "created";
     pub const LAST_MODIFIED: &str = "last-modified";
     pub const NOTE_TYPE: &str = "note-type";
     pub const TAGS: &str = "tags";
+    pub const THREADS: &str = "threads";
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ThreadRef {
+    /// The threads identifier.
+    pub id: String,
+    /// The thread's marker line, relative to the content start.
+    pub line: usize,
+    /// Whether the thread is pinned.
+    pub pinned: bool,
+}
+
+/// How a note was created.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum NoteType {
@@ -93,23 +106,32 @@ impl From<NoteHeaderError> for String {
     }
 }
 
+/// The typed schema of a note's frontmatter header.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NoteHeader {
+    /// The date the note was created (`created`).
     pub created: NaiveDate,
+    /// The date the note was last modified (`last-modified`).
     pub last_modified: Option<NaiveDate>,
+    /// How the note was created (`note-type`).
     pub note_type: NoteType,
+    /// The note's tags (`tags`).
     pub tags: Vec<String>,
+    /// The note's thread references (`threads`).
+    pub threads: Vec<ThreadRef>,
+    /// Keys outside the schema, preserved verbatim in their original order.
     pub extra: Vec<(String, String)>,
 }
 
 impl NoteHeader {
-    /// Builds a header with the given dates and type, without tags or extra keys.
+    /// Builds a header with the given dates and type, without tags or threads.
     pub fn new(created: NaiveDate, last_modified: NaiveDate, note_type: NoteType) -> Self {
         Self {
             created,
             last_modified: Some(last_modified),
             note_type,
             tags: Vec::new(),
+            threads: Vec::new(),
             extra: Vec::new(),
         }
     }
@@ -155,6 +177,7 @@ impl NoteHeader {
         let mut last_modified: Option<NaiveDate> = None;
         let mut note_type: Option<NoteType> = None;
         let mut tags: Option<Vec<String>> = None;
+        let mut threads: Option<Vec<ThreadRef>> = None;
         let mut extra: Vec<(String, String)> = Vec::new();
         let mut seen: HashSet<String> = HashSet::new();
 
@@ -189,6 +212,9 @@ impl NoteHeader {
                 keys::TAGS => {
                     tags = Some(crate::utils::tag_parser::parse_tags_from_yaml_value(value));
                 }
+                keys::THREADS => {
+                    threads = Some(Self::parse_threads_value(value));
+                }
                 _ => extra.push((key.to_string(), value.to_string())),
             }
         }
@@ -198,12 +224,81 @@ impl NoteHeader {
             last_modified,
             note_type: note_type.unwrap_or(NoteType::Auto),
             tags: tags.unwrap_or_default(),
+            threads: threads.unwrap_or_default(),
             extra,
+        })
+    }
+
+    /// Parses the value of a `threads` field.
+    ///
+    /// Expected format: `[{id: a, line: 0}, {id: b, line: 2, pinned: true}]`.
+    /// Values without valid entries yield no threads.
+    pub fn parse_threads_value(value: &str) -> Vec<ThreadRef> {
+        let inner = value.trim().trim_start_matches('[').trim_end_matches(']');
+        let mut threads = Vec::new();
+        let mut rest = inner;
+
+        while let Some(open) = rest.find('{') {
+            let Some(close) = rest[open..].find('}') else {
+                break;
+            };
+            let entry = &rest[open + 1..open + close];
+            if let Some(thread) = Self::parse_thread_entry(entry) {
+                threads.push(thread);
+            }
+            rest = &rest[open + close + 1..];
+        }
+
+        threads
+    }
+
+    /// Renders the value of a `threads` field as a YAML array.
+    ///
+    /// Unpinned threads omit the `pinned` attribute.
+    pub fn render_threads_value(threads: &[ThreadRef]) -> String {
+        let entries: Vec<String> = threads
+            .iter()
+            .map(|thread| {
+                let mut entry = format!("{{id: {}, line: {}", thread.id, thread.line);
+                if thread.pinned {
+                    entry.push_str(", pinned: true");
+                }
+                entry.push('}');
+                entry
+            })
+            .collect();
+        format!("[{}]", entries.join(", "))
+    }
+
+    /// Parses a single `{id: a, line: 0, pinned: true}` entry.
+    fn parse_thread_entry(entry: &str) -> Option<ThreadRef> {
+        let mut id = None;
+        let mut line = None;
+        let mut pinned = false;
+
+        for field in entry.split(',') {
+            let Some((key, value)) = field.split_once(':') else {
+                continue;
+            };
+            match key.trim() {
+                "id" => id = Some(value.trim().to_string()),
+                "line" => line = value.trim().parse().ok(),
+                "pinned" => pinned = value.trim() == "true",
+                _ => {}
+            }
+        }
+
+        Some(ThreadRef {
+            id: id?,
+            line: line?,
+            pinned,
         })
     }
 
     /// Renders the header as a canonical frontmatter block, including the
     /// `---` delimiters and a trailing newline.
+    ///
+    /// The `threads` line is only emitted when the header has threads.
     pub fn render(&self) -> String {
         let mut lines = vec![String::from("---")];
         lines.push(format!(
@@ -220,6 +315,13 @@ impl NoteHeader {
         }
         lines.push(format!("{}: {}", keys::NOTE_TYPE, self.note_type));
         lines.push(self.render_tags());
+        if !self.threads.is_empty() {
+            lines.push(format!(
+                "{}: {}",
+                keys::THREADS,
+                Self::render_threads_value(&self.threads)
+            ));
+        }
         for (key, value) in &self.extra {
             lines.push(format!("{}: {}", key, value));
         }
@@ -256,7 +358,7 @@ mod tests {
 
     #[test]
     fn test_parse_valid_header_with_all_fields() {
-        let content = "---\ncreated: 2024-01-15\nlast-modified: 2024-01-16\nnote-type: manual\ntags: [work, urgent]\nthreads: abc:0,def:2:pinned\n---\nbody";
+        let content = "---\ncreated: 2024-01-15\nlast-modified: 2024-01-16\nnote-type: manual\ntags: [work, urgent]\nthreads: [{id: abc, line: 0}, {id: def, line: 2, pinned: true}]\n---\nbody";
         let header = NoteHeader::parse(content).expect("Valid header should parse");
 
         assert_eq!(
@@ -270,9 +372,34 @@ mod tests {
         assert_eq!(header.note_type, NoteType::Manual);
         assert_eq!(header.tags, vec!["work", "urgent"]);
         assert_eq!(
-            header.extra,
-            vec![("threads".to_string(), "abc:0,def:2:pinned".to_string())]
+            header.threads,
+            vec![
+                ThreadRef {
+                    id: "abc".to_string(),
+                    line: 0,
+                    pinned: false
+                },
+                ThreadRef {
+                    id: "def".to_string(),
+                    line: 2,
+                    pinned: true
+                }
+            ]
         );
+        assert!(header.extra.is_empty());
+    }
+
+    #[test]
+    fn test_parse_threads_value_unrecognized_format_yields_empty() {
+        // Values that are not the array format produce no threads
+        assert!(NoteHeader::parse_threads_value("abc:0,def:2:pinned").is_empty());
+        assert!(NoteHeader::parse_threads_value("not an array").is_empty());
+    }
+
+    #[test]
+    fn test_parse_threads_value_empty() {
+        assert!(NoteHeader::parse_threads_value("").is_empty());
+        assert!(NoteHeader::parse_threads_value("[]").is_empty());
     }
 
     #[test]
@@ -284,6 +411,7 @@ mod tests {
         assert_eq!(header.note_type, NoteType::Auto);
         assert_eq!(header.last_modified, None);
         assert!(header.tags.is_empty());
+        assert!(header.threads.is_empty());
         assert!(header.extra.is_empty());
     }
 
@@ -361,6 +489,24 @@ mod tests {
     }
 
     #[test]
+    fn test_render_includes_threads_when_present() {
+        let mut header = NoteHeader::new(
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
+            NoteType::Auto,
+        );
+        header.threads.push(ThreadRef {
+            id: "abc".to_string(),
+            line: 0,
+            pinned: true,
+        });
+        assert_eq!(
+            header.render(),
+            "---\ncreated: 2024-01-15\nlast-modified: 2024-01-15\nnote-type: auto\ntags: []\nthreads: [{id: abc, line: 0, pinned: true}]\n---\n"
+        );
+    }
+
+    #[test]
     fn test_render_preserves_extra_keys() {
         let mut header = NoteHeader::new(
             NaiveDate::from_ymd_opt(2024, 1, 15).unwrap(),
@@ -378,9 +524,12 @@ mod tests {
 
     #[test]
     fn test_parse_render_round_trip() {
-        let content = "---\ncreated: 2024-01-15\nlast-modified: 2024-01-16\nnote-type: manual\ntags: [a, b]\nthreads: id:0\n---\nbody";
+        let content = "---\ncreated: 2024-01-15\nlast-modified: 2024-01-16\nnote-type: manual\ntags: [a, b]\nthreads: [{id: id1, line: 0}, {id: id2, line: 2, pinned: true}]\n---\nbody";
         let header = NoteHeader::parse(content).expect("Round-trip parse should succeed");
-        assert_eq!(header.render(), "---\ncreated: 2024-01-15\nlast-modified: 2024-01-16\nnote-type: manual\ntags: [a, b]\nthreads: id:0\n---\n");
+        assert_eq!(
+            header.render(),
+            "---\ncreated: 2024-01-15\nlast-modified: 2024-01-16\nnote-type: manual\ntags: [a, b]\nthreads: [{id: id1, line: 0}, {id: id2, line: 2, pinned: true}]\n---\n"
+        );
     }
 
     #[test]

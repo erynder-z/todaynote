@@ -416,7 +416,7 @@ mod tests {
     ///
     #[test]
     fn test_get_pinned_threads_finds_pinned() {
-        let content = "---\nthreads: t1:0:pinned\ntags: []\n---\n!!! Tasks\nDo something\n\n";
+        let content = "---\nthreads: [{id: t1, line: 0, pinned: true}]\ntags: []\n---\n!!! Tasks\nDo something\n\n";
         let (_dir, nm) = setup_notes(&[("2024-01-01.md", content)]);
 
         let service = SearchService::new(&nm);
@@ -429,7 +429,8 @@ mod tests {
 
     #[test]
     fn test_get_thread_content_returns_content() {
-        let content = "---\nthreads: t1:0\ntags: []\n---\n!!! Tasks\nDo something\n\n";
+        let content =
+            "---\nthreads: [{id: t1, line: 0}]\ntags: []\n---\n!!! Tasks\nDo something\n\n";
         let (_dir, nm) = setup_notes(&[("2024-01-01.md", content)]);
 
         let service = SearchService::new(&nm);
