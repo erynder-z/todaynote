@@ -1,5 +1,6 @@
 //! Manager to handle note operations and formatting.
 
+use crate::models::note_header::{NoteHeader, NoteType};
 use crate::models::response_types::{AppStatistics, FormattedNote, NoteListResponse};
 use crate::utils;
 use chrono::{Locale, NaiveDate};
@@ -61,17 +62,11 @@ impl NoteManager {
             return Ok(file_path);
         }
 
-        let current_date = utils::date::get_current_date();
+        let frontmatter = NoteHeader::for_new_note(NoteType::Auto)?.render();
         let note_content = if note_header.is_empty() {
-            format!(
-                "---\ncreated: {}\nlast-modified: {}\ntags: []\n---\n",
-                current_date, current_date
-            )
+            frontmatter
         } else {
-            format!(
-                "---\ncreated: {}\nlast-modified: {}\ntags: []\n---\n!!! {}\n",
-                current_date, current_date, note_header
-            )
+            format!("{}!!! {}\n", frontmatter, note_header)
         };
 
         fs::write(&file_path, note_content).map_err(|e| format!("Failed to create note: {}", e))?;
@@ -95,10 +90,7 @@ impl NoteManager {
             file_path = self.notes_folder.join(file_name);
         }
 
-        let note_content = format!(
-            "---\ncreated: {}\nlast-modified: {}\ntags: []\n---\n",
-            current_date, current_date
-        );
+        let note_content = NoteHeader::for_new_note(NoteType::Manual)?.render();
 
         fs::write(&file_path, note_content).map_err(|e| format!("Failed to create note: {}", e))?;
 
@@ -130,29 +122,12 @@ impl NoteManager {
 
     /// Extracts the `created` date from a note's YAML frontmatter.
     ///
-    /// Returns `Some(YYYY-MM-DD)` only if the frontmatter contains a `created`
-    /// key whose value parses as a date; otherwise `None`.
+    /// Returns `Some(YYYY-MM-DD)` only if the frontmatter parses and contains
+    /// a `created` key whose value is a valid date; otherwise `None`.
     pub fn extract_created_date(&self, content: &str) -> Option<String> {
-        let lines: Vec<&str> = content.lines().collect();
-        if lines.first().map(|l| l.trim()) != Some("---") {
-            return None;
-        }
-
-        for line in lines.iter().skip(1) {
-            let trimmed = line.trim();
-            if trimmed == "---" {
-                break;
-            }
-            if let Some(value) = trimmed.strip_prefix("created:") {
-                let created = value.trim();
-                if NaiveDate::parse_from_str(created, "%Y-%m-%d").is_ok() {
-                    return Some(created.to_string());
-                }
-                return None;
-            }
-        }
-
-        None
+        NoteHeader::parse(content)
+            .ok()
+            .map(|header| header.created.format("%Y-%m-%d").to_string())
     }
 
     /// Transforms a note filename into a FormattedNote by reading and processing its content.
@@ -455,7 +430,7 @@ mod tests {
         let content = fs::read_to_string(&file_path).expect("Failed to read created note");
         let current_date = crate::utils::date::get_current_date();
         let expected = format!(
-            "---\ncreated: {}\nlast-modified: {}\ntags: []\n---\n",
+            "---\ncreated: {}\nlast-modified: {}\nnote-type: auto\ntags: []\n---\n",
             current_date, current_date
         );
         assert_eq!(content, expected);
@@ -475,7 +450,7 @@ mod tests {
         let content = fs::read_to_string(&file_path).expect("Failed to read created note");
         let current_date = crate::utils::date::get_current_date();
         let expected = format!(
-            "---\ncreated: {}\nlast-modified: {}\ntags: []\n---\n!!! My Thread\n",
+            "---\ncreated: {}\nlast-modified: {}\nnote-type: auto\ntags: []\n---\n!!! My Thread\n",
             current_date, current_date
         );
         assert_eq!(content, expected);
@@ -532,7 +507,7 @@ mod tests {
         let content = fs::read_to_string(&file_path).expect("Failed to read created note");
         let current_date = crate::utils::date::get_current_date();
         let expected = format!(
-            "---\ncreated: {}\nlast-modified: {}\ntags: []\n---\n",
+            "---\ncreated: {}\nlast-modified: {}\nnote-type: manual\ntags: []\n---\n",
             current_date, current_date
         );
         assert_eq!(content, expected);
