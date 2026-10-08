@@ -2,6 +2,7 @@ export interface FormattedNote {
 	filename: string;
 	formattedName: string;
 	created: string | null;
+	noteType: string;
 	preview: string;
 	tags: string[];
 	threads: string[];

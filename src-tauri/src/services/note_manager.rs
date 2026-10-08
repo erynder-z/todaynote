@@ -130,6 +130,16 @@ impl NoteManager {
             .map(|header| header.created.format("%Y-%m-%d").to_string())
     }
 
+    /// Extracts the `note-type` from a note's YAML frontmatter.
+    ///
+    /// Returns "manual" or "auto"; notes without a parseable header or
+    /// without the field default to "auto".
+    pub fn extract_note_type(&self, content: &str) -> String {
+        NoteHeader::parse(content)
+            .map(|header| header.note_type.to_string())
+            .unwrap_or_else(|_| NoteType::Auto.to_string())
+    }
+
     /// Transforms a note filename into a FormattedNote by reading and processing its content.
     fn format_note_file(&self, file_name: &str) -> Option<FormattedNote> {
         let path = self.notes_folder.join(file_name);
@@ -138,6 +148,7 @@ impl NoteManager {
             filename: file_name.to_string(),
             formatted_name: self.format_note_name(file_name),
             created: self.extract_created_date(&content),
+            note_type: self.extract_note_type(&content),
             preview: self.extract_preview(&content),
             tags: crate::utils::tag_parser::parse_tags_from_content(&content),
             threads: self.extract_threads(&content, 5),
@@ -787,6 +798,49 @@ mod tests {
         assert!(result.is_ok());
         let response = result.unwrap();
         assert_eq!(response.notes[0].created, Some("2024-01-15".to_string()));
+    }
+
+    #[test]
+    fn test_extract_note_type_from_frontmatter() {
+        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
+
+        let manual = "---\ncreated: 2024-01-15\nnote-type: manual\ntags: []\n---\nbody";
+        assert_eq!(manager.extract_note_type(manual), "manual".to_string());
+
+        // Legacy note without the note-type field defaults to auto
+        let legacy = "---\ncreated: 2024-01-15\ntags: []\n---\nbody";
+        assert_eq!(manager.extract_note_type(legacy), "auto".to_string());
+    }
+
+    #[test]
+    fn test_extract_note_type_missing_or_invalid() {
+        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
+
+        // No frontmatter
+        assert_eq!(manager.extract_note_type("just body"), "auto".to_string());
+        // Missing required created key makes the header unparseable
+        assert_eq!(
+            manager.extract_note_type("---\ntags: []\n---\nbody"),
+            "auto".to_string()
+        );
+    }
+
+    #[test]
+    fn test_format_note_file_exposes_note_type() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+        fs::write(
+            notes_path.join("my-note.md"),
+            "---\ncreated: 2024-01-15\nnote-type: manual\ntags: []\n---\nbody",
+        )
+        .expect("Failed to write note");
+
+        let manager = NoteManager::new(notes_path, "en".to_string());
+        let response = manager.list_notes(None).expect("list_notes should succeed");
+
+        assert_eq!(response.notes[0].note_type, "manual".to_string());
     }
 
     ///

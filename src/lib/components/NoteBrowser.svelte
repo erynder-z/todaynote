@@ -147,9 +147,13 @@
         settings.dateFormatStyle,
       )}</span
     >
-    {#if note.tags && note.tags.length > 0}
+    {#if note.noteType === 'manual' || (note.tags && note.tags.length > 0)}
       <div class="list-tags">
-        {#each note.tags as tag}
+        {#if note.noteType === 'manual'}
+          <span class="tag-pill mini manual">{$t('notes.list.manual_tag')}</span
+          >
+        {/if}
+        {#each note.tags ?? [] as tag}
           <span class="tag-pill mini">{tag}</span>
         {/each}
       </div>
@@ -169,9 +173,12 @@
     >
   </div>
 
-  {#if note.tags && note.tags.length > 0}
+  {#if note.noteType === 'manual' || (note.tags && note.tags.length > 0)}
     <div class="note-tags">
-      {#each note.tags as tag}
+      {#if note.noteType === 'manual'}
+        <span class="tag-pill manual">{$t('notes.list.manual_tag')}</span>
+      {/if}
+      {#each note.tags ?? [] as tag}
         <span class="tag-pill">{tag}</span>
       {/each}
     </div>
@@ -404,6 +411,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+  }
+
+  .tag-pill.manual {
+    background-color: color-mix(in srgb, var(--text-muted), transparent 85%);
+    color: var(--text-muted);
   }
 
   .card-header {

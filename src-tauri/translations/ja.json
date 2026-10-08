@@ -121,6 +121,7 @@
 	"notes.list.wordCountWithCode_single": "{{count}} 単語 +　コード",
 	"notes.list.wordCountWithCode_multiple": "{{count}} 単語 +　コード",
 	"notes.list.load_all": "すべてのノートを読み込む (合計 {{count}})",
+	"notes.list.manual_tag": "手動",
 	"note.header": "ノート",
 	"note.delete": "ノートを削除",
 	"note.delete_confirm_title": "ノートを削除しますか？",

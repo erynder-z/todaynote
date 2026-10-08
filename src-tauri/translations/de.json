@@ -121,6 +121,7 @@
 	"notes.list.wordCountWithCode_single": "{{count}} Wort + etwas Code",
 	"notes.list.wordCountWithCode_multiple": "{{count}} Wörter + etwas Code",
 	"notes.list.load_all": "Alle Notizen laden ({{count}} insgesamt)",
+	"notes.list.manual_tag": "manuell",
 	"note.header": "Notizen",
 	"note.delete": "Notiz löschen",
 	"note.delete_confirm_title": "Notiz wirklich löschen?",

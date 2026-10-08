@@ -122,6 +122,7 @@
 	"notes.list.wordCountWithCode_single": "{{count}} word + some code",
 	"notes.list.wordCountWithCode_multiple": "{{count}} words + some code",
 	"notes.list.load_all": "Load all notes ({{count}} total)",
+	"notes.list.manual_tag": "manual",
 	"note.header": "Notes",
 	"note.delete": "Delete note",
 	"note.delete_confirm_title": "Delete this note?",
