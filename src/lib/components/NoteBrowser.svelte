@@ -150,8 +150,7 @@
     {#if note.noteType === 'manual' || (note.tags && note.tags.length > 0)}
       <div class="list-tags">
         {#if note.noteType === 'manual'}
-          <span class="tag-pill mini manual">{$t('notes.list.manual_tag')}</span
-          >
+          <span class="tag-pill mini manual">M</span>
         {/if}
         {#each note.tags ?? [] as tag}
           <span class="tag-pill mini">{tag}</span>
@@ -176,7 +175,7 @@
   {#if note.noteType === 'manual' || (note.tags && note.tags.length > 0)}
     <div class="note-tags">
       {#if note.noteType === 'manual'}
-        <span class="tag-pill manual">{$t('notes.list.manual_tag')}</span>
+        <span class="tag-pill manual">M</span>
       {/if}
       {#each note.tags ?? [] as tag}
         <span class="tag-pill">{tag}</span>
@@ -414,8 +413,8 @@
   }
 
   .tag-pill.manual {
-    background-color: color-mix(in srgb, var(--text-muted), transparent 85%);
-    color: var(--text-muted);
+    background-color: var(--accent);
+    color: var(--accent-text);
   }
 
   .card-header {
