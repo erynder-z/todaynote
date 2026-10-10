@@ -116,6 +116,8 @@
 	"notes.error.not_found": "ノートが見つかりません",
 	"notes.list.empty": "ノートが見つかりませんでした",
 	"notes.list.length": "{{count}} 個のノート",
+	"notes.list.wordCount_empty": "本文なし",
+	"notes.list.wordCountWithCode_empty": "コードのみ",
 	"notes.list.wordCount_single": "{{count}} 単語",
 	"notes.list.wordCount_multiple": "{{count}} 単語",
 	"notes.list.wordCountWithCode_single": "{{count}} 単語 +　コード",

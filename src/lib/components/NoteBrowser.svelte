@@ -102,6 +102,11 @@
    * Returns the appropriate word count translation based on note properties
    */
   const getWordCountText = (note: FormattedNote) => {
+    if (note.wordCount === 0) {
+      return note.hasCode
+        ? $t('notes.list.wordCountWithCode_empty')
+        : $t('notes.list.wordCount_empty');
+    }
     if (note.hasCode) {
       return note.wordCount >= 2
         ? $t('notes.list.wordCountWithCode_multiple', { count: note.wordCount })

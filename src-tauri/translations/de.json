@@ -116,6 +116,8 @@
 	"notes.error.not_found": "Notiz nicht gefunden",
 	"notes.list.empty": "Keine Notizen gefunden",
 	"notes.list.length": "{{count}} Notizen",
+	"notes.list.wordCount_empty": "Leer",
+	"notes.list.wordCountWithCode_empty": "Nur Code",
 	"notes.list.wordCount_single": "{{count}} Wort",
 	"notes.list.wordCount_multiple": "{{count}} Wörter",
 	"notes.list.wordCountWithCode_single": "{{count}} Wort + etwas Code",

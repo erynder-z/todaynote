@@ -117,6 +117,8 @@
 	"notes.error.not_found": "Note not found",
 	"notes.list.empty": "No notes found",
 	"notes.list.length": "{{count}} notes",
+	"notes.list.wordCount_empty": "Empty",
+	"notes.list.wordCountWithCode_empty": "Only code",
 	"notes.list.wordCount_single": "{{count}} word",
 	"notes.list.wordCount_multiple": "{{count}} words",
 	"notes.list.wordCountWithCode_single": "{{count}} word + some code",
