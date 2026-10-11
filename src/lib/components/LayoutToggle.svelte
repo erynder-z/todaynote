@@ -83,6 +83,6 @@
 
   .toggle-btn.active {
     background-color: var(--accent);
-    color: white;
+    color: var(--accent-text);
   }
 </style>
