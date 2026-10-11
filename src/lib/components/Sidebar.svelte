@@ -12,6 +12,7 @@
   import { sessionState } from '../stores/sessionState.svelte';
   import NoteDate from './NoteDate.svelte';
   import NoteDeleteButton from './NoteDeleteButton.svelte';
+  import NoteMetadataButton from './NoteMetadataButton.svelte';
   import NoteTags from './NoteTags.svelte';
   import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';
   import ThreadShortcutsModeToggle from './ThreadShortcutsModeToggle.svelte';
@@ -57,6 +58,13 @@
   const closeNoteOptions = (e?: Event) => {
     if (e) e.stopPropagation();
     noteOptionsOpen = false;
+  };
+
+  /**
+   * Opens the note metadata modal for the current note
+   */
+  const showNoteMetadata = () => {
+    sessionState.activePopup = 'noteMetadata';
   };
 
   /**
@@ -169,6 +177,10 @@
             role="menu"
             onclick={(e) => e.stopPropagation()}
           >
+            <NoteMetadataButton
+              onShowMetadata={showNoteMetadata}
+              closeDropdown={closeNoteOptions}
+            />
             <NoteDeleteButton
               {noteContent}
               {notePath}

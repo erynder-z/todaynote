@@ -13,6 +13,7 @@
     'toggleNoteBrowser',
     'toggleSettings',
     'toggleStatistics',
+    'toggleNoteMetadata',
     'togglePinnedThreads',
     'toggleSidebar',
     'manageTags',

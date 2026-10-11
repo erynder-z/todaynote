@@ -38,6 +38,7 @@
     toggleNoteBrowser: () => togglePopup('noteBrowser'),
     toggleSettings: () => togglePopup('settings'),
     toggleStatistics: () => togglePopup('statistics'),
+    toggleNoteMetadata: () => togglePopup('noteMetadata'),
     togglePinnedThreads: () => togglePopup('pinnedThreads'),
     createNote: () =>
       settings.allowManualNoteCreation ? handleCreateNote() : false,

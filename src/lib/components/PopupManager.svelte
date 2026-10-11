@@ -15,6 +15,7 @@
   import FindInView from './FindInNote.svelte';
   import Modal from './Modal.svelte';
   import NoteBrowser from './NoteBrowser.svelte';
+  import NoteMetadataView from './NoteMetadataView.svelte';
   import PinnedThreads from './PinnedThreads.svelte';
   import SearchNotes from './SearchNotes.svelte';
   import SettingsView from './SettingsView.svelte';
@@ -50,6 +51,10 @@
         showLayoutToggle={true}
       >
         <NoteBrowser />
+      </Modal>
+    {:else if sessionState.activePopup === 'noteMetadata'}
+      <Modal title={$t('note.metadata.title')} size="md">
+        <NoteMetadataView />
       </Modal>
     {:else if sessionState.activePopup === 'pinnedThreads'}
       <Modal

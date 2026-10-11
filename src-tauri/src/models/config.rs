@@ -147,6 +147,15 @@ impl Default for AppConfig {
             },
         );
         shortcuts.insert(
+            "toggleNoteMetadata".to_string(),
+            ShortcutConfig {
+                key: "Z".to_string(),
+                primary: true,
+                secondary: true,
+                description: "Toggle note metadata".to_string(),
+            },
+        );
+        shortcuts.insert(
             "deleteNote".to_string(),
             ShortcutConfig {
                 key: "X".to_string(),
@@ -403,19 +412,17 @@ impl AppConfig {
 
         if config_path.exists() {
             match std::fs::read_to_string(&config_path) {
-                Ok(config_content) => {
-                    match serde_json::from_str::<AppConfig>(&config_content) {
-                        Ok(mut config) => {
-                            config.merge_missing_shortcuts();
-                            config
-                        }
-                        Err(_) => {
-                            let config = AppConfig::default();
-                            config.save();
-                            config
-                        }
+                Ok(config_content) => match serde_json::from_str::<AppConfig>(&config_content) {
+                    Ok(mut config) => {
+                        config.merge_missing_shortcuts();
+                        config
                     }
-                }
+                    Err(_) => {
+                        let config = AppConfig::default();
+                        config.save();
+                        config
+                    }
+                },
                 Err(_) => {
                     let config = AppConfig::default();
                     config.save();

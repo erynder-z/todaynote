@@ -1,6 +1,7 @@
 export type PopupType =
 	| "settings"
 	| "noteBrowser"
+	| "noteMetadata"
 	| "pinnedThreads"
 	| "search"
 	| "tagManager"
