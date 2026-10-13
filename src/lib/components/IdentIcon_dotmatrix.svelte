@@ -55,26 +55,16 @@
   };
 
   const THEME_COLOR_VARIABLES = [
-    '--accent',
-    '--success',
-    '--error',
-    '--md-h1',
-    '--md-h2',
-    '--md-h3',
-    '--md-h4',
-    '--md-bold',
-    '--md-italic',
-    '--md-list-marker',
-    '--md-link',
-    '--md-link-hover',
-    '--md-quote-border',
-    '--text-selection',
-    '--accent',
-    '--success',
-    '--error',
-    '--md-h1',
-    '--md-h2',
-    '--md-h3',
+    '--identicon-1',
+    '--identicon-2',
+    '--identicon-3',
+    '--identicon-4',
+    '--identicon-5',
+    '--identicon-6',
+    '--identicon-7',
+    '--identicon-8',
+    '--identicon-9',
+    '--identicon-10',
   ];
 
   // Generate color from theme variables
