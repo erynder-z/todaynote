@@ -106,8 +106,12 @@
 
     if (isPathChange && lastNotePath !== null) {
       isTransitioning = true;
+
       if (transitionTimeout) clearTimeout(transitionTimeout);
-      transitionTimeout = setTimeout(performUpdate, 150); // Match CSS transition duration
+      transitionTimeout = setTimeout(
+        performUpdate,
+        sessionState.isLinux ? 0 : 150,
+      );
     } else {
       performUpdate();
     }
@@ -142,6 +146,7 @@
   <div
     class="editor-transition-container"
     class:transitioning={isTransitioning}
+    class:no-transition={sessionState.isLinux}
   >
     <MilkdownEditor
       content={editor.content}
@@ -175,5 +180,10 @@
   .editor-transition-container.transitioning {
     opacity: 0;
     overflow: hidden;
+  }
+
+  /* Transitions cause flickering on Linux; apply changes instantly instead. */
+  .editor-transition-container.no-transition {
+    transition: none;
   }
 </style>
