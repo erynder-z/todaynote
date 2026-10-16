@@ -162,7 +162,7 @@
       {/if}
     {:else}
       <div class="status-view">
-        <p class="muted">{$t('notes.list.empty')}</p>
+        <p class="muted">{$t('pinned_threads.empty')}</p>
       </div>
     {/if}
   </main>

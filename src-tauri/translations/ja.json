@@ -241,5 +241,6 @@
 	"note_formatter.copy": "コピー",
 	"pinned_threads.title": "固定されたスレッド",
 	"pinned_threads.count": "{{count}} 個の固定スレッド",
-	"pinned_threads.no_content": "このスレッドには内容がありません"
+	"pinned_threads.no_content": "このスレッドには内容がありません",
+	"pinned_threads.empty": "固定されたスレッドはありません"
 }

@@ -241,5 +241,6 @@
 	"note_formatter.copy": "Kopieren",
 	"pinned_threads.title": "Gepinnte Threads",
 	"pinned_threads.count": "{{count}} gepinnte Threads",
-	"pinned_threads.no_content": "Kein Inhalt verfügbar für diesen Thread"
+	"pinned_threads.no_content": "Kein Inhalt verfügbar für diesen Thread",
+	"pinned_threads.empty": "Keine gepinnten Threads"
 }

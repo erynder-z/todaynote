@@ -242,5 +242,6 @@
 	"note_formatter.copy": "Copy",
 	"pinned_threads.title": "Pinned Threads",
 	"pinned_threads.count": "{{count}} pinned threads",
-	"pinned_threads.no_content": "No content available for this thread"
+	"pinned_threads.no_content": "No content available for this thread",
+	"pinned_threads.empty": "No pinned threads"
 }
