@@ -7,10 +7,12 @@
   import IdentIcon from './IdentIcon.svelte';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
-  let { threads, onSelect } = $props<{
+  interface Props {
     threads: NoteThread[];
     onSelect: (threadId: string) => void;
-  }>();
+  }
+
+  let { threads, onSelect }: Props = $props();
 
   // Show only up to 20 threads as there are only 20 shortcuts (1-9, A-K)
   let visibleThreads = $derived(threads.slice(0, 20));

@@ -13,10 +13,12 @@
   import NoteEditor from './NoteEditor.svelte';
   import Sidebar from './Sidebar.svelte';
 
-  let { noteContent = $bindable(), notePath } = $props<{
+  interface Props {
     noteContent: NoteContentResponse | null;
     notePath: string | null;
-  }>();
+  }
+
+  let { noteContent = $bindable(), notePath }: Props = $props();
 
   const editor = new EditorStore();
 

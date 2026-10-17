@@ -15,17 +15,19 @@
     show: () => void;
   };
 
+  interface Props {
+    editorInstance: Editor | null;
+    onLinkInputActive?: (active: boolean) => void;
+    anchor?: SelectionFloatingAnchorInstance | null;
+    visible?: boolean;
+  }
+
   let {
     editorInstance,
     onLinkInputActive,
     anchor,
     visible = false,
-  } = $props<{
-    editorInstance: Editor | null;
-    onLinkInputActive?: (active: boolean) => void;
-    anchor?: SelectionFloatingAnchorInstance | null;
-    visible?: boolean;
-  }>();
+  }: Props = $props();
 
   let isBold = $state(false);
   let isItalic = $state(false);

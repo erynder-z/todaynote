@@ -6,17 +6,19 @@
   import { t } from '#lib';
   import type { NoteContentResponse } from '#lib/interfaces/notes.js';
 
+  interface Props {
+    noteContent: NoteContentResponse | null;
+    notePath: string | null;
+    onDelete: () => void;
+    closeDropdown?: () => void;
+  }
+
   let {
     noteContent,
     notePath,
     onDelete,
     closeDropdown = () => {},
-  } = $props<{
-    noteContent: NoteContentResponse | null;
-    notePath: string | null;
-    onDelete: () => void;
-    closeDropdown?: () => void;
-  }>();
+  }: Props = $props();
 
   /**
    * Handles the click on the delete button

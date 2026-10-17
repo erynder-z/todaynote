@@ -3,12 +3,10 @@
 // See: https://svelte.dev/docs/kit/single-page-apps
 // See: https://v2.tauri.app/start/frontend/sveltekit/ for more info
 import adapter from "@sveltejs/adapter-static";
-
-import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import { sveltekit } from "@sveltejs/kit/vite";
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig } from "vite";
 
-// @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
@@ -16,8 +14,8 @@ export default defineConfig(async () => ({
 	plugins: [
 		sveltekit({
 			preprocess: vitePreprocess(),
-			adapter: adapter({ fallback: "index.html" })
-		})
+			adapter: adapter({ fallback: "index.html" }),
+		}),
 	],
 	clearScreen: false,
 
@@ -42,7 +40,9 @@ export default defineConfig(async () => ({
 		// Optimize chunking strategy
 		rollupOptions: {
 			output: {
-				manualChunks /** @type {string | string[]} */: (id) => {
+				manualChunks /** @type {string | string[]} */: (
+					/** @type {string} */ id,
+				) => {
 					// Put all milkdown/prosemirror libraries in a dedicated vendor chunk
 					if (
 						id.includes("node_modules/@milkdown") ||

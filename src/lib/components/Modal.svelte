@@ -3,7 +3,7 @@
    * Modal wrapper that handles displaying a popup as a child component.
    * Consolidates focus management and scroll locking into a single setup action.
    */
-  import { type Component, tick } from 'svelte';
+  import { type Snippet, tick } from 'svelte';
   import { blur } from 'svelte/transition';
   import type { ModalSize } from '#lib/types/ui.js';
   import { focusTrap } from '../actions/focusTrap';
@@ -12,17 +12,19 @@
   import { useShortcuts } from '../utils/shortcuts';
   import LayoutToggle from './LayoutToggle.svelte';
 
+  interface Props {
+    title?: string;
+    children: Snippet;
+    size?: ModalSize;
+    showLayoutToggle?: boolean;
+  }
+
   let {
     title,
     children,
     size = 'md',
     showLayoutToggle = false,
-  } = $props<{
-    title?: string;
-    children: Component;
-    size?: ModalSize;
-    showLayoutToggle?: boolean;
-  }>();
+  }: Props = $props();
 
   /**
    * Clears the active popup state to hide the modal.

@@ -4,7 +4,11 @@
   import { toast } from '#lib/stores/toast.svelte.js';
   import { t } from '#lib/utils/i18n.js';
 
-  let { t: toastData } = $props<{ t: Toast }>();
+  interface Props {
+    t: Toast;
+  }
+
+  let { t: toastData }: Props = $props();
 
   let message = $derived($t(toastData.message));
   let actionLabel = $derived(

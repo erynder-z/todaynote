@@ -4,11 +4,13 @@
    */
   import { t } from '#lib';
 
-  let { searchMode, selectedTag, onModeChange } = $props<{
+  interface Props {
     searchMode: 'notes' | 'threads' | 'tags';
     selectedTag: string | null;
     onModeChange: (mode: 'notes' | 'threads' | 'tags') => void;
-  }>();
+  }
+
+  let { searchMode, selectedTag, onModeChange }: Props = $props();
 </script>
 
 <aside class="sidebar">

@@ -8,9 +8,11 @@
   import { notesService } from '#lib/utils/notes.js';
   import { settings } from '../stores/settings.svelte';
 
-  let { noteContent } = $props<{
+  interface Props {
     noteContent: NoteContentResponse | null;
-  }>();
+  }
+
+  let { noteContent }: Props = $props();
 
   let date = $derived(
     noteContent?.path

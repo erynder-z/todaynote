@@ -5,17 +5,19 @@
   import { type Snippet, tick } from 'svelte';
   import { fade, scale } from 'svelte/transition';
 
+  interface Props {
+    children: Snippet<[boolean]>;
+    editorWrapperClass?: string;
+    linkInputActive?: boolean;
+    editorInstance?: Editor | null;
+  }
+
   let {
     children,
     editorWrapperClass = 'milkdown-editor-wrapper',
     linkInputActive = false,
     editorInstance,
-  } = $props<{
-    children: Snippet<[boolean]>;
-    editorWrapperClass?: string;
-    linkInputActive?: boolean;
-    editorInstance?: Editor | null;
-  }>();
+  }: Props = $props();
 
   let visible = $state(false);
   let x = $state(0);

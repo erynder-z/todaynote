@@ -8,7 +8,11 @@
   import NoteFormatter from './NoteFormatter.svelte';
   import SelectionFloatingAnchor from './SelectionFloatingAnchor.svelte';
 
-  let { editorInstance } = $props<{ editorInstance: Editor | null }>();
+  interface Props {
+    editorInstance: Editor | null;
+  }
+
+  let { editorInstance }: Props = $props();
 
   let linkInputActive = $state(false);
   let anchor: SelectionFloatingAnchorInstance | null = $state(null);

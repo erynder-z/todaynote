@@ -1,8 +1,10 @@
 <script lang="ts">
-  let { title = '', size = '2rem' } = $props<{
+  interface Props {
     title?: string;
     size?: string; // relative units
-  }>();
+  }
+
+  let { title = '', size = '2rem' }: Props = $props();
 
   /**
    * High-distribution, non-cryptographic string hashing (djb2).

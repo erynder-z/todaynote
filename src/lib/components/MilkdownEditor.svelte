@@ -24,6 +24,15 @@
   import { threadMarkerPlugin } from '../plugins/threadMarkerPlugin';
   import { parser } from '../utils/milkdownConfig';
 
+  interface Props {
+    content: string;
+    onUpdate?: (markdown: string) => void;
+    plugins?: MilkdownPlugin[];
+    readonly?: boolean;
+    activeThreadIndex?: number;
+    onReady?: (instance: Editor) => void;
+  }
+
   let {
     content,
     onUpdate,
@@ -31,14 +40,7 @@
     readonly = false,
     activeThreadIndex = -1,
     onReady,
-  } = $props<{
-    content: string;
-    onUpdate?: (markdown: string) => void;
-    plugins?: MilkdownPlugin[];
-    readonly?: boolean;
-    activeThreadIndex?: number;
-    onReady?: (instance: Editor) => void;
-  }>();
+  }: Props = $props();
 
   const allPlugins = $derived([
     commonmark,

@@ -5,13 +5,12 @@
    */
   import { t } from '#lib';
 
-  let {
-    onShowMetadata,
-    closeDropdown = () => {},
-  } = $props<{
+  interface Props {
     onShowMetadata: () => void;
     closeDropdown?: () => void;
-  }>();
+  }
+
+  let { onShowMetadata, closeDropdown = () => {} }: Props = $props();
 
   /**
    * Handles the click on the metadata button

@@ -4,7 +4,10 @@
    */
   import { ask } from '@tauri-apps/plugin-dialog';
   import { slide } from 'svelte/transition';
-  import type { NoteContentResponse, NoteThread } from '#lib/interfaces/notes.js';
+  import type {
+    NoteContentResponse,
+    NoteThread,
+  } from '#lib/interfaces/notes.js';
   import { toast } from '#lib/stores/toast.svelte.js';
   import { t } from '#lib/utils/i18n.js';
   import { notesService } from '#lib/utils/notes.js';
@@ -17,6 +20,16 @@
   import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';
   import ThreadShortcutsModeToggle from './ThreadShortcutsModeToggle.svelte';
 
+  interface Props {
+    noteContent: NoteContentResponse | null;
+    threads: NoteThread[];
+    notePath: string | null;
+    onSelect: (threadId: string) => void;
+    onNoteDeleted: () => void;
+    width?: number;
+    isResizing?: boolean;
+  }
+
   let {
     noteContent,
     threads,
@@ -25,15 +38,7 @@
     onNoteDeleted,
     width = 22, // rem
     isResizing = false,
-  } = $props<{
-    noteContent: NoteContentResponse | null;
-    threads: NoteThread[];
-    notePath: string | null;
-    onSelect: (threadId: string) => void;
-    onNoteDeleted: () => void;
-    width?: number;
-    isResizing?: boolean;
-  }>();
+  }: Props = $props();
 
   let noteOptionsOpen = $state(false);
 

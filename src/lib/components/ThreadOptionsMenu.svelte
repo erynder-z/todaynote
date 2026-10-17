@@ -12,9 +12,11 @@
   import { useShortcuts } from '../utils/shortcuts';
   import ThreadOptionButton from './ThreadOptionButton.svelte';
 
-  let { thread } = $props<{
+  interface Props {
     thread: NoteThread;
-  }>();
+  }
+
+  let { thread }: Props = $props();
 
   let currentThread = $derived(
     sessionState.todayNoteContent?.threads.find((t) => t.id === thread.id) ??

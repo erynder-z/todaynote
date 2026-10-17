@@ -3,15 +3,13 @@
   import IdentIconDotmatrix from './IdentIcon_dotmatrix.svelte';
   import IdentIconRound from './IdentIcon_round.svelte';
 
-  let {
-    title = '',
-    size = 2,
-    style = 'dotmatrix',
-  } = $props<{
+  interface Props {
     title?: string;
     size?: number;
     style?: 'dotmatrix' | 'round' | 'none';
-  }>();
+  }
+
+  let { title = '', size = 2, style = 'dotmatrix' }: Props = $props();
 
   // Convert size in rem units to a CSS string
   const sizeWithUnit = $derived(`${size}rem`);

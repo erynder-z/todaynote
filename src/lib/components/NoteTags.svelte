@@ -7,9 +7,11 @@
   import type { NoteContentResponse } from '#lib/interfaces/notes.js';
   import { notesService } from '#lib/utils/notes.js';
 
-  let { noteContent } = $props<{
+  interface Props {
     noteContent: NoteContentResponse | null;
-  }>();
+  }
+
+  let { noteContent }: Props = $props();
 
   let tags = $derived(noteContent?.metadata.tags || []);
   let selectedTag = $state<string | null>(null);

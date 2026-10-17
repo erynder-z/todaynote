@@ -6,7 +6,10 @@
    */
   import type { Editor } from '@milkdown/kit/core';
   import { untrack } from 'svelte';
-  import type { NoteContentResponse, NoteThread } from '#lib/interfaces/notes.js';
+  import type {
+    NoteContentResponse,
+    NoteThread,
+  } from '#lib/interfaces/notes.js';
   import { customKeymapPlugin } from '../plugins/customKeymapPlugin';
   import { linkOpenerPlugin } from '../plugins/linkOpenerPlugin';
   import type { EditorStore } from '../stores/editor.svelte';
@@ -18,15 +21,13 @@
   import FloatingToolbar from './FloatingToolbar.svelte';
   import MilkdownEditor from './MilkdownEditor.svelte';
 
-  let {
-    noteContent = $bindable(),
-    notePath,
-    editor,
-  } = $props<{
+  interface Props {
     noteContent: NoteContentResponse | null;
     notePath: string | null;
     editor: EditorStore;
-  }>();
+  }
+
+  let { noteContent = $bindable(), notePath, editor }: Props = $props();
 
   let milkdownInstance: Editor | null = $state(null);
   let editorService: EditorService | null = $state(null);
