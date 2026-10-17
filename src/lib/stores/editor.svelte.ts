@@ -1,6 +1,6 @@
 import { untrack } from "svelte";
-import type { NoteContentResponse, NoteThread } from "$lib/interfaces/notes";
-import { notesService } from "$lib/utils/notes";
+import type { NoteContentResponse, NoteThread } from "#lib/interfaces/notes.js";
+import { notesService } from "#lib/utils/notes.js";
 
 /**
  * Manages the state and logic for the Note Editor.

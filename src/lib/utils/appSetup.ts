@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AppPayload } from "$lib/interfaces/appState";
+import type { AppPayload } from "#lib/interfaces/appState.js";
 import { sessionState } from "../stores/sessionState.svelte";
 import { settings } from "../stores/settings.svelte";
 import { availableLocales, locale, translations } from "./i18n";

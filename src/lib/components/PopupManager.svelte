@@ -5,8 +5,8 @@
    */
   import { flip } from 'svelte/animate';
   import { fade } from 'svelte/transition';
-  import { toast } from '$lib/stores/toast.svelte';
-  import { toggleFindInNote } from '$lib/utils/findInElement';
+  import { toast } from '#lib/stores/toast.svelte.js';
+  import { toggleFindInNote } from '#lib/utils/findInElement.js';
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';
   import { t } from '../utils/i18n';

@@ -6,7 +6,7 @@
    */
   import type { Editor } from '@milkdown/kit/core';
   import { untrack } from 'svelte';
-  import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
+  import type { NoteContentResponse, NoteThread } from '#lib/interfaces/notes.js';
   import { customKeymapPlugin } from '../plugins/customKeymapPlugin';
   import { linkOpenerPlugin } from '../plugins/linkOpenerPlugin';
   import type { EditorStore } from '../stores/editor.svelte';

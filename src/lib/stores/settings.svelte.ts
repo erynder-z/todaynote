@@ -1,10 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AppPayload } from "$lib/interfaces/appState";
-import type { ShortcutConfig } from "$lib/interfaces/input";
-import type { NoteContentResponse } from "$lib/interfaces/notes";
-import type { AppSettings } from "$lib/interfaces/settings";
-import type { ShortcutAction } from "$lib/types/input";
-import { appInitializer } from "$lib/utils/appSetup";
+import type { AppPayload } from "#lib/interfaces/appState.js";
+import type { ShortcutConfig } from "#lib/interfaces/input.js";
+import type { NoteContentResponse } from "#lib/interfaces/notes.js";
+import type { AppSettings } from "#lib/interfaces/settings.js";
+import type { ShortcutAction } from "#lib/types/input.js";
+import { appInitializer } from "#lib/utils/appSetup.js";
 import { sessionState } from "./sessionState.svelte";
 
 /**

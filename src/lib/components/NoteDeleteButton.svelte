@@ -3,8 +3,8 @@
    * Button for deleting a note.
    * Triggers the onDelete callback when clicked.
    */
-  import { t } from '$lib';
-  import type { NoteContentResponse } from '$lib/interfaces/notes';
+  import { t } from '#lib';
+  import type { NoteContentResponse } from '#lib/interfaces/notes.js';
 
   let {
     noteContent,

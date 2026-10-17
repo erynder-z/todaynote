@@ -4,7 +4,7 @@
    */
   import { invoke } from '@tauri-apps/api/core';
   import { ask } from '@tauri-apps/plugin-dialog';
-  import { t, toast } from '$lib';
+  import { t, toast } from '#lib';
 
   /**
    * Purges all empty notes after confirmation.

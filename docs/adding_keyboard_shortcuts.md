@@ -121,7 +121,7 @@ In the component, register the shortcut using the `useShortcuts` hook:
 
 ```svelte
 <script lang="ts">
-import { useShortcuts } from '$lib/utils/shortcuts';
+import { useShortcuts } from '#lib/utils/shortcuts.js';
 
 const handleYourAction = (e: KeyboardEvent) => {
     // Action logic here
@@ -239,8 +239,8 @@ const globalActions: ShortcutAction[] = [
 
 ```svelte
 <script lang="ts">
-import { useShortcuts } from '$lib/utils/shortcuts';
-import { sessionState } from '$lib/stores/sessionState.svelte';
+import { useShortcuts } from '#lib/utils/shortcuts.js';
+import { sessionState } from '#lib/stores/sessionState.svelte.js';
 
 const toggleZenMode = () => {
     sessionState.zenModeEnabled = !sessionState.zenModeEnabled;

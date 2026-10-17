@@ -11,8 +11,8 @@
     Navigation,
     PopupManager,
     settings,
-  } from '$lib';
-  import { dayWatcher } from '$lib/utils/dayWatcher';
+  } from '#lib';
+  import { dayWatcher } from '#lib/utils/dayWatcher.js';
 
   /**
    * Bootstraps the app by fetching initial state from the backend.

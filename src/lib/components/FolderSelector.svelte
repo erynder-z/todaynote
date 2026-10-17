@@ -3,9 +3,9 @@
    * Provides a UI for selecting and validating a directory as the root for notes.
    */
   import { invoke } from '@tauri-apps/api/core';
-  import { settings, t } from '$lib';
-  import type { FolderValidation } from '$lib/interfaces/folder';
-  import { selectFolder } from '$lib/utils/folder';
+  import { settings, t } from '#lib';
+  import type { FolderValidation } from '#lib/interfaces/folder.js';
+  import { selectFolder } from '#lib/utils/folder.js';
 
   let selectedFolderPath = $state<string | null>(null);
   let validationResult = $state<FolderValidation | null>(null);

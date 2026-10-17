@@ -8,8 +8,8 @@
     SearchResult,
     TagSearchResult,
     ThreadSearchResult,
-  } from '$lib/interfaces/notes';
-  import { notesService } from '$lib/utils/notes';
+  } from '#lib/interfaces/notes.js';
+  import { notesService } from '#lib/utils/notes.js';
   import { ListNavigator } from '../stores/listNav.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';

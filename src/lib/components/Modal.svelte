@@ -5,7 +5,7 @@
    */
   import { type Component, tick } from 'svelte';
   import { blur } from 'svelte/transition';
-  import type { ModalSize } from '$lib/types/ui';
+  import type { ModalSize } from '#lib/types/ui.js';
   import { focusTrap } from '../actions/focusTrap';
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';

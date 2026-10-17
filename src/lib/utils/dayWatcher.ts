@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { DayBoundaryStatus } from "$lib/interfaces/date";
-import type { NoteContentResponse } from "$lib/interfaces/notes";
+import type { DayBoundaryStatus } from "#lib/interfaces/date.js";
+import type { NoteContentResponse } from "#lib/interfaces/notes.js";
 import { sessionState } from "../stores/sessionState.svelte";
 import { toast } from "../stores/toast.svelte";
 

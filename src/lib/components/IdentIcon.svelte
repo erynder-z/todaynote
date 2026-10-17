@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { settings } from '$lib/stores/settings.svelte';
+  import { settings } from '#lib/stores/settings.svelte.js';
   import IdentIconDotmatrix from './IdentIcon_dotmatrix.svelte';
   import IdentIconRound from './IdentIcon_round.svelte';
 

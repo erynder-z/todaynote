@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import type { NoteListResponse } from "$lib/interfaces/notes";
+import type { NoteListResponse } from "#lib/interfaces/notes.js";
 
 /**
  * Opens a native file dialog to let the user select a directory for their notes.

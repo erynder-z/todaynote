@@ -1,5 +1,5 @@
-import type { Toast, ToastAction } from "$lib/interfaces/ui";
-import type { ToastType } from "$lib/types/ui";
+import type { Toast, ToastAction } from "#lib/interfaces/ui.js";
+import type { ToastType } from "#lib/types/ui.js";
 
 class ToastStore {
 	toasts = $state<Toast[]>([]);

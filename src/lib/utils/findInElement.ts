@@ -1,4 +1,4 @@
-import { sessionState } from "$lib/stores/sessionState.svelte";
+import { sessionState } from "#lib/stores/sessionState.svelte.js";
 
 /**
  * Class for finding text matches within the current view (find-in-page functionality)

@@ -2,7 +2,7 @@
   /**
    * Component that provides a button to open the keyboard shortcuts modal.
    */
-  import { sessionState, t } from '$lib';
+  import { sessionState, t } from '#lib';
 
   const openShortcuts = () => {
     sessionState.activePopup = 'shortcuts';

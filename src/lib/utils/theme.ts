@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import type { ThemeInfo } from "$lib/interfaces/settings";
+import type { ThemeInfo } from "#lib/interfaces/settings.js";
 
 /**
  * Holds the list of themes currently available in the application.

@@ -2,7 +2,7 @@
   /**
    * Component for choosing the application language from supported locales.
    */
-  import { availableLocales, settings, t } from '$lib';
+  import { availableLocales, settings, t } from '#lib';
 
   /**
    * Updates the global locale setting when a new language is selected.

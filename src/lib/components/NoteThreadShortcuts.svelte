@@ -2,7 +2,7 @@
   /**
    * Component for displaying note threads with shortcut hints for quick navigation.
    */
-  import type { NoteThread } from '$lib/interfaces/notes';
+  import type { NoteThread } from '#lib/interfaces/notes.js';
   import { tagSuggestionShortcuts } from '../config/shortcuts';
   import IdentIcon from './IdentIcon.svelte';
   import KeyboardShortcut from './KeyboardShortcut.svelte';

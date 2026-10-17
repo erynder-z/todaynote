@@ -4,7 +4,7 @@
    * Keeps backward compatibility for NoteEditor.svelte imports.
    */
   import type { Editor } from '@milkdown/kit/core';
-  import type { SelectionFloatingAnchorInstance } from '$lib/types/other';
+  import type { SelectionFloatingAnchorInstance } from '#lib/types/other.js';
   import NoteFormatter from './NoteFormatter.svelte';
   import SelectionFloatingAnchor from './SelectionFloatingAnchor.svelte';
 

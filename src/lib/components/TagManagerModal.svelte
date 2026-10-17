@@ -3,7 +3,7 @@
    * Modern, minimal Modal component for managing tags.
    * Refactored for better readability and Svelte 5 idiomatic patterns.
    */
-  import { tagSuggestionShortcuts } from '$lib/config/shortcuts';
+  import { tagSuggestionShortcuts } from '#lib/config/shortcuts.js';
   import { inputManager } from '../stores/input.svelte';
   import { ListNavigator } from '../stores/listNav.svelte';
   import { sessionState } from '../stores/sessionState.svelte';

@@ -261,7 +261,7 @@ In the component, use the setting and save it when changed:
 
 ```svelte
 <script lang="ts">
-import { settings } from '$lib/stores/settings.svelte';
+import { settings } from '#lib/stores/settings.svelte.js';
 
 const handleChange = async (newValue) => {
     settings.settingName = newValue;

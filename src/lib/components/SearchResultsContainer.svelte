@@ -7,9 +7,9 @@
     SearchResult,
     TagSearchResult,
     ThreadSearchResult,
-  } from '$lib/interfaces/notes';
-  import type { SearchResultsContainerProps } from '$lib/interfaces/ui';
-  import { notesService } from '$lib/utils/notes';
+  } from '#lib/interfaces/notes.js';
+  import type { SearchResultsContainerProps } from '#lib/interfaces/ui.js';
+  import { notesService } from '#lib/utils/notes.js';
   import { settings } from '../stores/settings.svelte';
   import { locale, t } from '../utils/i18n';
   import IdentIcon from './IdentIcon.svelte';

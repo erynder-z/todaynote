@@ -3,10 +3,10 @@
    * Slide-in menu for displaying thread options
    */
   import { slide } from 'svelte/transition';
-  import type { NoteThread } from '$lib/interfaces/notes';
-  import { toast } from '$lib/stores/toast.svelte';
-  import { t } from '$lib/utils/i18n';
-  import { stripMarkdown } from '$lib/utils/markdown';
+  import type { NoteThread } from '#lib/interfaces/notes.js';
+  import { toast } from '#lib/stores/toast.svelte.js';
+  import { t } from '#lib/utils/i18n.js';
+  import { stripMarkdown } from '#lib/utils/markdown.js';
   import { sessionState } from '../stores/sessionState.svelte';
   import { notesService } from '../utils/notes';
   import { useShortcuts } from '../utils/shortcuts';

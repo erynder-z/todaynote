@@ -4,8 +4,8 @@
    * Medium format: "Mon, January 01, 2026"
    * Narrow format: "M, Jan 01, 26"
    */
-  import { settings } from '$lib/stores/settings.svelte';
-  import { locale, t } from '$lib/utils/i18n';
+  import { settings } from '#lib/stores/settings.svelte.js';
+  import { locale, t } from '#lib/utils/i18n.js';
 
   $: options = [
     { value: 'medium', label: $t('settings.date.medium') },

@@ -3,9 +3,9 @@
    * Component for displaying tags for a note.
    * Clicking the add button opens the Tag Manager modal.
    */
-  import { sessionState, useShortcuts } from '$lib';
-  import type { NoteContentResponse } from '$lib/interfaces/notes';
-  import { notesService } from '$lib/utils/notes';
+  import { sessionState, useShortcuts } from '#lib';
+  import type { NoteContentResponse } from '#lib/interfaces/notes.js';
+  import { notesService } from '#lib/utils/notes.js';
 
   let { noteContent } = $props<{
     noteContent: NoteContentResponse | null;

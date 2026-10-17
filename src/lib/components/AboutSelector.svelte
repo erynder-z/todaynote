@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t } from '$lib/utils/i18n';
+  import { t } from '#lib/utils/i18n.js';
   /**
    * Button that opens the About popup.
    */

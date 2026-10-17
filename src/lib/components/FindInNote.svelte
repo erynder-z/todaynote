@@ -5,7 +5,7 @@
    */
   import { onDestroy, tick } from 'svelte';
   import { fly } from 'svelte/transition';
-  import { t } from '$lib/utils/i18n';
+  import { t } from '#lib/utils/i18n.js';
   import { sessionState } from '../stores/sessionState.svelte';
   import { DOMObserver } from '../utils/domObserver';
   import { FindInElement } from '../utils/findInElement';

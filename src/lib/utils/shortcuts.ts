@@ -1,6 +1,6 @@
 import { onMount } from "svelte";
-import { inputManager } from "$lib/stores/input.svelte";
-import type { ShortcutAction, ShortcutCallback } from "$lib/types/input";
+import { inputManager } from "#lib/stores/input.svelte.js";
+import type { ShortcutAction, ShortcutCallback } from "#lib/types/input.js";
 
 /**
  * Shortcut registration helper that handles cleanup automatically.

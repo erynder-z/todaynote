@@ -1,8 +1,8 @@
 import type {
 	ShortcutConfig,
 	ShortcutRegistration,
-} from "$lib/interfaces/input";
-import type { ShortcutAction, ShortcutCallback } from "$lib/types/input";
+} from "#lib/interfaces/input.js";
+import type { ShortcutAction, ShortcutCallback } from "#lib/types/input.js";
 import { sessionState } from "./sessionState.svelte";
 import { settings } from "./settings.svelte";
 

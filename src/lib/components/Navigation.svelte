@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { settings } from '$lib/stores/settings.svelte';
+  import { settings } from '#lib/stores/settings.svelte.js';
   /**
    * Navigation bar that provides access to the several app features.
    */
-  import type { PopupType } from '$lib/types/ui';
+  import type { PopupType } from '#lib/types/ui.js';
   import { sessionState } from '../stores/sessionState.svelte';
   import { toast } from '../stores/toast.svelte';
   import { t } from '../utils/i18n';

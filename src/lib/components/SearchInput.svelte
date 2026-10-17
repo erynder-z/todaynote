@@ -2,8 +2,8 @@
   /**
    * Search input component with integrated actions (fuzzy toggle, clear).
    */
-  import { t } from '$lib';
-  import type { SearchInputProps } from '$lib/interfaces/ui';
+  import { t } from '#lib';
+  import type { SearchInputProps } from '#lib/interfaces/ui.js';
 
   let {
     query = $bindable(),

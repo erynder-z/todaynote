@@ -5,10 +5,10 @@
   import { lift, toggleMark, wrapIn } from '@milkdown/kit/prose/commands';
   import type { Mark, Node as PMNode } from '@milkdown/kit/prose/model';
   import type { EditorState } from '@milkdown/kit/prose/state';
-  import { inputManager } from '$lib/stores/input.svelte';
-  import { settings } from '$lib/stores/settings.svelte';
-  import { t } from '$lib/utils/i18n';
-  import { useShortcuts } from '$lib/utils/shortcuts';
+  import { inputManager } from '#lib/stores/input.svelte.js';
+  import { settings } from '#lib/stores/settings.svelte.js';
+  import { t } from '#lib/utils/i18n.js';
+  import { useShortcuts } from '#lib/utils/shortcuts.js';
 
   type SelectionFloatingAnchorInstance = {
     hide: () => void;

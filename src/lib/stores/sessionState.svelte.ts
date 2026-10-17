@@ -1,4 +1,4 @@
-import type { SessionState } from "$lib/interfaces/appState";
+import type { SessionState } from "#lib/interfaces/appState.js";
 /**
  * Global application state including current note information and UI state.
  */

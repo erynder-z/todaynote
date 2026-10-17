@@ -3,9 +3,9 @@
    * Component for displaying a note's formatted date.
    * Extracts and formats the localized date from the provided note content.
    */
-  import type { NoteContentResponse } from '$lib/interfaces/notes';
-  import { locale } from '$lib/utils/i18n';
-  import { notesService } from '$lib/utils/notes';
+  import type { NoteContentResponse } from '#lib/interfaces/notes.js';
+  import { locale } from '#lib/utils/i18n.js';
+  import { notesService } from '#lib/utils/notes.js';
   import { settings } from '../stores/settings.svelte';
 
   let { noteContent } = $props<{

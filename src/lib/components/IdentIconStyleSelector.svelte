@@ -3,8 +3,8 @@
    * Component for selecting thread visual representation style.
    * Allows users to choose between different visual styles for thread identification.
    */
-  import { settings } from '$lib/stores/settings.svelte';
-  import { t } from '$lib/utils/i18n';
+  import { settings } from '#lib/stores/settings.svelte.js';
+  import { t } from '#lib/utils/i18n.js';
   import IdentIconDotmatrix from './IdentIcon_dotmatrix.svelte';
   import IdentIconRound from './IdentIcon_round.svelte';
 

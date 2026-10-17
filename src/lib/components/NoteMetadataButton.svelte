@@ -3,7 +3,7 @@
    * Dropdown item for showing the note metadata.
    * Triggers the onShowMetadata callback when clicked.
    */
-  import { t } from '$lib';
+  import { t } from '#lib';
 
   let {
     onShowMetadata,

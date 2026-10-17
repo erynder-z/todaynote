@@ -4,7 +4,7 @@
    */
   import { invoke } from '@tauri-apps/api/core';
   import { ask } from '@tauri-apps/plugin-dialog';
-  import { sessionState, settings, t, toast } from '$lib';
+  import { sessionState, settings, t, toast } from '#lib';
   import { notesService } from '../utils/notes';
 
   let localValue = $state(settings.defaultThreadName || '');

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { sessionState } from '$lib/stores/sessionState.svelte';
-  import { settings } from '$lib/stores/settings.svelte';
-  import { t } from '$lib/utils/i18n';
-  import { useShortcuts } from '$lib/utils/shortcuts';
+  import { sessionState } from '#lib/stores/sessionState.svelte.js';
+  import { settings } from '#lib/stores/settings.svelte.js';
+  import { t } from '#lib/utils/i18n.js';
+  import { useShortcuts } from '#lib/utils/shortcuts.js';
 
   /**
    * Toggle to switch between navigation and action mode

@@ -2,7 +2,7 @@
   /**
    * Component for toggling the window size persistence setting.
    */
-  import { settings, t } from '$lib';
+  import { settings, t } from '#lib';
 
   /**
    * Updates the global setting that determines whether the

@@ -3,7 +3,7 @@
    * Reusable component for displaying keyboard shortcuts.
    * Supports primary modifier (Cmd/Ctrl), secondary modifier (Option/Shift), and a key.
    */
-  import { inputManager } from '$lib/stores/input.svelte';
+  import { inputManager } from '#lib/stores/input.svelte.js';
 
   let {
     primary = false,

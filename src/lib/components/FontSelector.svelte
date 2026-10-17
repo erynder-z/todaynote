@@ -4,7 +4,7 @@
    */
   import { invoke } from '@tauri-apps/api/core';
   import { onMount } from 'svelte';
-  import { settings, t } from '$lib';
+  import { settings, t } from '#lib';
 
   let systemFonts = $state<string[]>([]);
   let isLoading = $state(false);

@@ -7,7 +7,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { open, save } from '@tauri-apps/plugin-dialog';
   import { tick } from 'svelte';
-  import { sessionState, t, toast } from '$lib';
+  import { sessionState, t, toast } from '#lib';
 
   type PasswordMode = 'export' | 'import' | null;
 

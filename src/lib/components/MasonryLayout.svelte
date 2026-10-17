@@ -4,7 +4,7 @@
    * Handles responsive columns, distribution, and 2D keyboard navigation.
    */
   import type { Snippet } from 'svelte';
-  import type { ListNavigator } from '$lib/stores/listNav.svelte';
+  import type { ListNavigator } from '#lib/stores/listNav.svelte.js';
 
   let {
     items,

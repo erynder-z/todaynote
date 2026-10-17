@@ -4,11 +4,11 @@
    */
   import { ask } from '@tauri-apps/plugin-dialog';
   import { slide } from 'svelte/transition';
-  import type { NoteContentResponse, NoteThread } from '$lib/interfaces/notes';
-  import { toast } from '$lib/stores/toast.svelte';
-  import { t } from '$lib/utils/i18n';
-  import { notesService } from '$lib/utils/notes';
-  import { useShortcuts } from '$lib/utils/shortcuts';
+  import type { NoteContentResponse, NoteThread } from '#lib/interfaces/notes.js';
+  import { toast } from '#lib/stores/toast.svelte.js';
+  import { t } from '#lib/utils/i18n.js';
+  import { notesService } from '#lib/utils/notes.js';
+  import { useShortcuts } from '#lib/utils/shortcuts.js';
   import { sessionState } from '../stores/sessionState.svelte';
   import NoteDate from './NoteDate.svelte';
   import NoteDeleteButton from './NoteDeleteButton.svelte';

@@ -2,7 +2,7 @@
   /**
    * Component for selecting the application's visual theme.
    */
-  import { settings, t } from '$lib';
+  import { settings, t } from '#lib';
   import { availableThemes } from '../utils/theme';
 
   /**

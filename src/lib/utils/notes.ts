@@ -7,7 +7,7 @@ import type {
 	TagSearchResult,
 	ThreadAggregationResult,
 	ThreadSearchResult,
-} from "$lib/interfaces/notes";
+} from "#lib/interfaces/notes.js";
 import { processSearchResults } from "./search";
 
 /**

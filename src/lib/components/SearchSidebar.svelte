@@ -2,7 +2,7 @@
   /**
    * Sidebar component for search mode selection and navigation.
    */
-  import { t } from '$lib';
+  import { t } from '#lib';
 
   let { searchMode, selectedTag, onModeChange } = $props<{
     searchMode: 'notes' | 'threads' | 'tags';

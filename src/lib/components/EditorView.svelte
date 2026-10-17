@@ -4,9 +4,9 @@
    */
 
   import { fade } from 'svelte/transition';
-  import { toast } from '$lib';
-  import type { NoteContentResponse } from '$lib/interfaces/notes';
-  import { notesService } from '$lib/utils/notes';
+  import { toast } from '#lib';
+  import type { NoteContentResponse } from '#lib/interfaces/notes.js';
+  import { notesService } from '#lib/utils/notes.js';
   import { settings, t } from '../index';
   import { EditorStore } from '../stores/editor.svelte';
   import { sessionState } from '../stores/sessionState.svelte';

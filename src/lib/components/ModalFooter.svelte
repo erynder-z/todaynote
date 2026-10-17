@@ -4,8 +4,8 @@
    * Displays keyboard shortcuts and optional item count.
    */
 
-  import type { ShortcutHint } from '$lib/interfaces/ui';
-  import { settings } from '$lib/stores/settings.svelte';
+  import type { ShortcutHint } from '#lib/interfaces/ui.js';
+  import { settings } from '#lib/stores/settings.svelte.js';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
   let {

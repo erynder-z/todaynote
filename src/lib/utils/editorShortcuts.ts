@@ -1,7 +1,7 @@
 import { tick } from "svelte";
-import type { EditorShortcutDeps } from "$lib/interfaces/editor";
-import type { NoteThread } from "$lib/interfaces/notes";
-import type { ShortcutAction, ShortcutCallback } from "$lib/types/input";
+import type { EditorShortcutDeps } from "#lib/interfaces/editor.js";
+import type { NoteThread } from "#lib/interfaces/notes.js";
+import type { ShortcutAction, ShortcutCallback } from "#lib/types/input.js";
 import { tagSuggestionShortcuts } from "../config/shortcuts";
 import { sessionState } from "../stores/sessionState.svelte";
 import { navigateToLastAvailable, navigateToOffset } from "./dailyNote";

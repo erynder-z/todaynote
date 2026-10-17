@@ -2,9 +2,9 @@
   /**
    * Displays the note browser which allows switching between list and masonry layouts.
    */
-  import type { FormattedNote } from '$lib/interfaces/notes';
-  import { listNotes } from '$lib/utils/folder';
-  import { notesService } from '$lib/utils/notes';
+  import type { FormattedNote } from '#lib/interfaces/notes.js';
+  import { listNotes } from '#lib/utils/folder.js';
+  import { notesService } from '#lib/utils/notes.js';
   import { ListNavigator } from '../stores/listNav.svelte';
   import { sessionState } from '../stores/sessionState.svelte';
   import { settings } from '../stores/settings.svelte';

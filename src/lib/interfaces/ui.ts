@@ -1,4 +1,4 @@
-import type { ListNavigator } from "$lib/stores/listNav.svelte";
+import type { ListNavigator } from "#lib/stores/listNav.svelte.js";
 import type { ShortcutAction } from "../types/input";
 import type { ToastType } from "../types/ui";
 import type {
