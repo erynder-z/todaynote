@@ -4,21 +4,14 @@
    * Triggers the onDelete callback when clicked.
    */
   import { t } from '#lib';
-  import type { NoteContentResponse } from '#lib/interfaces/notes.js';
-
-  interface Props {
-    noteContent: NoteContentResponse | null;
-    notePath: string | null;
-    onDelete: () => void;
-    closeDropdown?: () => void;
-  }
+  import type { NoteDeleteButtonProps } from '#lib/interfaces/notes.ts';
 
   let {
     noteContent,
     notePath,
     onDelete,
     closeDropdown = () => {},
-  }: Props = $props();
+  }: NoteDeleteButtonProps = $props();
 
   /**
    * Handles the click on the delete button

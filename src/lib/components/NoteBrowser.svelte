@@ -2,15 +2,15 @@
   /**
    * Displays the note browser which allows switching between list and masonry layouts.
    */
-  import type { FormattedNote } from '#lib/interfaces/notes.js';
-  import { listNotes } from '#lib/utils/folder.js';
-  import { notesService } from '#lib/utils/notes.js';
-  import { ListNavigator } from '../stores/listNav.svelte';
-  import { sessionState } from '../stores/sessionState.svelte';
-  import { settings } from '../stores/settings.svelte';
-  import { toast } from '../stores/toast.svelte';
-  import { locale, t } from '../utils/i18n';
-  import { useShortcuts } from '../utils/shortcuts';
+  import type { FormattedNote } from '#lib/interfaces/notes.ts';
+  import { listNotes } from '#lib/utils/folder.ts';
+  import { notesService } from '#lib/utils/notes.ts';
+  import { ListNavigator } from '../stores/listNav.svelte.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
+  import { settings } from '../stores/settings.svelte.ts';
+  import { toast } from '../stores/toast.svelte.ts';
+  import { locale, t } from '../utils/i18n.ts';
+  import { useShortcuts } from '../utils/shortcuts.ts';
   import IdentIcon from './IdentIcon.svelte';
   import ListLayout from './ListLayout.svelte';
   import MasonryLayout from './MasonryLayout.svelte';

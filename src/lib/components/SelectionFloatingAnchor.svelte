@@ -1,23 +1,15 @@
 <script lang="ts">
-  import type { Editor } from '@milkdown/kit/core';
   import { editorViewCtx } from '@milkdown/kit/core';
   import type { Ctx } from '@milkdown/kit/ctx';
-  import { type Snippet, tick } from 'svelte';
   import { fade, scale } from 'svelte/transition';
-
-  interface Props {
-    children: Snippet<[boolean]>;
-    editorWrapperClass?: string;
-    linkInputActive?: boolean;
-    editorInstance?: Editor | null;
-  }
+  import type { SelectionFloatingAnchorProps } from '#lib/interfaces/editor.ts';
 
   let {
     children,
     editorWrapperClass = 'milkdown-editor-wrapper',
     linkInputActive = false,
     editorInstance,
-  }: Props = $props();
+  }: SelectionFloatingAnchorProps = $props();
 
   let visible = $state(false);
   let x = $state(0);

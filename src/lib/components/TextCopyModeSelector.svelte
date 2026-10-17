@@ -2,8 +2,8 @@
   /**
    * Toggle for selecting between plain text and markdown copy mode.
    */
-  import { settings } from '#lib/stores/settings.svelte.js';
-  import { t } from '#lib/utils/i18n.js';
+  import { settings } from '#lib/stores/settings.svelte.ts';
+  import { t } from '#lib/utils/i18n.ts';
 
   $: options = [
     { value: 'plain', label: $t('settings.text_copy.plain') },

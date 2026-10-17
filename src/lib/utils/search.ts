@@ -3,7 +3,7 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
-import type { SearchResult } from "#lib/interfaces/notes.js";
+import type { SearchResult } from "#lib/interfaces/notes.ts";
 
 /**
  * Processes search results using backend filtering and sorting.

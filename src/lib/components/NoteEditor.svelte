@@ -6,28 +6,26 @@
    */
   import type { Editor } from '@milkdown/kit/core';
   import { untrack } from 'svelte';
+  import type { NoteEditorProps } from '#lib/interfaces/editor.ts';
   import type {
     NoteContentResponse,
     NoteThread,
-  } from '#lib/interfaces/notes.js';
+  } from '#lib/interfaces/notes.ts';
   import { customKeymapPlugin } from '../plugins/customKeymapPlugin';
   import { linkOpenerPlugin } from '../plugins/linkOpenerPlugin';
-  import type { EditorStore } from '../stores/editor.svelte';
-  import { sessionState } from '../stores/sessionState.svelte';
-  import { settings } from '../stores/settings.svelte';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
+  import { settings } from '../stores/settings.svelte.ts';
   import { EditorService } from '../utils/editor';
-  import { createEditorShortcuts } from '../utils/editorShortcuts';
-  import { useShortcuts } from '../utils/shortcuts';
+  import { createEditorShortcuts } from '../utils/editorShortcuts.ts';
+  import { useShortcuts } from '../utils/shortcuts.ts';
   import FloatingToolbar from './FloatingToolbar.svelte';
   import MilkdownEditor from './MilkdownEditor.svelte';
 
-  interface Props {
-    noteContent: NoteContentResponse | null;
-    notePath: string | null;
-    editor: EditorStore;
-  }
-
-  let { noteContent = $bindable(), notePath, editor }: Props = $props();
+  let {
+    noteContent = $bindable(),
+    notePath,
+    editor,
+  }: NoteEditorProps = $props();
 
   let milkdownInstance: Editor | null = $state(null);
   let editorService: EditorService | null = $state(null);

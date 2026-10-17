@@ -4,7 +4,7 @@
    * Handles 1D navigation and selection via ListNavigator.
    */
   import type { Snippet } from 'svelte';
-  import type { ListNavigator } from '#lib/stores/listNav.svelte.js';
+  import type { ListNavigator } from '#lib/stores/listNav.svelte.ts';
 
   let {
     items,

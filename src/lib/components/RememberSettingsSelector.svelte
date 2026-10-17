@@ -3,8 +3,8 @@
    * Component for toggling the persistence of component-specific settings
    * (like search mode, layout choice, etc.) across sessions.
    */
-  import { settings } from '../stores/settings.svelte';
-  import { t } from '../utils/i18n';
+  import { settings } from '../stores/settings.svelte.ts';
+  import { t } from '../utils/i18n.ts';
 
   /**
    * Updates the global setting that determines whether transient component

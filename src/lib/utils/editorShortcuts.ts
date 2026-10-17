@@ -1,10 +1,10 @@
 import { tick } from "svelte";
-import type { EditorShortcutDeps } from "#lib/interfaces/editor.js";
-import type { NoteThread } from "#lib/interfaces/notes.js";
-import type { ShortcutAction, ShortcutCallback } from "#lib/types/input.js";
-import { tagSuggestionShortcuts } from "../config/shortcuts";
+import type { EditorShortcutDeps } from "#lib/interfaces/editor.ts";
+import type { NoteThread } from "#lib/interfaces/notes.ts";
+import type { ShortcutAction, ShortcutCallback } from "#lib/types/input.ts";
+import { tagSuggestionShortcuts } from "../config/shortcuts.ts";
 import { sessionState } from "../stores/sessionState.svelte";
-import { navigateToLastAvailable, navigateToOffset } from "./dailyNote";
+import { navigateToLastAvailable, navigateToOffset } from "./dailyNote.ts";
 
 /**
  * Builds the keyboard shortcut handlers for the note editor.

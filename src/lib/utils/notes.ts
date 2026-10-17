@@ -7,8 +7,8 @@ import type {
 	TagSearchResult,
 	ThreadAggregationResult,
 	ThreadSearchResult,
-} from "#lib/interfaces/notes.js";
-import { processSearchResults } from "./search";
+} from "#lib/interfaces/notes.ts";
+import { processSearchResults } from "./search.ts";
 
 /**
  * Service class for all note-related operations including search, reading, saving,

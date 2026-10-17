@@ -1,4 +1,4 @@
-import type { ShortcutAction, ShortcutCallback } from "../types/input";
+import type { ShortcutAction, ShortcutCallback } from "../types/input.ts";
 
 export interface ShortcutConfig {
 	key: string;

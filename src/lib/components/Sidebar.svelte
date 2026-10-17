@@ -4,31 +4,18 @@
    */
   import { ask } from '@tauri-apps/plugin-dialog';
   import { slide } from 'svelte/transition';
-  import type {
-    NoteContentResponse,
-    NoteThread,
-  } from '#lib/interfaces/notes.js';
-  import { toast } from '#lib/stores/toast.svelte.js';
-  import { t } from '#lib/utils/i18n.js';
-  import { notesService } from '#lib/utils/notes.js';
-  import { useShortcuts } from '#lib/utils/shortcuts.js';
-  import { sessionState } from '../stores/sessionState.svelte';
+  import type { SidebarProps } from '#lib/interfaces/notes.ts';
+  import { toast } from '#lib/stores/toast.svelte.ts';
+  import { t } from '#lib/utils/i18n.ts';
+  import { notesService } from '#lib/utils/notes.ts';
+  import { useShortcuts } from '#lib/utils/shortcuts.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
   import NoteDate from './NoteDate.svelte';
   import NoteDeleteButton from './NoteDeleteButton.svelte';
   import NoteMetadataButton from './NoteMetadataButton.svelte';
   import NoteTags from './NoteTags.svelte';
   import NoteThreadShortcuts from './NoteThreadShortcuts.svelte';
   import ThreadShortcutsModeToggle from './ThreadShortcutsModeToggle.svelte';
-
-  interface Props {
-    noteContent: NoteContentResponse | null;
-    threads: NoteThread[];
-    notePath: string | null;
-    onSelect: (threadId: string) => void;
-    onNoteDeleted: () => void;
-    width?: number;
-    isResizing?: boolean;
-  }
 
   let {
     noteContent,
@@ -38,7 +25,7 @@
     onNoteDeleted,
     width = 22, // rem
     isResizing = false,
-  }: Props = $props();
+  }: SidebarProps = $props();
 
   let noteOptionsOpen = $state(false);
 

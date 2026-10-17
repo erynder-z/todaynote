@@ -5,12 +5,12 @@
    */
   import { onDestroy, tick } from 'svelte';
   import { fly } from 'svelte/transition';
-  import { t } from '#lib/utils/i18n.js';
-  import { sessionState } from '../stores/sessionState.svelte';
-  import { DOMObserver } from '../utils/domObserver';
-  import { FindInElement } from '../utils/findInElement';
-  import { Highlighter } from '../utils/highlighter';
-  import { useShortcuts } from '../utils/shortcuts';
+  import { t } from '#lib/utils/i18n.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
+  import { DOMObserver } from '../utils/domObserver.ts';
+  import { FindInElement } from '../utils/findInElement.ts';
+  import { Highlighter } from '../utils/highlighter.ts';
+  import { useShortcuts } from '../utils/shortcuts.ts';
 
   let inputEl = $state<HTMLInputElement | null>(null);
   let searchQuery = $state('');

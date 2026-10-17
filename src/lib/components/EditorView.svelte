@@ -5,20 +5,15 @@
 
   import { fade } from 'svelte/transition';
   import { toast } from '#lib';
-  import type { NoteContentResponse } from '#lib/interfaces/notes.js';
-  import { notesService } from '#lib/utils/notes.js';
-  import { settings, t } from '../index';
-  import { EditorStore } from '../stores/editor.svelte';
-  import { sessionState } from '../stores/sessionState.svelte';
+  import type { EditorViewProps } from '#lib/interfaces/editor.ts';
+  import { notesService } from '#lib/utils/notes.ts';
+  import { settings, t } from '../index.ts';
+  import { EditorStore } from '../stores/editor.svelte.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
   import NoteEditor from './NoteEditor.svelte';
   import Sidebar from './Sidebar.svelte';
 
-  interface Props {
-    noteContent: NoteContentResponse | null;
-    notePath: string | null;
-  }
-
-  let { noteContent = $bindable(), notePath }: Props = $props();
+  let { noteContent = $bindable(), notePath }: EditorViewProps = $props();
 
   const editor = new EditorStore();
 

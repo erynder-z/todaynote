@@ -2,8 +2,8 @@
   /**
    * Component for toggling the floating toolbar visibility.
    */
-  import { settings } from '../stores/settings.svelte';
-  import { t } from '../utils/i18n';
+  import { settings } from '../stores/settings.svelte.ts';
+  import { t } from '../utils/i18n.ts';
 
   $: options = [
     { value: 'true', label: $t('settings.floating_toolbar.enabled') },

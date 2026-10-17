@@ -1,5 +1,5 @@
-import type { ShortcutAction } from "../types/input";
-import type { ShortcutConfig } from "./input";
+import type { ShortcutAction } from "../types/input.ts";
+import type { ShortcutConfig } from "./input.ts";
 
 export interface AppSettings {
 	notesFolder: string;

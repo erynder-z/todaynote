@@ -1,33 +1,21 @@
 <script lang="ts">
-  import type { Editor } from '@milkdown/kit/core';
   import { editorViewCtx, serializerCtx } from '@milkdown/kit/core';
   import type { Ctx } from '@milkdown/kit/ctx';
   import { lift, toggleMark, wrapIn } from '@milkdown/kit/prose/commands';
   import type { Mark, Node as PMNode } from '@milkdown/kit/prose/model';
   import type { EditorState } from '@milkdown/kit/prose/state';
-  import { inputManager } from '#lib/stores/input.svelte.js';
-  import { settings } from '#lib/stores/settings.svelte.js';
-  import { t } from '#lib/utils/i18n.js';
-  import { useShortcuts } from '#lib/utils/shortcuts.js';
-
-  type SelectionFloatingAnchorInstance = {
-    hide: () => void;
-    show: () => void;
-  };
-
-  interface Props {
-    editorInstance: Editor | null;
-    onLinkInputActive?: (active: boolean) => void;
-    anchor?: SelectionFloatingAnchorInstance | null;
-    visible?: boolean;
-  }
+  import type { NoteFormatterProps } from '#lib/interfaces/editor.ts';
+  import { inputManager } from '#lib/stores/input.svelte.ts';
+  import { settings } from '#lib/stores/settings.svelte.ts';
+  import { t } from '#lib/utils/i18n.ts';
+  import { useShortcuts } from '#lib/utils/shortcuts.ts';
 
   let {
     editorInstance,
     onLinkInputActive,
     anchor,
     visible = false,
-  }: Props = $props();
+  }: NoteFormatterProps = $props();
 
   let isBold = $state(false);
   let isItalic = $state(false);

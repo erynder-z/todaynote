@@ -2,17 +2,12 @@
   /**
    * Component for displaying note threads with shortcut hints for quick navigation.
    */
-  import type { NoteThread } from '#lib/interfaces/notes.js';
-  import { tagSuggestionShortcuts } from '../config/shortcuts';
+  import type { NoteThreadShortcutsProps } from '#lib/interfaces/notes.ts';
+  import { tagSuggestionShortcuts } from '../config/shortcuts.ts';
   import IdentIcon from './IdentIcon.svelte';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
 
-  interface Props {
-    threads: NoteThread[];
-    onSelect: (threadId: string) => void;
-  }
-
-  let { threads, onSelect }: Props = $props();
+  let { threads, onSelect }: NoteThreadShortcutsProps = $props();
 
   // Show only up to 20 threads as there are only 20 shortcuts (1-9, A-K)
   let visibleThreads = $derived(threads.slice(0, 20));

@@ -3,8 +3,8 @@
    * Modal that displays all available keyboard shortcuts.
    */
   import { KeyboardShortcut, t } from '#lib';
-  import { settings } from '#lib/stores/settings.svelte.js';
-  import type { ShortcutAction } from '#lib/types/input.js';
+  import { settings } from '#lib/stores/settings.svelte.ts';
+  import type { ShortcutAction } from '#lib/types/input.ts';
 
   // Global shortcuts (exclude context-specific ones)
   const globalActions: ShortcutAction[] = [

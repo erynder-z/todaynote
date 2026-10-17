@@ -3,8 +3,8 @@
    * Layout toggle for switching between list and masonry views.
    */
 
-  import type { LayoutToggleProps } from '#lib/interfaces/ui.js';
-  import { settings } from '../stores/settings.svelte';
+  import type { LayoutToggleProps } from '#lib/interfaces/ui.ts';
+  import { settings } from '../stores/settings.svelte.ts';
 
   let { onLayoutChange }: LayoutToggleProps = $props();
 </script>

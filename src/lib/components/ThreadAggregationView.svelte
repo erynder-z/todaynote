@@ -3,11 +3,11 @@
    * Component for displaying aggregated content (threads) from multiple notes.
    */
   import { sessionState, settings, t, toast } from '#lib';
-  import type { AggregatedThreadItem } from '#lib/interfaces/notes.js';
-  import { locale } from '#lib/utils/i18n.js';
-  import { notesService } from '#lib/utils/notes.js';
-  import { aggregationItemPlugin } from '../plugins/aggregationItemPlugin';
-  import { linkOpenerPlugin } from '../plugins/linkOpenerPlugin';
+  import type { AggregatedThreadItem } from '#lib/interfaces/notes.ts';
+  import { locale } from '#lib/utils/i18n.ts';
+  import { notesService } from '#lib/utils/notes.ts';
+  import { aggregationItemPlugin } from '../plugins/aggregationItemPlugin.ts';
+  import { linkOpenerPlugin } from '../plugins/linkOpenerPlugin.ts';
   import MilkdownEditor from './MilkdownEditor.svelte';
 
   let aggregation = $derived(sessionState.aggregatedThread);

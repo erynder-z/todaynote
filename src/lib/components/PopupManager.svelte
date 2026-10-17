@@ -5,12 +5,12 @@
    */
   import { flip } from 'svelte/animate';
   import { fade } from 'svelte/transition';
-  import { toast } from '#lib/stores/toast.svelte.js';
-  import { toggleFindInNote } from '#lib/utils/findInElement.js';
-  import { sessionState } from '../stores/sessionState.svelte';
-  import { settings } from '../stores/settings.svelte';
-  import { t } from '../utils/i18n';
-  import { useShortcuts } from '../utils/shortcuts';
+  import { toast } from '#lib/stores/toast.svelte.ts';
+  import { toggleFindInNote } from '#lib/utils/findInElement.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
+  import { settings } from '../stores/settings.svelte.ts';
+  import { t } from '../utils/i18n.ts';
+  import { useShortcuts } from '../utils/shortcuts.ts';
   import AboutView from './AboutView.svelte';
   import FindInView from './FindInNote.svelte';
   import Modal from './Modal.svelte';

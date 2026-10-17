@@ -4,9 +4,9 @@
    * the welcome screen (for first-time setup), or a loading state.
    */
 
-  import { sessionState } from '../stores/sessionState.svelte';
-  import { settings } from '../stores/settings.svelte';
-  import { t } from '../utils/i18n';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
+  import { settings } from '../stores/settings.svelte.ts';
+  import { t } from '../utils/i18n.ts';
   import EditorView from './EditorView.svelte';
   import FolderSelector from './FolderSelector.svelte';
 </script>

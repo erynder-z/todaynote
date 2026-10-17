@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { t } from '#lib/utils/i18n.js';
+  import { t } from '#lib/utils/i18n.ts';
   /**
    * Button that opens the About popup.
    */
-  import { sessionState } from '../stores/sessionState.svelte';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
 
   const openAbout = () => {
     sessionState.activePopup = 'about';

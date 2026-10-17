@@ -1,8 +1,11 @@
 <script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
   import { onMount } from 'svelte';
-  import type { AppStatistics, InsightResponse } from '#lib/interfaces/notes.js';
-  import { locale, t } from '../utils/i18n';
+  import type {
+    AppStatistics,
+    InsightResponse,
+  } from '#lib/interfaces/notes.ts';
+  import { locale, t } from '../utils/i18n.ts';
 
   let stats = $state<AppStatistics | null>(null);
   let loading = $state(true);

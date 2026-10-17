@@ -3,8 +3,8 @@
    * Displays the metadata of the currently loaded note
    * (filename, path, date, tags, threads and raw frontmatter).
    */
-  import { t } from '#lib/utils/i18n.js';
-  import { sessionState } from '../stores/sessionState.svelte';
+  import { t } from '#lib/utils/i18n.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
 
   const note = $derived(sessionState.todayNoteContent);
   const filename = $derived(

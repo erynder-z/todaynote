@@ -1,15 +1,10 @@
 <script lang="ts">
-  import { settings } from '#lib/stores/settings.svelte.js';
+  import type { IdentIconProps } from '#lib/interfaces/ui.ts';
+  import { settings } from '#lib/stores/settings.svelte.ts';
   import IdentIconDotmatrix from './IdentIcon_dotmatrix.svelte';
   import IdentIconRound from './IdentIcon_round.svelte';
 
-  interface Props {
-    title?: string;
-    size?: number;
-    style?: 'dotmatrix' | 'round' | 'none';
-  }
-
-  let { title = '', size = 2, style = 'dotmatrix' }: Props = $props();
+  let { title = '', size = 2, style = 'dotmatrix' }: IdentIconProps = $props();
 
   // Convert size in rem units to a CSS string
   const sizeWithUnit = $derived(`${size}rem`);

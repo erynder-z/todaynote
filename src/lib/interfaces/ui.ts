@@ -1,6 +1,7 @@
-import type { ListNavigator } from "#lib/stores/listNav.svelte.js";
-import type { ShortcutAction } from "../types/input";
-import type { ToastType } from "../types/ui";
+import type { Snippet } from "svelte";
+import type { ListNavigator } from "#lib/stores/listNav.svelte.ts";
+import type { ShortcutAction } from "../types/input.ts";
+import type { ModalSize, ToastType } from "../types/ui.ts";
 import type {
 	SearchResult,
 	TagSearchResult,
@@ -39,6 +40,34 @@ export interface SearchStatusViewProps {
 	hasResults: boolean;
 	query: string;
 	selectedTag: string | null;
+}
+
+export interface IdentIconProps {
+	title?: string;
+	size?: number;
+	style?: "dotmatrix" | "round" | "none";
+}
+
+export interface IdentIconVariantProps {
+	title?: string;
+	size?: string; // relative units
+}
+
+export interface ModalProps {
+	title?: string;
+	children: Snippet;
+	size?: ModalSize;
+	showLayoutToggle?: boolean;
+}
+
+export interface SearchSidebarProps {
+	searchMode: "notes" | "threads" | "tags";
+	selectedTag: string | null;
+	onModeChange: (mode: "notes" | "threads" | "tags") => void;
+}
+
+export interface ToastProps {
+	t: Toast;
 }
 
 export interface ShortcutHint {

@@ -4,14 +4,10 @@
    * Clicking the add button opens the Tag Manager modal.
    */
   import { sessionState, useShortcuts } from '#lib';
-  import type { NoteContentResponse } from '#lib/interfaces/notes.js';
-  import { notesService } from '#lib/utils/notes.js';
+  import type { NoteTagsProps } from '#lib/interfaces/notes.ts';
+  import { notesService } from '#lib/utils/notes.ts';
 
-  interface Props {
-    noteContent: NoteContentResponse | null;
-  }
-
-  let { noteContent }: Props = $props();
+  let { noteContent }: NoteTagsProps = $props();
 
   let tags = $derived(noteContent?.metadata.tags || []);
   let selectedTag = $state<string | null>(null);

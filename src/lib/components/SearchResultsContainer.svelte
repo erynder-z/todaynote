@@ -7,11 +7,11 @@
     SearchResult,
     TagSearchResult,
     ThreadSearchResult,
-  } from '#lib/interfaces/notes.js';
-  import type { SearchResultsContainerProps } from '#lib/interfaces/ui.js';
-  import { notesService } from '#lib/utils/notes.js';
-  import { settings } from '../stores/settings.svelte';
-  import { locale, t } from '../utils/i18n';
+  } from '#lib/interfaces/notes.ts';
+  import type { SearchResultsContainerProps } from '#lib/interfaces/ui.ts';
+  import { notesService } from '#lib/utils/notes.ts';
+  import { settings } from '../stores/settings.svelte.ts';
+  import { locale, t } from '../utils/i18n.ts';
   import IdentIcon from './IdentIcon.svelte';
   import ListLayout from './ListLayout.svelte';
   import MasonryLayout from './MasonryLayout.svelte';

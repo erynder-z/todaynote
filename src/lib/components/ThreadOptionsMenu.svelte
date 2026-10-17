@@ -3,20 +3,16 @@
    * Slide-in menu for displaying thread options
    */
   import { slide } from 'svelte/transition';
-  import type { NoteThread } from '#lib/interfaces/notes.js';
-  import { toast } from '#lib/stores/toast.svelte.js';
-  import { t } from '#lib/utils/i18n.js';
-  import { stripMarkdown } from '#lib/utils/markdown.js';
-  import { sessionState } from '../stores/sessionState.svelte';
-  import { notesService } from '../utils/notes';
-  import { useShortcuts } from '../utils/shortcuts';
+  import type { ThreadOptionsMenuProps } from '#lib/interfaces/notes.ts';
+  import { toast } from '#lib/stores/toast.svelte.ts';
+  import { t } from '#lib/utils/i18n.ts';
+  import { stripMarkdown } from '#lib/utils/markdown.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
+  import { notesService } from '../utils/notes.ts';
+  import { useShortcuts } from '../utils/shortcuts.ts';
   import ThreadOptionButton from './ThreadOptionButton.svelte';
 
-  interface Props {
-    thread: NoteThread;
-  }
-
-  let { thread }: Props = $props();
+  let { thread }: ThreadOptionsMenuProps = $props();
 
   let currentThread = $derived(
     sessionState.todayNoteContent?.threads.find((t) => t.id === thread.id) ??

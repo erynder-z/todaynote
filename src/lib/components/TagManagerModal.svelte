@@ -3,14 +3,14 @@
    * Modern, minimal Modal component for managing tags.
    * Refactored for better readability and Svelte 5 idiomatic patterns.
    */
-  import { tagSuggestionShortcuts } from '#lib/config/shortcuts.js';
-  import { inputManager } from '../stores/input.svelte';
-  import { ListNavigator } from '../stores/listNav.svelte';
-  import { sessionState } from '../stores/sessionState.svelte';
-  import { settings } from '../stores/settings.svelte';
-  import { t } from '../utils/i18n';
-  import { notesService } from '../utils/notes';
-  import { useShortcuts } from '../utils/shortcuts';
+  import { tagSuggestionShortcuts } from '#lib/config/shortcuts.ts';
+  import { inputManager } from '../stores/input.svelte.ts';
+  import { ListNavigator } from '../stores/listNav.svelte.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
+  import { settings } from '../stores/settings.svelte.ts';
+  import { t } from '../utils/i18n.ts';
+  import { notesService } from '../utils/notes.ts';
+  import { useShortcuts } from '../utils/shortcuts.ts';
   import KeyboardShortcut from './KeyboardShortcut.svelte';
   import MasonryLayout from './MasonryLayout.svelte';
   import ModalFooter from './ModalFooter.svelte';

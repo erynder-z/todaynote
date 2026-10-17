@@ -3,12 +3,12 @@
   /**
    * Navigation bar that provides access to the several app features.
    */
-  import type { PopupType } from '#lib/types/ui.js';
+  import type { PopupType } from '#lib/types/ui.ts';
   import { sessionState } from '../stores/sessionState.svelte';
-  import { toast } from '../stores/toast.svelte';
-  import { t } from '../utils/i18n';
-  import { notesService } from '../utils/notes';
-  import { useShortcuts } from '../utils/shortcuts';
+  import { toast } from '../stores/toast.svelte.ts';
+  import { t } from '../utils/i18n.ts';
+  import { notesService } from '../utils/notes.ts';
+  import { useShortcuts } from '../utils/shortcuts.ts';
 
   /**
    * Toggles the visibility of a specific popup by updating the global state.

@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { NoteContentResponse } from "#lib/interfaces/notes.js";
+import type { NoteContentResponse } from "#lib/interfaces/notes.ts";
 import { sessionState } from "../stores/sessionState.svelte";
 import { toast } from "../stores/toast.svelte";
 

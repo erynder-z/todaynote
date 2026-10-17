@@ -3,13 +3,13 @@
   /**
    * Component for displaying a single thread's content.
    */
-  import { sessionState } from '#lib/stores/sessionState.svelte.js';
-  import { settings } from '#lib/stores/settings.svelte.js';
-  import { toast } from '#lib/stores/toast.svelte.js';
-  import { t } from '#lib/utils/i18n.js';
-  import { notesService } from '#lib/utils/notes.js';
-  import { useShortcuts } from '#lib/utils/shortcuts.js';
-  import { linkOpenerPlugin } from '../plugins/linkOpenerPlugin';
+  import { sessionState } from '#lib/stores/sessionState.svelte.ts';
+  import { settings } from '#lib/stores/settings.svelte.ts';
+  import { toast } from '#lib/stores/toast.svelte.ts';
+  import { t } from '#lib/utils/i18n.ts';
+  import { notesService } from '#lib/utils/notes.ts';
+  import { useShortcuts } from '#lib/utils/shortcuts.ts';
+  import { linkOpenerPlugin } from '../plugins/linkOpenerPlugin.ts';
   import MilkdownEditor from './MilkdownEditor.svelte';
 
   const content = $derived(sessionState.threadViewContent);

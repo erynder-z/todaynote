@@ -4,13 +4,10 @@
    * Triggers the onShowMetadata callback when clicked.
    */
   import { t } from '#lib';
+  import type { NoteMetadataButtonProps } from '#lib/interfaces/notes.ts';
 
-  interface Props {
-    onShowMetadata: () => void;
-    closeDropdown?: () => void;
-  }
-
-  let { onShowMetadata, closeDropdown = () => {} }: Props = $props();
+  let { onShowMetadata, closeDropdown = () => {} }: NoteMetadataButtonProps =
+    $props();
 
   /**
    * Handles the click on the metadata button

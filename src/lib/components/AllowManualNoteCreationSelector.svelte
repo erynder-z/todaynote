@@ -2,8 +2,8 @@
   /**
    * Component for toggling whether the user can manually create notes.
    */
-  import { settings } from '../stores/settings.svelte';
-  import { t } from '../utils/i18n';
+  import { settings } from '../stores/settings.svelte.ts';
+  import { t } from '../utils/i18n.ts';
 
   let isActive = $derived(settings.allowManualNoteCreation);
 

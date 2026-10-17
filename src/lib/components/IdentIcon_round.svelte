@@ -1,10 +1,7 @@
 <script lang="ts">
-  interface Props {
-    title?: string;
-    size?: string; // relative units
-  }
+  import type { IdentIconVariantProps } from '#lib/interfaces/ui.ts';
 
-  let { title = '', size = '2rem' }: Props = $props();
+  let { title = '', size = '2rem' }: IdentIconVariantProps = $props();
 
   /**
    * High-distribution, non-cryptographic string hashing (djb2).

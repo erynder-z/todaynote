@@ -12,7 +12,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 // Now import the module under test and other dependencies
-import type { SearchResult } from "#lib/interfaces/notes.js";
+import type { SearchResult } from "#lib/interfaces/notes.ts";
 import {
 	filterResultsByFilename,
 	filterResultsByScore,

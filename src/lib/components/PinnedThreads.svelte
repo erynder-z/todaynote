@@ -2,14 +2,14 @@
   /**
    * Displays all pinned threads in a list or masonry layout.
    */
-  import type { PinnedThreadItem } from '#lib/interfaces/notes.js';
-  import { notesService } from '#lib/utils/notes.js';
-  import { ListNavigator } from '../stores/listNav.svelte';
-  import { sessionState } from '../stores/sessionState.svelte';
-  import { settings } from '../stores/settings.svelte';
-  import { toast } from '../stores/toast.svelte';
-  import { t } from '../utils/i18n';
-  import { useShortcuts } from '../utils/shortcuts';
+  import type { PinnedThreadItem } from '#lib/interfaces/notes.ts';
+  import { notesService } from '#lib/utils/notes.ts';
+  import { ListNavigator } from '../stores/listNav.svelte.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
+  import { settings } from '../stores/settings.svelte.ts';
+  import { toast } from '../stores/toast.svelte.ts';
+  import { t } from '../utils/i18n.ts';
+  import { useShortcuts } from '../utils/shortcuts.ts';
   import ListLayout from './ListLayout.svelte';
   import MasonryLayout from './MasonryLayout.svelte';
   import ModalFooter from './ModalFooter.svelte';

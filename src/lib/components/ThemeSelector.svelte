@@ -3,7 +3,7 @@
    * Component for selecting the application's visual theme.
    */
   import { settings, t } from '#lib';
-  import { availableThemes } from '../utils/theme';
+  import { availableThemes } from '../utils/theme.ts';
 
   /**
    * Updates the global theme setting and applies new colors to the UI.

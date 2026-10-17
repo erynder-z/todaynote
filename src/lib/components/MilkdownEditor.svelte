@@ -10,28 +10,19 @@
     editorViewOptionsCtx,
     rootCtx,
   } from '@milkdown/kit/core';
-  import type { MilkdownPlugin } from '@milkdown/kit/ctx';
   import { history } from '@milkdown/kit/plugin/history';
   import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
   import { commonmark } from '@milkdown/kit/preset/commonmark';
   import { gfm } from '@milkdown/kit/preset/gfm';
   import { highlight, highlightPluginConfig } from '@milkdown/plugin-highlight';
   import { untrack } from 'svelte';
+  import type { MilkdownEditorProps } from '#lib/interfaces/editor.ts';
   import {
     activeThreadPlugin,
     setActiveThread,
-  } from '../plugins/activeThreadPlugin';
-  import { threadMarkerPlugin } from '../plugins/threadMarkerPlugin';
-  import { parser } from '../utils/milkdownConfig';
-
-  interface Props {
-    content: string;
-    onUpdate?: (markdown: string) => void;
-    plugins?: MilkdownPlugin[];
-    readonly?: boolean;
-    activeThreadIndex?: number;
-    onReady?: (instance: Editor) => void;
-  }
+  } from '../plugins/activeThreadPlugin.ts';
+  import { threadMarkerPlugin } from '../plugins/threadMarkerPlugin.ts';
+  import { parser } from '../utils/milkdownConfig.ts';
 
   let {
     content,
@@ -40,7 +31,7 @@
     readonly = false,
     activeThreadIndex = -1,
     onReady,
-  }: Props = $props();
+  }: MilkdownEditorProps = $props();
 
   const allPlugins = $derived([
     commonmark,

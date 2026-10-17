@@ -3,14 +3,9 @@
    * Sidebar component for search mode selection and navigation.
    */
   import { t } from '#lib';
+  import type { SearchSidebarProps } from '#lib/interfaces/ui.ts';
 
-  interface Props {
-    searchMode: 'notes' | 'threads' | 'tags';
-    selectedTag: string | null;
-    onModeChange: (mode: 'notes' | 'threads' | 'tags') => void;
-  }
-
-  let { searchMode, selectedTag, onModeChange }: Props = $props();
+  let { searchMode, selectedTag, onModeChange }: SearchSidebarProps = $props();
 </script>
 
 <aside class="sidebar">

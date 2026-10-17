@@ -3,7 +3,7 @@
    * Status view component showing loading, empty, and no-results states.
    */
   import { settings, t } from '#lib';
-  import type { SearchStatusViewProps } from '#lib/interfaces/ui.js';
+  import type { SearchStatusViewProps } from '#lib/interfaces/ui.ts';
 
   let { isSearching, hasResults, query, selectedTag }: SearchStatusViewProps =
     $props();

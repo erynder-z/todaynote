@@ -1,9 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AppPayload } from "#lib/interfaces/appState.js";
+import type { AppPayload } from "#lib/interfaces/appState.ts";
 import { sessionState } from "../stores/sessionState.svelte";
 import { settings } from "../stores/settings.svelte";
-import { availableLocales, locale, translations } from "./i18n";
-import { applyThemeColors, availableThemes, currentTheme } from "./theme";
+import { availableLocales, locale, translations } from "./i18n.ts";
+import { applyThemeColors, availableThemes, currentTheme } from "./theme.ts";
 
 /**
  * Manages application initialization and state synchronization.

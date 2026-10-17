@@ -1,7 +1,7 @@
-import type { ShortcutAction } from "../types/input";
-import type { PopupType } from "../types/ui";
-import type { ShortcutConfig } from "./input";
-import type { LocaleInfo } from "./locale";
+import type { ShortcutAction } from "../types/input.ts";
+import type { PopupType } from "../types/ui.ts";
+import type { ShortcutConfig } from "./input.ts";
+import type { LocaleInfo } from "./locale.ts";
 import type {
 	NoteContentResponse,
 	NoteThread,

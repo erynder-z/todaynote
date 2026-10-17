@@ -4,8 +4,8 @@
    */
   import { invoke } from '@tauri-apps/api/core';
   import { settings, t } from '#lib';
-  import type { FolderValidation } from '#lib/interfaces/folder.js';
-  import { selectFolder } from '#lib/utils/folder.js';
+  import type { FolderValidation } from '#lib/interfaces/folder.ts';
+  import { selectFolder } from '#lib/utils/folder.ts';
 
   let selectedFolderPath = $state<string | null>(null);
   let validationResult = $state<FolderValidation | null>(null);

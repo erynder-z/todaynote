@@ -122,3 +122,42 @@ export interface PinnedThreadItem {
 	excerpt: string;
 	lineNumber: number;
 }
+
+export interface NoteDateProps {
+	noteContent: NoteContentResponse | null;
+}
+
+export interface NoteDeleteButtonProps {
+	noteContent: NoteContentResponse | null;
+	notePath: string | null;
+	onDelete: () => void;
+	closeDropdown?: () => void;
+}
+
+export interface NoteMetadataButtonProps {
+	onShowMetadata: () => void;
+	closeDropdown?: () => void;
+}
+
+export interface NoteTagsProps {
+	noteContent: NoteContentResponse | null;
+}
+
+export interface NoteThreadShortcutsProps {
+	threads: NoteThread[];
+	onSelect: (threadId: string) => void;
+}
+
+export interface SidebarProps {
+	noteContent: NoteContentResponse | null;
+	threads: NoteThread[];
+	notePath: string | null;
+	onSelect: (threadId: string) => void;
+	onNoteDeleted: () => void;
+	width?: number;
+	isResizing?: boolean;
+}
+
+export interface ThreadOptionsMenuProps {
+	thread: NoteThread;
+}

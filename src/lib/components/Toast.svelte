@@ -1,14 +1,10 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
-  import type { Toast } from '#lib/interfaces/ui.js';
-  import { toast } from '#lib/stores/toast.svelte.js';
-  import { t } from '#lib/utils/i18n.js';
+  import type { ToastProps } from '#lib/interfaces/ui.ts';
+  import { toast } from '#lib/stores/toast.svelte.ts';
+  import { t } from '#lib/utils/i18n.ts';
 
-  interface Props {
-    t: Toast;
-  }
-
-  let { t: toastData }: Props = $props();
+  let { t: toastData }: ToastProps = $props();
 
   let message = $derived($t(toastData.message));
   let actionLabel = $derived(
