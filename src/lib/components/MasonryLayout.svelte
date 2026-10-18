@@ -19,6 +19,7 @@
   } = $props();
 
   let containerWidth = $state(0);
+  let container: HTMLDivElement | null = $state(null);
 
   /**
    * Number of columns based on container width.
@@ -52,6 +53,10 @@
     if (arrowKeys.includes(e.key)) {
       e.preventDefault();
 
+      // Ignore mouseenter briefly so the smooth scroll does not
+      // re-select whatever card ends up under the pointer.
+      nav.ignoreMouseEnterUntil = Date.now() + 300;
+
       const currentIndex = nav.index === -1 ? 0 : nav.index;
       let nextIndex = currentIndex;
 
@@ -62,12 +67,16 @@
         case 'ArrowRight':
           nextIndex = Math.min(items.length - 1, currentIndex + 1);
           break;
-        case 'ArrowUp':
-          nextIndex = Math.max(0, currentIndex - columnCount);
+        case 'ArrowUp': {
+          const above = currentIndex - columnCount;
+          nextIndex = above >= 0 ? above : currentIndex;
           break;
-        case 'ArrowDown':
-          nextIndex = Math.min(items.length - 1, currentIndex + columnCount);
+        }
+        case 'ArrowDown': {
+          const below = currentIndex + columnCount;
+          nextIndex = below < items.length ? below : currentIndex;
           break;
+        }
       }
 
       nav.setIndex(nextIndex, 'keyboard');
@@ -76,11 +85,23 @@
 
     return nav.handleKey(e);
   };
+
+  /**
+   * Scrolls the selected card into view after keyboard navigation.
+   */
+  $effect(() => {
+    if (nav.index !== -1 && nav.lastInputSource === 'keyboard') {
+      container
+        ?.querySelector('.item-card.selected')
+        ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  });
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="masonry-container"
+  bind:this={container}
   bind:clientWidth={containerWidth}
   onmouseleave={() => nav.reset()}
 >
