@@ -104,7 +104,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleStatistics".to_string(),
             ShortcutConfig {
-                key: "X".to_string(),
+                key: "D".to_string(),
                 primary: true,
                 secondary: false,
                 description: "Toggle statistics".to_string(),
@@ -113,7 +113,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "togglePinnedThreads".to_string(),
             ShortcutConfig {
-                key: "I".to_string(),
+                key: "P".to_string(),
                 primary: true,
                 secondary: false,
                 description: "Toggle pinned threads".to_string(),
@@ -149,7 +149,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleNoteMetadata".to_string(),
             ShortcutConfig {
-                key: "Z".to_string(),
+                key: "V".to_string(),
                 primary: true,
                 secondary: true,
                 description: "Toggle note metadata".to_string(),
@@ -158,7 +158,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "deleteNote".to_string(),
             ShortcutConfig {
-                key: "X".to_string(),
+                key: "Backspace".to_string(),
                 primary: true,
                 secondary: true,
                 description: "Delete note".to_string(),
@@ -167,9 +167,9 @@ impl Default for AppConfig {
         shortcuts.insert(
             "createNote".to_string(),
             ShortcutConfig {
-                key: "U".to_string(),
+                key: "N".to_string(),
                 primary: true,
-                secondary: true,
+                secondary: false,
                 description: "Create note".to_string(),
             },
         );
@@ -185,7 +185,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "focusLastLine".to_string(),
             ShortcutConfig {
-                key: "0".to_string(),
+                key: "ArrowDown".to_string(),
                 primary: true,
                 secondary: true,
                 description: "Focus last line".to_string(),
@@ -194,7 +194,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "jumpByNumber".to_string(),
             ShortcutConfig {
-                key: "1,2,3,4,5,6,7,8,9,B,C,D,G,H,I,J,K,N,P,R".to_string(),
+                key: "1,2,3,4,5,6,7,8,9,C,D,G,H,I,J,K,N,P,R,S".to_string(),
                 primary: true,
                 secondary: true,
                 description: "Jump to thread".to_string(),
@@ -230,7 +230,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "navigateYesterday".to_string(),
             ShortcutConfig {
-                key: "E".to_string(),
+                key: "Y".to_string(),
                 primary: true,
                 secondary: true,
                 description: "Go to yesterday's note".to_string(),
@@ -248,7 +248,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "navigateToday".to_string(),
             ShortcutConfig {
-                key: "O".to_string(),
+                key: "T".to_string(),
                 primary: true,
                 secondary: true,
                 description: "Go to today's note".to_string(),
@@ -257,7 +257,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleThreadOptionsMode".to_string(),
             ShortcutConfig {
-                key: "P".to_string(),
+                key: "O".to_string(),
                 primary: true,
                 secondary: true,
                 description: "Toggle thread options mode".to_string(),
@@ -275,7 +275,7 @@ impl Default for AppConfig {
         shortcuts.insert(
             "threadOptionLinked".to_string(),
             ShortcutConfig {
-                key: "I".to_string(),
+                key: "L".to_string(),
                 primary: true,
                 secondary: true,
                 description: "Show linked threads".to_string(),
@@ -330,16 +330,16 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleStrikethrough".to_string(),
             ShortcutConfig {
-                key: "S".to_string(),
+                key: "X".to_string(),
                 primary: true,
-                secondary: false,
+                secondary: true,
                 description: "Toggle strikethrough formatting".to_string(),
             },
         );
         shortcuts.insert(
             "toggleCode".to_string(),
             ShortcutConfig {
-                key: "O".to_string(),
+                key: "E".to_string(),
                 primary: true,
                 secondary: false,
                 description: "Toggle code formatting".to_string(),
@@ -348,18 +348,18 @@ impl Default for AppConfig {
         shortcuts.insert(
             "toggleBlockquote".to_string(),
             ShortcutConfig {
-                key: "K".to_string(),
+                key: "Q".to_string(),
                 primary: true,
-                secondary: false,
+                secondary: true,
                 description: "Toggle blockquote formatting".to_string(),
             },
         );
         shortcuts.insert(
             "toggleLink".to_string(),
             ShortcutConfig {
-                key: "N".to_string(),
+                key: "K".to_string(),
                 primary: true,
-                secondary: false,
+                secondary: true,
                 description: "Toggle link formatting".to_string(),
             },
         );
@@ -540,9 +540,9 @@ mod tests {
 
         // Missing shortcut is restored with its default
         let create = &config.shortcuts["createNote"];
-        assert_eq!(create.key, "U");
+        assert_eq!(create.key, "N");
         assert!(create.primary);
-        assert!(create.secondary);
+        assert!(!create.secondary);
     }
 
     #[test]

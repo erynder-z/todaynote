@@ -16,8 +16,23 @@
   } = $props();
 
   const isMultiKey = $derived(key.split(',').length > 5);
+
+  // Compact symbols for non-letter keys shown in shortcut hints.
+  const KEY_LABELS: Record<string, string> = {
+    ArrowDown: '↓',
+    ArrowUp: '↑',
+    ArrowLeft: '←',
+    ArrowRight: '→',
+    Backspace: '⌫',
+    Escape: 'Esc',
+  };
+
   const displayKey = $derived(
-    key === ' ' ? 'Space' : isMultiKey ? '1-9, A-K' : key,
+    key === ' '
+      ? 'Space'
+      : isMultiKey
+        ? '1-9, A-K'
+        : (KEY_LABELS[key] ?? key),
   );
 </script>
 
