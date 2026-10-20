@@ -49,6 +49,13 @@
   };
 
   /**
+   * Opens the add image popup for the current thread
+   */
+  const handleAddImage = () => {
+    sessionState.activePopup = 'addImage';
+  };
+
+  /**
    * Loads linked thread information
    */
   const loadLinkedThreads = async () => {
@@ -177,6 +184,7 @@
     threadOptionLinked: handleLinked,
     threadOptionCopy: handleCopyThread,
     threadOptionPin: handleTogglePin,
+    threadOptionAddImage: handleAddImage,
     closePopup: closeMenu,
   });
 </script>
@@ -250,7 +258,7 @@
           ? $t('thread.options.linked')
           : $t('thread.options.no_linked')}
         title={$t('thread.options.linked')}
-        shortcutKey={hasLinkedThreads ? 'I' : ''}
+        shortcutKey={hasLinkedThreads ? 'L' : ''}
         disabled={!hasLinkedThreads}
         onclick={handleLinked}
       >
@@ -281,6 +289,24 @@
           fill="currentColor"
           ><path
             d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"
+          /></svg
+        >
+      </ThreadOptionButton>
+
+      <ThreadOptionButton
+        label={$t('thread.options.add_image')}
+        title={$t('thread.options.add_image')}
+        shortcutKey="I"
+        onclick={handleAddImage}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="1.2rem"
+          viewBox="0 0 24 24"
+          width="1.2rem"
+          fill="currentColor"
+          ><path
+            d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
           /></svg
         >
       </ThreadOptionButton>

@@ -12,6 +12,7 @@
   import { t } from '../utils/i18n.ts';
   import { useShortcuts } from '../utils/shortcuts.ts';
   import AboutView from './AboutView.svelte';
+  import AddImageModal from './AddImageModal.svelte';
   import FindInView from './FindInNote.svelte';
   import Modal from './Modal.svelte';
   import NoteBrowser from './NoteBrowser.svelte';
@@ -97,6 +98,10 @@
     {:else if sessionState.activePopup === 'statistics'}
       <Modal title={$t('statistics.title')} size="lg">
         <StatisticsView />
+      </Modal>
+    {:else if sessionState.activePopup === 'addImage'}
+      <Modal title={$t('image.title')} size="sm">
+        <AddImageModal />
       </Modal>
     {/if}
   </div>

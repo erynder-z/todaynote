@@ -15,6 +15,7 @@ export const sessionState = $state<SessionState>({
 	isLinux: false,
 	sidebarOpen: typeof window !== "undefined" ? window.innerWidth > 1024 : false,
 	selectedThreadForOptions: null,
+	editorService: null,
 	threadShortcutsMode: "navigation",
 	showFindInNote: false,
 	pendingThreadJump: null,

@@ -423,6 +423,32 @@ export class NotesService {
 			return null;
 		}
 	}
+
+	/**
+	 * Copies a locally selected image into the notes images directory.
+	 * Returns the stored path relative to the notes folder.
+	 */
+	async addImageFromPath(path: string): Promise<string | null> {
+		try {
+			return (await invoke("add_image_from_path", { path })) as string;
+		} catch (error) {
+			console.error("Error adding image from path:", error);
+			return null;
+		}
+	}
+
+	/**
+	 * Downloads a remote image into the notes images directory.
+	 * Returns the stored path relative to the notes folder.
+	 */
+	async addImageFromUrl(url: string): Promise<string | null> {
+		try {
+			return (await invoke("add_image_from_url", { url })) as string;
+		} catch (error) {
+			console.error("Error adding image from url:", error);
+			return null;
+		}
+	}
 }
 
 /**

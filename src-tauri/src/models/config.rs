@@ -300,6 +300,15 @@ impl Default for AppConfig {
             },
         );
         shortcuts.insert(
+            "threadOptionAddImage".to_string(),
+            ShortcutConfig {
+                key: "I".to_string(),
+                primary: true,
+                secondary: true,
+                description: "Add image to thread".to_string(),
+            },
+        );
+        shortcuts.insert(
             "unpinThread".to_string(),
             ShortcutConfig {
                 key: "U".to_string(),

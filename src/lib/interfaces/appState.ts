@@ -1,5 +1,6 @@
 import type { ShortcutAction } from "../types/input.ts";
 import type { PopupType } from "../types/ui.ts";
+import type { EditorService } from "../utils/editor.ts";
 import type { ShortcutConfig } from "./input.ts";
 import type { LocaleInfo } from "./locale.ts";
 import type {
@@ -23,6 +24,7 @@ export interface SessionState {
 	isLinux: boolean;
 	sidebarOpen: boolean;
 	selectedThreadForOptions: NoteThread | null;
+	editorService: EditorService | null;
 	threadShortcutsMode: "navigation" | "actions";
 	showFindInNote: boolean;
 	notesVersion: number;

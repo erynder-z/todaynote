@@ -7,6 +7,7 @@ pub mod backup;
 pub mod folder;
 pub mod font;
 pub mod i18n;
+pub mod images;
 pub mod notes;
 pub mod search;
 pub mod settings;

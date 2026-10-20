@@ -5,7 +5,7 @@ use crate::models::app_state::AppState;
 use crate::models::config::AppConfig;
 use crate::models::response_types::{AppPayload, ConfigResponse};
 use std::path::PathBuf;
-use tauri::State;
+use tauri::{Manager, State};
 
 /// Updates the entire application configuration and handles side effects.
 #[tauri::command]
@@ -245,6 +245,7 @@ pub async fn set_locale(locale: String, state: State<'_, AppState>) -> Result<()
 #[tauri::command]
 pub async fn switch_notes_folder(
     path: String,
+    app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<AppPayload, String> {
     let config = {
@@ -284,6 +285,11 @@ pub async fn switch_notes_folder(
         let mut note_manager = state.note_manager()?;
         note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
     }
+
+    let images_dir = config.notes_folder.join("images");
+    let _ = app
+        .asset_protocol_scope()
+        .allow_directory(&images_dir, true);
 
     setup::get_initial_state(config, state)
 }

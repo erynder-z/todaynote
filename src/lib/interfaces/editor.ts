@@ -32,6 +32,11 @@ export interface MilkdownEditorProps {
 	onReady?: (instance: Editor) => void;
 }
 
+export interface ImageSizeMenuProps {
+	container: HTMLDivElement | null;
+	instance: Editor | null;
+}
+
 export interface FloatingToolbarProps {
 	editorInstance: Editor | null;
 }

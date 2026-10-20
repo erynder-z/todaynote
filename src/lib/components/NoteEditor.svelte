@@ -53,9 +53,17 @@
 
   /** Create the editor service whenever the Milkdown instance becomes ready. */
   $effect(() => {
-    editorService = milkdownInstance
+    const service = milkdownInstance
       ? new EditorService(milkdownInstance)
       : null;
+
+    editorService = service;
+    sessionState.editorService = service;
+
+    return () => {
+      if (sessionState.editorService === service)
+        sessionState.editorService = null;
+    };
   });
 
   /** Sync props to the internal store before rendering. */

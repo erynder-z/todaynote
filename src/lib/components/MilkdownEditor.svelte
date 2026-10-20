@@ -21,8 +21,11 @@
     activeThreadPlugin,
     setActiveThread,
   } from '../plugins/activeThreadPlugin.ts';
+  import { imageBlockPlugin } from '../plugins/imageBlockPlugin.ts';
   import { threadMarkerPlugin } from '../plugins/threadMarkerPlugin.ts';
+  import { resolveImageSrc } from '../utils/images.ts';
   import { parser } from '../utils/milkdownConfig.ts';
+  import ImageSizeMenu from './ImageSizeMenu.svelte';
 
   let {
     content,
@@ -39,6 +42,7 @@
     listener,
     threadMarkerPlugin,
     activeThreadPlugin,
+    imageBlockPlugin,
     highlight,
     history,
     ...plugins,
@@ -112,6 +116,35 @@
 
     setActiveThread(view, activeThreadIndex);
   });
+
+  // Inline images typed as markdown reference relative paths. Block-level
+  // images are handled by their node view (imageBlockPlugin), which resolves
+  // srcs itself; this only rewrites the remaining inline ones into
+  // asset-protocol URLs.
+  $effect(() => {
+    if (!container) return;
+
+    const rewrite = () => {
+      container?.querySelectorAll('img').forEach((img) => {
+        if (img.dataset.type === 'image-block') return;
+
+        const src = img.getAttribute('src') ?? '';
+        if (!src.startsWith('images/')) return;
+
+        const [path] = src.split('#');
+        resolveImageSrc(path).then((resolved) => {
+          if (img.getAttribute('src') === src)
+            img.setAttribute('src', resolved);
+        });
+      });
+    };
+
+    const observer = new MutationObserver(rewrite);
+    observer.observe(container, { childList: true, subtree: true });
+    rewrite();
+
+    return () => observer.disconnect();
+  });
 </script>
 
 <div
@@ -119,6 +152,10 @@
   class="milkdown-editor-wrapper"
   data-active-thread={activeThreadIndex !== -1 ? activeThreadIndex : undefined}
 ></div>
+
+{#if !readonly}
+  <ImageSizeMenu {container} instance={currentInstance} />
+{/if}
 
 <style>
   .milkdown-editor-wrapper {
@@ -141,6 +178,70 @@
     outline: none;
     padding-bottom: 5rem;
     min-height: 100%;
+  }
+
+  /* Images */
+  .milkdown-editor-wrapper :global(.milkdown img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    display: block;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown figure.img-figure) {
+    margin: 1rem 0;
+    position: relative;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown figure.img-figure img) {
+    width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    display: block;
+    transition: box-shadow 0.15s ease;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown figure.img-size-small) {
+    width: 25%;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown figure.img-size-medium) {
+    width: 60%;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown figure.img-size-large) {
+    width: 100%;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown figure.img-align-center) {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown figure.img-align-right) {
+    margin-left: auto;
+  }
+
+  .milkdown-editor-wrapper :global(.milkdown img.img-loading) {
+    min-height: 3rem;
+    background-color: color-mix(in srgb, var(--text-main), transparent 94%);
+  }
+
+  .milkdown-editor-wrapper :global(.img-caption) {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    margin-top: 0.4rem;
+    overflow-wrap: break-word;
+  }
+
+  .milkdown-editor-wrapper :global(.img-caption-center) {
+    text-align: center;
+  }
+
+  .milkdown-editor-wrapper :global(.img-caption-right) {
+    text-align: right;
   }
 
   /* Thread Markers */

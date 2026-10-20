@@ -1,5 +1,5 @@
 import { type Editor, editorViewCtx, parserCtx } from "@milkdown/kit/core";
-import { Selection } from "@milkdown/kit/prose/state";
+import { NodeSelection, Selection } from "@milkdown/kit/prose/state";
 
 /**
  * Service class for Milkdown editor operations.
@@ -82,8 +82,15 @@ export class EditorService {
 
 				let tr = view.state.tr.replaceWith(0, view.state.doc.content.size, doc);
 
-				// Ensure trailing empty line for thread markers (Milkdown parser workaround)
-				if (doc.lastChild?.type.name === "thread_marker") {
+				// Ensure a trailing paragraph: milkdown needs a trailing empty
+				// line for thread markers, and the caret needs a textblock
+				// after a trailing image to rest in (otherwise the image
+				// would end up node-selected).
+				const lastChildType = doc.lastChild?.type.name;
+				if (
+					lastChildType === "thread_marker" ||
+					lastChildType === "image-block"
+				) {
 					const paragraph = view.state.schema.nodes.paragraph.create();
 					tr = tr.insert(tr.doc.content.size, paragraph);
 				}
@@ -103,6 +110,87 @@ export class EditorService {
 				});
 			});
 		}, 50);
+	}
+
+	/**
+	 * Inserts an image as a block node into the line after the one the
+	 * caret is currently in, and places the caret after it. Returns false
+	 * when the editor is not ready.
+	 *
+	 * Inserting through a transaction keeps undo history intact and flows
+	 * through the regular editor change/auto-save path.
+	 */
+	insertImage(relativePath: string): boolean {
+		let inserted = false;
+
+		this.editor.action((ctx) => {
+			const view = ctx.get(editorViewCtx);
+			const { schema } = view.state;
+
+			const type = schema.nodes["image-block"];
+			if (!type) return;
+
+			const { selection } = view.state;
+			const $from = selection.$from;
+
+			let insertPos: number;
+			let replaceLine = false;
+
+			if (selection instanceof NodeSelection && selection.node.isBlock) {
+				// A block node is selected: insert right after it.
+				insertPos = $from.pos + selection.node.nodeSize;
+			} else if ($from.depth === 0) {
+				// Gap cursor or another block-level position: insert at it.
+				insertPos = $from.pos;
+			} else if (
+				$from.depth === 1 &&
+				$from.parent.type.name === "paragraph" &&
+				$from.parent.content.size === 0
+			) {
+				// The caret sits on a blank line: let the image take that
+				// line instead of stacking below the blank one.
+				replaceLine = true;
+				insertPos = $from.before($from.depth);
+			} else {
+				// Insert after the top-level block containing the caret.
+				insertPos = $from.after(1);
+			}
+
+			const image = type.create({
+				src: relativePath,
+				caption: "",
+				size: "medium",
+				align: null,
+			});
+
+			let tr = replaceLine
+				? view.state.tr.replaceWith(
+						insertPos,
+						insertPos + $from.parent.nodeSize,
+						image,
+					)
+				: view.state.tr.insert(insertPos, image);
+
+			// Keep a paragraph after the image so the caret can rest there
+			// and the next thread marker stays in its own block.
+			const imageEnd = insertPos + image.nodeSize;
+			const $after = tr.doc.resolve(imageEnd);
+			if (!$after.nodeAfter || $after.parent.type.name === "thread_marker") {
+				tr = tr.insert(imageEnd, schema.nodes.paragraph.create());
+			}
+
+			// Position the caret after the image; never inside the next
+			// thread's marker.
+			let caret = Selection.near(tr.doc.resolve(imageEnd), 1);
+			if (caret.$from.parent.type.name === "thread_marker") {
+				caret = Selection.near(tr.doc.resolve(imageEnd), -1);
+			}
+
+			view.dispatch(tr.setSelection(caret).scrollIntoView());
+			inserted = true;
+		});
+
+		return inserted;
 	}
 
 	/**

@@ -7,6 +7,7 @@ use commands::backup::{export_notes_archive, import_notes_archive};
 use commands::folder::validate_folder;
 use commands::font::{get_system_fonts, set_font_family, set_use_custom_font};
 use commands::i18n::get_translations;
+use commands::images::{add_image_from_path, add_image_from_url, get_images_dir};
 use commands::notes::{
     apply_default_thread_name, check_day_boundary, check_todays_note_exists, create_note,
     delete_note, delete_note_line, detect_threads, ensure_thread, get_last_available_note_path,
@@ -32,6 +33,7 @@ use models::note_session::NoteSession;
 use services::note_manager::NoteManager;
 use services::tag_manager::TagManager;
 use std::sync::Mutex;
+use tauri::Manager;
 use utils::window::show_window;
 
 /// The main entry point of the application's core logic.
@@ -104,6 +106,9 @@ pub fn run() {
             aggregate_thread,
             process_search_results,
             get_translations,
+            add_image_from_path,
+            add_image_from_url,
+            get_images_dir,
             get_theme_colors,
             get_system_fonts,
             get_all_tags,
@@ -134,6 +139,12 @@ pub fn run() {
             if !config.remember_app_layout {
                 let _ = utils::window::setup_main_window(app.handle());
             }
+
+            let images_dir = config.notes_folder.join("images");
+            let _ = std::fs::create_dir_all(&images_dir);
+            let _ = app
+                .asset_protocol_scope()
+                .allow_directory(&images_dir, true);
 
             Ok(())
         })

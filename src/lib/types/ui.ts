@@ -11,6 +11,7 @@ export type PopupType =
 	| "about"
 	| "statistics"
 	| "threadOptions"
+	| "addImage"
 	| null;
 
 export type ToastType = "info" | "success" | "warning" | "error";

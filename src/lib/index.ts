@@ -3,6 +3,7 @@ export { lang } from "./actions/lang";
 export { default as EditorView } from "./components/EditorView.svelte";
 export { default as FindInView } from "./components/FindInNote.svelte";
 export { default as FolderSelector } from "./components/FolderSelector.svelte";
+export { default as ImageSizeMenu } from "./components/ImageSizeMenu.svelte";
 export { default as KeyboardShortcut } from "./components/KeyboardShortcut.svelte";
 export { default as LanguageSelector } from "./components/LanguageSelector.svelte";
 export { default as LayoutToggle } from "./components/LayoutToggle.svelte";
