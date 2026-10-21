@@ -1,4 +1,5 @@
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { sessionState } from "../stores/sessionState.svelte";
 
 /**
  * Cached absolute path of the notes images directory.
@@ -20,15 +21,31 @@ const getImagesDir = () => {
 
 /**
  * Resolves a relative image path used in note markdown (`images/<file>`)
- * into a URL the webview can load through Tauri's asset protocol.
+ * into a URL the webview can load.
  *
  * Notes keep relative paths on disk so they stay portable; only the
- * rendered DOM uses the asset URL.
+ * rendered DOM uses a loadable URL. Production builds use the asset
+ * protocol on every platform.
+ *
+ * In dev, WebKitGTK 2.54+ refuses to load `asset://` subresources from
+ * the http dev-server origin ("Unsafe attempt to load URL"), a
+ * Linux-only problem, so local files are routed through Vite's `/@fs`
+ * endpoint there instead (requires `server.fs.strict: false` in
+ * vite.config). Dev builds on macOS and Windows keep using the asset
+ * protocol.
+ * https://github.com/tauri-apps/tauri/issues/16201
  */
 export const resolveImageSrc = async (src: string): Promise<string> => {
 	const dir = await getImagesDir();
 	if (!dir || !src.startsWith("images/")) return src;
-	return convertFileSrc(`${dir}/${src.slice("images/".length)}`);
+
+	const path = `${dir}/${src.slice("images/".length)}`;
+
+	/* return convertFileSrc(`${dir}/${src.slice("images/".length)}`); */
+
+	return import.meta.env.DEV && sessionState.isLinux
+		? `/@fs${path}`
+		: convertFileSrc(path);
 };
 
 /** Display sizes an embedded image can be set to (Gmail-style). */

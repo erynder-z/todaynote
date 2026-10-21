@@ -11,6 +11,9 @@ vi.mock("@tauri-apps/api/core", () => ({
 	invoke: mockInvoke,
 	convertFileSrc: vi.fn((path: string) => `asset://${path}`),
 }));
+vi.mock("../../stores/sessionState.svelte", () => ({
+	sessionState: { isLinux: false },
+}));
 
 // Now import the module under test and other dependencies
 import {

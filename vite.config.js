@@ -9,6 +9,11 @@ import { defineConfig } from "vite";
 
 const host = process.env.TAURI_DEV_HOST;
 
+// Linux dev builds serve note images via the /@fs route as a WebKitGTK
+// workaround (see resolveImageSrc in src/lib/utils/images.ts), so the fs
+// restriction must be off there. Other platforms keep the default.
+const isLinux = process.platform === "linux";
+
 // https://vite.dev/config/
 export default defineConfig(async () => ({
 	plugins: [
@@ -23,6 +28,12 @@ export default defineConfig(async () => ({
 		port: 1420,
 		strictPort: true,
 		host: host || false,
+		fs: {
+			/* This should be also true for linux, when the following issue is fixed:
+			https://github.com/tauri-apps/tauri/issues/16201
+			 */
+			strict: !isLinux /* strict: true, */,
+		},
 		hmr: host
 			? {
 					protocol: "ws",
