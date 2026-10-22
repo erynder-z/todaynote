@@ -16,4 +16,4 @@ export type PopupType =
 
 export type ToastType = "info" | "success" | "warning" | "error";
 
-export type ModalSize = "sm" | "md" | "lg" | "xl" | "full";
+export type ModalSize = "minimal" | "sm" | "md" | "lg" | "xl" | "full";

@@ -143,6 +143,12 @@
   }
 
   /* Size Variants */
+  .size-minimal {
+    width: 25rem;
+    height: auto;
+    max-height: 85dvh;
+  }
+
   .size-sm {
     width: 25rem;
   }

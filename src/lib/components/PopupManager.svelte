@@ -100,7 +100,7 @@
         <StatisticsView />
       </Modal>
     {:else if sessionState.activePopup === 'addImage'}
-      <Modal title={$t('image.title')} size="sm">
+      <Modal title={$t('image.title')} size="minimal">
         <AddImageModal />
       </Modal>
     {/if}
