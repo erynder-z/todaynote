@@ -117,6 +117,13 @@
     setActiveThread(view, activeThreadIndex);
   });
 
+  /**
+   * Whether the document currently contains a block-level image. The
+   * size menu is only mounted while this is true; the MutationObserver
+   * below keeps it in sync with the live DOM.
+   */
+  let hasImages = $state(false);
+
   // Inline images typed as markdown reference relative paths. Block-level
   // images are handled by their node view (imageBlockPlugin), which resolves
   // srcs itself; this only rewrites the remaining inline ones into
@@ -137,6 +144,8 @@
             img.setAttribute('src', resolved);
         });
       });
+
+      hasImages = !!container?.querySelector('img[data-type="image-block"]');
     };
 
     const observer = new MutationObserver(rewrite);
@@ -153,7 +162,7 @@
   data-active-thread={activeThreadIndex !== -1 ? activeThreadIndex : undefined}
 ></div>
 
-{#if !readonly}
+{#if !readonly && hasImages}
   <ImageSizeMenu {container} instance={currentInstance} />
 {/if}
 

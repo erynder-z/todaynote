@@ -40,7 +40,7 @@
     const target = e.target as HTMLElement;
 
     const img = target.closest('img');
-    if (img && container && container.contains(img) && instance) {
+    if (img && container?.contains(img) && instance) {
       openMenu(img, instance);
       return;
     }
