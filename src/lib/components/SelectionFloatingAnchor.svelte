@@ -1,6 +1,7 @@
 <script lang="ts">
   import { editorViewCtx } from '@milkdown/kit/core';
   import type { Ctx } from '@milkdown/kit/ctx';
+  import { NodeSelection } from '@milkdown/kit/prose/state';
   import { fade, scale } from 'svelte/transition';
   import type { SelectionFloatingAnchorProps } from '#lib/interfaces/editor.ts';
 
@@ -116,6 +117,48 @@
   };
 
   /**
+   * Checks if a DOM node is inside a block-level image figure.
+   */
+  const isNodeInImageFigure = (node: Node | null): boolean => {
+    let curr = node;
+    while (curr) {
+      if (curr instanceof HTMLElement && curr.classList.contains('img-figure'))
+        return true;
+
+      curr = curr.parentNode;
+    }
+    return false;
+  };
+
+  /**
+   * Checks if the selection is inside a block-level image figure.
+   */
+  const isSelectionInImageFigure = (selection: Selection | null): boolean => {
+    return !!selection?.anchorNode && isNodeInImageFigure(selection.anchorNode);
+  };
+
+  /**
+   * Checks if ProseMirror's selection is a node selection on a block-level image.
+   */
+  const isImageNodeSelected = (): boolean => {
+    if (!editorInstance) return false;
+
+    try {
+      let imageSelected = false;
+      editorInstance.action((ctx: Ctx) => {
+        const { selection } = ctx.get(editorViewCtx).state;
+        imageSelected =
+          selection instanceof NodeSelection &&
+          selection.node.type.name === 'image-block';
+      });
+      return imageSelected;
+    } catch (e) {
+      console.warn('Failed to check image node selection:', e);
+      return false;
+    }
+  };
+
+  /**
    * Checks if the current selection is valid (non-empty and not collapsed).
    */
   const isSelectionValid = (selection: Selection | null): boolean => {
@@ -181,7 +224,12 @@
     // Show/hide floating toolbar based on selection state and link input activity
     const domSelection = window.getSelection();
 
-    if (!domSelection || isSelectionInThreadMarker(domSelection)) {
+    if (
+      !domSelection ||
+      isSelectionInThreadMarker(domSelection) ||
+      isSelectionInImageFigure(domSelection) ||
+      isImageNodeSelected()
+    ) {
       visible = false;
       return;
     }
@@ -261,7 +309,9 @@
       selection &&
       isSelectionValid(selection) &&
       isSelectionInEditor(selection) &&
-      !isSelectionInThreadMarker(selection)
+      !isSelectionInThreadMarker(selection) &&
+      !isSelectionInImageFigure(selection) &&
+      !isImageNodeSelected()
     ) {
       positionToolbar(selection);
       visible = true;
