@@ -215,7 +215,6 @@ class ImageBlockView implements NodeView {
 				this.dom.appendChild(this.figcaption);
 			}
 			this.figcaption.className = "img-caption";
-			if (align) this.figcaption.classList.add(`img-caption-${align}`);
 			this.figcaption.textContent = caption;
 		} else if (this.figcaption) {
 			this.figcaption.remove();

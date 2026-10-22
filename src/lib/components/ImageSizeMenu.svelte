@@ -189,7 +189,7 @@
     flex: 1;
     width: 12rem;
     padding: 0.4rem 0.5rem;
-    background: none;
+    background: color-mix(in srgb, var(--accent), transparent 90%);
     border: 1px solid var(--border);
     border-radius: 0.375rem;
     color: var(--text-main);

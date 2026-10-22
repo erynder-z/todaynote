@@ -193,7 +193,6 @@
   .milkdown-editor-wrapper :global(.milkdown img) {
     max-width: 100%;
     height: auto;
-    border-radius: 0.5rem;
     display: block;
   }
 
@@ -205,7 +204,6 @@
   .milkdown-editor-wrapper :global(.milkdown figure.img-figure img) {
     width: 100%;
     height: auto;
-    border-radius: 0.5rem;
     display: block;
     transition: box-shadow 0.15s ease;
   }
@@ -243,14 +241,7 @@
     font-style: italic;
     margin-top: 0.4rem;
     overflow-wrap: break-word;
-  }
-
-  .milkdown-editor-wrapper :global(.img-caption-center) {
     text-align: center;
-  }
-
-  .milkdown-editor-wrapper :global(.img-caption-right) {
-    text-align: right;
   }
 
   /* Thread Markers */
@@ -473,6 +464,18 @@
   .milkdown-editor-wrapper :global(.milkdown ::selection) {
     background: var(--text-selection);
     color: var(--text-main);
+  }
+
+  /* Images are excluded from text-selection painting. Image
+     selection is styled through ProseMirror-selectednode below. */
+  .milkdown-editor-wrapper :global(.milkdown figure.img-figure::selection),
+  .milkdown-editor-wrapper :global(.milkdown figure.img-figure *::selection) {
+    background: transparent;
+  }
+
+  .milkdown-editor-wrapper
+    :global(.milkdown figure.ProseMirror-selectednode img) {
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent), transparent 60%);
   }
 
   /* Thread options active */

@@ -33,7 +33,7 @@
   const insertImage = (relativePath: string) => {
     const service = sessionState.editorService;
 
-    if (!service || !service.insertImage(relativePath)) {
+    if (!service?.insertImage(relativePath)) {
       toast.error($t('image.insert_error'));
       return;
     }
@@ -147,6 +147,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    padding: 1rem;
   }
 
   .choice-button {
@@ -156,7 +157,7 @@
     gap: 0.8rem;
     padding: 1rem;
     background-color: color-mix(in srgb, var(--bg-surface), transparent 45%);
-    border: 1px solid var(--border);
+    border: none;
     color: var(--text-main);
     font-weight: 600;
     cursor: pointer;
