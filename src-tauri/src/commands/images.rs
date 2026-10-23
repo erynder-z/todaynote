@@ -28,7 +28,7 @@ pub fn ensure_images_dir(state: &AppState) -> Result<PathBuf, String> {
 }
 
 /// Normalizes a file extension and validates it against the allow-list.
-fn normalize_extension(ext: &str) -> Result<String, String> {
+pub(crate) fn normalize_extension(ext: &str) -> Result<String, String> {
     let ext = ext.trim().trim_start_matches('.').to_lowercase();
     if ALLOWED_EXTENSIONS.contains(&ext.as_str()) {
         Ok(ext)

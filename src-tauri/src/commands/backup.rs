@@ -1,5 +1,6 @@
-// Backup commands: export and import the notes folder as a zip archive,
-// with optional app-level encryption (XChaCha20-Poly1305 + Argon2id).
+// Backup commands: export and import the notes folder (notes plus embedded
+// images) as a zip archive, with optional app-level encryption
+// (XChaCha20-Poly1305 + Argon2id).
 use crate::models::app_state::AppState;
 use crate::models::response_types::ImportReport;
 use chacha20poly1305::{
@@ -8,7 +9,8 @@ use chacha20poly1305::{
 };
 use rand::{rngs::SysRng, TryRng};
 use std::fs;
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Read, Seek, Write};
+use std::path::Path;
 use tauri::State;
 use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, ZipArchive, ZipWriter};
@@ -28,21 +30,32 @@ const ARGON2_T_COST: u32 = 3;
 /// Argon2id parallelism.
 const ARGON2_P_COST: u32 = 4;
 
-/// Builds an in-memory zip archive containing every `.md` note in the configured folder.
+/// Builds an in-memory zip archive containing every `.md` note in the configured
+/// folder and every supported image in its `images` subfolder.
 ///
-/// Each note is stored under a `notes/` prefix with its bare filename, preserving the
-/// flat `YYYY-MM-DD.md` layout. Returns the raw zip bytes.
+/// Each note is stored under a `notes/` prefix and each image under an `images/`
+/// prefix, both with bare filenames, mirroring the on-disk layout. Returns the
+/// raw zip bytes.
 fn build_zip_bytes(state: &State<'_, AppState>) -> Result<Vec<u8>, String> {
     let note_manager = state.note_manager()?;
     let notes_folder = note_manager.notes_folder.clone();
     let files = note_manager.get_sorted_note_files()?;
+    drop(note_manager);
+    build_archive_bytes(&notes_folder, &files)
+}
 
+/// Writes notes and images into a zip archive in memory.
+///
+/// Only files with an allow-listed image extension are picked up from the
+/// `images` subfolder; anything else there is skipped, mirroring how notes
+/// listing filters non-`.md` files.
+fn build_archive_bytes(notes_folder: &Path, note_files: &[String]) -> Result<Vec<u8>, String> {
     let buf = Cursor::new(Vec::new());
     let mut zip = ZipWriter::new(buf);
     let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
 
-    for filename in files {
-        let path = notes_folder.join(&filename);
+    for filename in note_files {
+        let path = notes_folder.join(filename);
         let content =
             fs::read(&path).map_err(|e| format!("Failed to read note '{}': {}", filename, e))?;
         let entry_name = format!("notes/{}", filename);
@@ -50,6 +63,31 @@ fn build_zip_bytes(state: &State<'_, AppState>) -> Result<Vec<u8>, String> {
             .map_err(|e| format!("Failed to add '{}' to archive: {}", filename, e))?;
         zip.write_all(&content)
             .map_err(|e| format!("Failed to write '{}' to archive: {}", filename, e))?;
+    }
+
+    let images_dir = notes_folder.join("images");
+    if images_dir.is_dir() {
+        let entries = fs::read_dir(&images_dir)
+            .map_err(|e| format!("Failed to read images directory: {}", e))?;
+        for entry in entries {
+            let entry = entry.map_err(|e| format!("Failed to read images directory: {}", e))?;
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let filename = entry.file_name().to_string_lossy().into_owned();
+            match path.extension().and_then(|e| e.to_str()) {
+                Some(ext) if super::images::normalize_extension(ext).is_ok() => {}
+                _ => continue,
+            }
+            let content = fs::read(&path)
+                .map_err(|e| format!("Failed to read image '{}': {}", filename, e))?;
+            let entry_name = format!("images/{}", filename);
+            zip.start_file(&entry_name, options)
+                .map_err(|e| format!("Failed to add '{}' to archive: {}", filename, e))?;
+            zip.write_all(&content)
+                .map_err(|e| format!("Failed to write '{}' to archive: {}", filename, e))?;
+        }
     }
 
     let buf = zip
@@ -122,8 +160,9 @@ fn decrypt_bytes(data: &[u8], passphrase: &str) -> Result<Vec<u8>, String> {
         .map_err(|_| "Wrong password or corrupted backup".to_string())
 }
 
-/// Exports all notes in the configured folder to a zip archive (optionally encrypted)
-/// written to a path chosen by the user via the native save dialog.
+/// Exports all notes and embedded images in the configured folder to a zip
+/// archive (optionally encrypted) written to a path chosen by the user via the
+/// native save dialog.
 ///
 /// When `password` is provided, the zip bytes are encrypted into the `.tnbk` container
 /// format before being written. Otherwise a plain `.zip` is written.
@@ -142,12 +181,102 @@ pub async fn export_notes_archive(
     Ok(bytes.len())
 }
 
-/// Imports notes from a backup archive at the given path.
+/// Extracts notes and images from an opened archive into the notes folder.
+///
+/// `.md` entries land in the notes folder and image entries (validated against
+/// the image extension allow-list) in its `images` subfolder. Entry names are
+/// sanitized to their basename, so archives with or without `notes/`/`images/`
+/// prefixes import the same way. When `overwrite` is false, existing files with
+/// the same name are skipped.
+fn import_archive_entries<R: Read + Seek>(
+    archive: &mut ZipArchive<R>,
+    notes_folder: &Path,
+    overwrite: bool,
+) -> ImportReport {
+    let images_dir = notes_folder.join("images");
+    let mut imported = 0usize;
+    let mut skipped = 0usize;
+    let mut errors: Vec<String> = Vec::new();
+    let mut images_dir_ensured = false;
+
+    for i in 0..archive.len() {
+        let mut entry = match archive.by_index(i) {
+            Ok(e) => e,
+            Err(e) => {
+                errors.push(format!("Entry {}: could not read ({})", i, e));
+                continue;
+            }
+        };
+
+        let name = entry.name().to_string();
+        if entry.is_dir() {
+            continue;
+        }
+
+        // Sanitize to basename only, rejecting path traversal.
+        let basename = match std::path::Path::new(&name).file_name() {
+            Some(b) => b.to_string_lossy().into_owned(),
+            None => continue,
+        };
+        if basename.is_empty() || basename.contains('/') || basename.contains('\\') {
+            errors.push(format!("Skipped unsafe entry: {}", name));
+            continue;
+        }
+
+        // Route by extension: markdown goes to the notes folder, allow-listed
+        // image types to the images directory, anything else is skipped.
+        let is_image = !basename.ends_with(".md")
+            && basename
+                .rsplit_once('.')
+                .map(|(_, ext)| super::images::normalize_extension(ext).is_ok())
+                .unwrap_or(false);
+        let dest = if is_image {
+            if !images_dir_ensured {
+                if let Err(e) = fs::create_dir_all(&images_dir) {
+                    errors.push(format!("Failed to create images directory: {}", e));
+                    continue;
+                }
+                images_dir_ensured = true;
+            }
+            images_dir.join(&basename)
+        } else if basename.ends_with(".md") {
+            notes_folder.join(&basename)
+        } else {
+            continue;
+        };
+
+        if dest.exists() && !overwrite {
+            skipped += 1;
+            continue;
+        }
+
+        let mut content = Vec::new();
+        if let Err(e) = entry.read_to_end(&mut content) {
+            errors.push(format!("Failed to read '{}': {}", basename, e));
+            continue;
+        }
+
+        if let Err(e) = fs::write(&dest, &content) {
+            errors.push(format!("Failed to write '{}': {}", basename, e));
+            continue;
+        }
+        imported += 1;
+    }
+
+    ImportReport {
+        imported,
+        skipped,
+        errors,
+    }
+}
+
+/// Imports notes and images from a backup archive at the given path.
 ///
 /// Accepts both plain `.zip` files and encrypted `.tnbk` containers (when a `password`
-/// is supplied). Notes are extracted into the current notes folder. When `overwrite`
-/// is false, existing notes with the same filename are skipped. Only `.md` entries are
-/// imported; path-traversal entries are sanitized to their basename.
+/// is supplied). Notes are extracted into the current notes folder and images into
+/// its `images` subfolder. When `overwrite` is false, existing files with the same
+/// name are skipped. Only `.md` and allow-listed image entries are imported;
+/// path-traversal entries are sanitized to their basename.
 #[tauri::command]
 pub async fn import_notes_archive(
     path: String,
@@ -176,61 +305,11 @@ pub async fn import_notes_archive(
     let mut archive = ZipArchive::new(Cursor::new(zip_bytes))
         .map_err(|e| format!("Failed to open archive: {}", e))?;
 
-    let mut imported = 0usize;
-    let mut skipped = 0usize;
-    let mut errors: Vec<String> = Vec::new();
-
-    for i in 0..archive.len() {
-        let mut entry = match archive.by_index(i) {
-            Ok(e) => e,
-            Err(e) => {
-                errors.push(format!("Entry {}: could not read ({})", i, e));
-                continue;
-            }
-        };
-
-        let name = entry.name().to_string();
-        if entry.is_dir() {
-            continue;
-        }
-
-        // Sanitize to basename only, rejecting path traversal.
-        let basename = match std::path::Path::new(&name).file_name() {
-            Some(b) => b.to_string_lossy().into_owned(),
-            None => continue,
-        };
-        if basename.is_empty() || basename.contains('/') || basename.contains('\\') {
-            errors.push(format!("Skipped unsafe entry: {}", name));
-            continue;
-        }
-        if !basename.ends_with(".md") {
-            continue;
-        }
-
-        let dest = notes_folder.join(&basename);
-        if dest.exists() && !overwrite {
-            skipped += 1;
-            continue;
-        }
-
-        let mut content = Vec::new();
-        if let Err(e) = entry.read_to_end(&mut content) {
-            errors.push(format!("Failed to read '{}': {}", basename, e));
-            continue;
-        }
-
-        if let Err(e) = fs::write(&dest, &content) {
-            errors.push(format!("Failed to write '{}': {}", basename, e));
-            continue;
-        }
-        imported += 1;
-    }
-
-    Ok(ImportReport {
-        imported,
-        skipped,
-        errors,
-    })
+    Ok(import_archive_entries(
+        &mut archive,
+        &notes_folder,
+        overwrite,
+    ))
 }
 
 ///
@@ -724,5 +803,158 @@ mod tests {
         assert_eq!(_salt.len(), SALT_LEN);
         assert_eq!(_nonce.len(), NONCE_LEN);
         assert!(_ciphertext.len() > 0);
+    }
+
+    // Archive Build / Import Tests
+
+    use std::io::Cursor as IoCursor;
+    use tempfile::tempdir;
+
+    /// Creates a temp notes folder with two notes and an images subfolder
+    /// containing two supported images and two unsupported files.
+    fn setup_source_folder() -> (tempfile::TempDir, std::path::PathBuf, Vec<String>) {
+        let src = tempdir().expect("Failed to create temp dir");
+        let notes_folder = src.path().to_path_buf();
+        fs::create_dir_all(notes_folder.join("images")).expect("Failed to create images dir");
+        fs::write(notes_folder.join("2026-01-01.md"), "note a").expect("write failed");
+        fs::write(notes_folder.join("2026-01-02.md"), "note b").expect("write failed");
+        fs::write(notes_folder.join("images").join("abc.png"), b"png-bytes").expect("write failed");
+        fs::write(notes_folder.join("images").join("def.jpg"), b"jpg-bytes").expect("write failed");
+        fs::write(notes_folder.join("images").join("evil.svg"), b"<svg/>").expect("write failed");
+        fs::write(notes_folder.join("images").join("meta.txt"), b"text").expect("write failed");
+
+        let note_files = vec!["2026-01-02.md".to_string(), "2026-01-01.md".to_string()];
+        (src, notes_folder, note_files)
+    }
+
+    #[test]
+    fn test_build_archive_includes_notes_and_images_only() {
+        let (_src, notes_folder, note_files) = setup_source_folder();
+
+        let zip_bytes =
+            build_archive_bytes(&notes_folder, &note_files).expect("Failed to build archive");
+
+        let mut archive =
+            ZipArchive::new(IoCursor::new(zip_bytes)).expect("Failed to open archive");
+        let mut names: Vec<String> = (0..archive.len())
+            .filter_map(|i| archive.by_index(i).ok().map(|e| e.name().to_string()))
+            .collect();
+        names.sort();
+        assert_eq!(
+            names,
+            vec![
+                "images/abc.png",
+                "images/def.jpg",
+                "notes/2026-01-01.md",
+                "notes/2026-01-02.md",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_build_archive_without_images_dir() {
+        let src = tempdir().expect("Failed to create temp dir");
+        let notes_folder = src.path().to_path_buf();
+        fs::write(notes_folder.join("2026-01-01.md"), "note a").expect("write failed");
+
+        let zip_bytes = build_archive_bytes(&notes_folder, &["2026-01-01.md".to_string()])
+            .expect("Failed to build archive");
+
+        let archive = ZipArchive::new(IoCursor::new(zip_bytes)).expect("Failed to open archive");
+        assert_eq!(archive.len(), 1);
+    }
+
+    #[test]
+    fn test_import_roundtrip_restores_notes_and_images() {
+        let (_src, notes_folder, note_files) = setup_source_folder();
+        let zip_bytes =
+            build_archive_bytes(&notes_folder, &note_files).expect("Failed to build archive");
+        let mut archive =
+            ZipArchive::new(IoCursor::new(zip_bytes)).expect("Failed to open archive");
+
+        let dest = tempdir().expect("Failed to create temp dir");
+        let report = import_archive_entries(&mut archive, dest.path(), false);
+
+        assert_eq!(report.imported, 4, "Two notes and two images expected");
+        assert_eq!(report.skipped, 0);
+        assert!(report.errors.is_empty(), "Errors: {:?}", report.errors);
+        assert_eq!(
+            fs::read(dest.path().join("2026-01-01.md")).expect("note missing"),
+            b"note a"
+        );
+        assert_eq!(
+            fs::read(dest.path().join("images").join("abc.png")).expect("image missing"),
+            b"png-bytes"
+        );
+        assert_eq!(
+            fs::read(dest.path().join("images").join("def.jpg")).expect("image missing"),
+            b"jpg-bytes"
+        );
+        assert!(!dest.path().join("images").join("evil.svg").exists());
+        assert!(!dest.path().join("images").join("meta.txt").exists());
+    }
+
+    #[test]
+    fn test_import_skips_existing_without_overwrite() {
+        let (_src, notes_folder, note_files) = setup_source_folder();
+        let zip_bytes =
+            build_archive_bytes(&notes_folder, &note_files).expect("Failed to build archive");
+
+        let dest = tempdir().expect("Failed to create temp dir");
+        for overwrite in [false, true] {
+            let mut archive =
+                ZipArchive::new(IoCursor::new(zip_bytes.clone())).expect("Failed to open archive");
+            let report = import_archive_entries(&mut archive, dest.path(), overwrite);
+            assert_eq!(report.imported, 4, "overwrite={}", overwrite);
+            assert_eq!(report.skipped, 0, "overwrite={}", overwrite);
+        }
+
+        let mut archive =
+            ZipArchive::new(IoCursor::new(zip_bytes)).expect("Failed to open archive");
+        let report = import_archive_entries(&mut archive, dest.path(), false);
+        assert_eq!(report.imported, 0);
+        assert_eq!(report.skipped, 4);
+    }
+
+    #[test]
+    fn test_import_rejects_unsupported_image_entries() {
+        let buf = IoCursor::new(Vec::new());
+        let mut zip = ZipWriter::new(buf);
+        let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
+        zip.start_file("images/evil.svg", options)
+            .expect("start failed");
+        zip.write_all(b"<svg/>").expect("write failed");
+        zip.start_file("images/ok.webp", options)
+            .expect("start failed");
+        zip.write_all(b"webp-bytes").expect("write failed");
+        let buf = zip.finish().expect("finalize failed");
+
+        let mut archive = ZipArchive::new(buf).expect("Failed to open archive");
+        let dest = tempdir().expect("Failed to create temp dir");
+        let report = import_archive_entries(&mut archive, dest.path(), false);
+
+        assert_eq!(report.imported, 1, "Only the webp image should import");
+        assert!(report.errors.is_empty());
+        assert!(dest.path().join("images").join("ok.webp").exists());
+        assert!(!dest.path().join("images").join("evil.svg").exists());
+    }
+
+    #[test]
+    fn test_import_sanitizes_nested_entry_names() {
+        let buf = IoCursor::new(Vec::new());
+        let mut zip = ZipWriter::new(buf);
+        let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
+        zip.start_file("notes/2026-01-01.md", options)
+            .expect("start failed");
+        zip.write_all(b"note a").expect("write failed");
+        let buf = zip.finish().expect("finalize failed");
+
+        let mut archive = ZipArchive::new(buf).expect("Failed to open archive");
+        let dest = tempdir().expect("Failed to create temp dir");
+        let report = import_archive_entries(&mut archive, dest.path(), false);
+
+        assert_eq!(report.imported, 1);
+        assert!(dest.path().join("2026-01-01.md").exists());
+        assert!(!dest.path().join("notes").exists());
     }
 }
