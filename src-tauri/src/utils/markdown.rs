@@ -66,6 +66,11 @@ pub fn strip_markdown_line(line: &str) -> String {
     result.trim().to_string()
 }
 
+/// Returns true if the line contains a markdown image (`![alt](url)`).
+pub fn line_has_image(line: &str) -> bool {
+    IMAGE_RE.is_match(line)
+}
+
 ///
 /// Unit Tests
 ///

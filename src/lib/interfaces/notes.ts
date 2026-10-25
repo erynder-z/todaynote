@@ -8,6 +8,7 @@ export interface FormattedNote {
 	threads: string[];
 	wordCount: number;
 	hasCode: boolean;
+	hasImages: boolean;
 }
 
 export interface NoteListResponse {

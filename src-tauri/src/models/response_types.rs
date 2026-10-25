@@ -56,6 +56,7 @@ pub struct FormattedNote {
     pub threads: Vec<String>,
     pub word_count: usize,
     pub has_code: bool,
+    pub has_images: bool,
 }
 
 /// A paginated response for note listing.
@@ -521,6 +522,7 @@ mod tests {
                 threads: vec!["Work".into()],
                 word_count: 5,
                 has_code: false,
+                has_images: false,
             }],
             total_count: 1,
         };

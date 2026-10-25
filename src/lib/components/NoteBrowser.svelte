@@ -152,10 +152,13 @@
         settings.dateFormatStyle,
       )}</span
     >
-    {#if note.noteType === 'manual' || (note.tags && note.tags.length > 0)}
+    {#if note.noteType === 'manual' || note.hasImages || (note.tags && note.tags.length > 0)}
       <div class="list-tags">
         {#if note.noteType === 'manual'}
           <span class="tag-pill mini manual">M</span>
+        {/if}
+        {#if note.hasImages}
+          <span class="tag-pill mini image">IMG</span>
         {/if}
         {#each note.tags ?? [] as tag}
           <span class="tag-pill mini">{tag}</span>
@@ -177,10 +180,13 @@
     >
   </div>
 
-  {#if note.noteType === 'manual' || (note.tags && note.tags.length > 0)}
+  {#if note.noteType === 'manual' || note.hasImages || (note.tags && note.tags.length > 0)}
     <div class="note-tags">
       {#if note.noteType === 'manual'}
         <span class="tag-pill manual">M</span>
+      {/if}
+      {#if note.hasImages}
+        <span class="tag-pill image">IMG</span>
       {/if}
       {#each note.tags ?? [] as tag}
         <span class="tag-pill">{tag}</span>
@@ -420,6 +426,11 @@
   .tag-pill.manual {
     background-color: var(--accent);
     color: var(--accent-text);
+  }
+
+  .tag-pill.image {
+    background-color: color-mix(in srgb, var(--identicon-1), transparent 85%);
+    color: var(--identicon-1);
   }
 
   .card-header {

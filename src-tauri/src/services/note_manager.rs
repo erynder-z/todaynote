@@ -154,6 +154,7 @@ impl NoteManager {
             threads: self.extract_threads(&content, 5),
             word_count: crate::utils::text::count_words(&content).0,
             has_code: crate::utils::text::count_words(&content).1,
+            has_images: crate::utils::text::has_images(&content),
         })
     }
 

@@ -167,6 +167,31 @@ pub fn count_words(content: &str) -> (usize, bool) {
     (word_count, has_code)
 }
 
+/// Returns true if the content contains a markdown image (`![alt](url)`).
+pub fn has_images(content: &str) -> bool {
+    let lines: Vec<&str> = content.lines().collect();
+    let mut start_idx = 0;
+
+    // Skip YAML frontmatter if present
+    if lines.first().map(|l| l.trim()) == Some("---") {
+        for (i, line) in lines.iter().enumerate().skip(1) {
+            if line.trim() == "---" {
+                start_idx = i + 1;
+                break;
+            }
+        }
+    }
+
+    let mut in_code_block = false;
+    lines[start_idx..].iter().any(|line| {
+        if line.trim_start().starts_with("```") {
+            in_code_block = !in_code_block;
+            return false;
+        }
+        !in_code_block && crate::utils::markdown::line_has_image(line)
+    })
+}
+
 ///
 /// Unit Tests
 ///
@@ -281,5 +306,45 @@ mod tests {
         let (count, has_code) = count_words("");
         assert_eq!(count, 0);
         assert!(!has_code);
+    }
+    ///
+    /// has_images tests
+    ///
+    #[test]
+    fn test_has_images_detects_markdown_image() {
+        let content = "Some note\n![photo](images/pic.jpg#small-center)";
+        assert!(has_images(content));
+    }
+
+    #[test]
+    fn test_has_images_false_without_image() {
+        let content = "# Heading\n- item\n[link](page.md)";
+        assert!(!has_images(content));
+    }
+
+    #[test]
+    fn test_has_images_ignores_code_blocks() {
+        let content = "Some note\n```rust\nreturn Ok(vec![]);\nlet v = vec![1];\n```\nafter";
+        assert!(!has_images(content));
+    }
+
+    #[test]
+    fn test_has_images_requires_full_image_syntax() {
+        // `![` alone is not an image; code like `vec![]` must not match
+        // even outside a fenced code block.
+        assert!(!has_images("return Ok(vec![]);"));
+        assert!(!has_images("let v = vec![1];"));
+    }
+
+    #[test]
+    fn test_has_images_ignores_frontmatter() {
+        let content = "---\ntitle: vec![]\n---\nhello world";
+        assert!(!has_images(content));
+    }
+
+    #[test]
+    fn test_has_images_detects_image_after_code_block() {
+        let content = "```\nvec![]\n```\n![photo](images/pic.jpg)";
+        assert!(has_images(content));
     }
 }
