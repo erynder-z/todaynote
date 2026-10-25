@@ -5,7 +5,6 @@
 //! so notes remain portable outside the application.
 
 use crate::models::app_state::AppState;
-use crate::models::response_types::ImagePurgeReport;
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -150,9 +149,9 @@ pub fn get_images_dir(state: State<'_, AppState>) -> Result<String, String> {
 }
 
 /// Deletes all images in the images directory that are not referenced by any
-/// note.
+/// note. Returns the number of removed images.
 #[tauri::command]
-pub fn purge_unused_images(state: State<'_, AppState>) -> Result<ImagePurgeReport, String> {
+pub fn purge_unused_images(state: State<'_, AppState>) -> Result<usize, String> {
     let (notes_folder, note_files) = {
         let note_manager = state.note_manager()?;
         (
@@ -173,10 +172,7 @@ pub fn purge_unused_images(state: State<'_, AppState>) -> Result<ImagePurgeRepor
     }
 
     let images_dir = notes_folder.join("images");
-    let mut report = ImagePurgeReport {
-        removed: 0,
-        freed_bytes: 0,
-    };
+    let mut removed = 0;
 
     if images_dir.is_dir() {
         let entries = fs::read_dir(&images_dir)
@@ -202,15 +198,13 @@ pub fn purge_unused_images(state: State<'_, AppState>) -> Result<ImagePurgeRepor
             if !is_image || referenced.contains(&name) {
                 continue;
             }
-            let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
             if fs::remove_file(&path).is_ok() {
-                report.removed += 1;
-                report.freed_bytes += size;
+                removed += 1;
             }
         }
     }
 
-    Ok(report)
+    Ok(removed)
 }
 
 /// Returns the image filename referenced by a note markdown URL, if the URL
