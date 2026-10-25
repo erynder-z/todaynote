@@ -152,13 +152,16 @@
         settings.dateFormatStyle,
       )}</span
     >
-    {#if note.noteType === 'manual' || note.hasImages || (note.tags && note.tags.length > 0)}
+    {#if note.noteType === 'manual' || note.hasImages || note.hasCode || (note.tags && note.tags.length > 0)}
       <div class="list-tags">
         {#if note.noteType === 'manual'}
           <span class="tag-pill mini manual">M</span>
         {/if}
         {#if note.hasImages}
           <span class="tag-pill mini image">IMG</span>
+        {/if}
+        {#if note.hasCode}
+          <span class="tag-pill mini code">&lt;/&gt;</span>
         {/if}
         {#each note.tags ?? [] as tag}
           <span class="tag-pill mini">{tag}</span>
@@ -180,13 +183,16 @@
     >
   </div>
 
-  {#if note.noteType === 'manual' || note.hasImages || (note.tags && note.tags.length > 0)}
+  {#if note.noteType === 'manual' || note.hasImages || note.hasCode || (note.tags && note.tags.length > 0)}
     <div class="note-tags">
       {#if note.noteType === 'manual'}
         <span class="tag-pill manual">M</span>
       {/if}
       {#if note.hasImages}
         <span class="tag-pill image">IMG</span>
+      {/if}
+      {#if note.hasCode}
+        <span class="tag-pill code">&lt;/&gt;</span>
       {/if}
       {#each note.tags ?? [] as tag}
         <span class="tag-pill">{tag}</span>
@@ -431,6 +437,11 @@
   .tag-pill.image {
     background-color: color-mix(in srgb, var(--identicon-1), transparent 85%);
     color: var(--identicon-1);
+  }
+
+  .tag-pill.code {
+    background-color: color-mix(in srgb, var(--identicon-2), transparent 85%);
+    color: var(--identicon-2);
   }
 
   .card-header {
