@@ -183,6 +183,16 @@ pub struct ImportReport {
     pub errors: Vec<String>,
 }
 
+/// Result of purging unused images from the images directory.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImagePurgeReport {
+    /// Number of unused image files removed.
+    pub removed: usize,
+    /// Total bytes freed.
+    pub freed_bytes: u64,
+}
+
 /// Statistics about the note collection.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

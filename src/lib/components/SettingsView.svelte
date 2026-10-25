@@ -13,6 +13,7 @@
   import FolderSelector from './FolderSelector.svelte';
   import FontSelector from './FontSelector.svelte';
   import IdentIconStyleSelector from './IdentIconStyleSelector.svelte';
+  import ImageMaintenanceSelector from './ImageMaintenanceSelector.svelte';
   import LanguageSelector from './LanguageSelector.svelte';
   import PurgeEmptyNotesSelector from './PurgeEmptyNotesSelector.svelte';
   import RememberSettingsSelector from './RememberSettingsSelector.svelte';
@@ -50,6 +51,7 @@
     TextCopyModeSelector,
     ShortcutSelector,
     PurgeEmptyNotesSelector,
+    ImageMaintenanceSelector,
     BackupSelector,
     AboutSelector,
   ];

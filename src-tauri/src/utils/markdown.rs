@@ -4,8 +4,10 @@ use regex::Regex;
 use std::sync::LazyLock;
 
 /// Matches Markdown images `![alt](url)` and keeps the alt text.
+/// Group 2 captures the URL, used for extracting image references.
 /// Defined before links so `![..](..)` is consumed before `[..](..)`.
-static IMAGE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"!\[([^\]]*)\]\([^)]*\)").unwrap());
+static IMAGE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"!\[([^\]]*)\]\(([^)]*)\)").unwrap());
 
 /// Matches Markdown links `[text](url)` and keeps the link text.
 static LINK_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[([^\]]+)\]\([^)]+\)").unwrap());
@@ -71,6 +73,14 @@ pub fn line_has_image(line: &str) -> bool {
     IMAGE_RE.is_match(line)
 }
 
+/// Extracts the URLs of all markdown images (`![alt](url)`) in the content.
+pub fn extract_image_urls(content: &str) -> Vec<String> {
+    IMAGE_RE
+        .captures_iter(content)
+        .filter_map(|c| c.get(2).map(|m| m.as_str().trim().to_string()))
+        .collect()
+}
+
 ///
 /// Unit Tests
 ///
@@ -131,6 +141,18 @@ mod tests {
         assert_eq!(
             strip_markdown_line("> ![logo](pic.png) and *em*"),
             "logo and em"
+        );
+    }
+
+    #[test]
+    fn test_extract_image_urls() {
+        let content = "![a](images/a.png#small-center)\n![b](images/b.jpg)\n[text](page.md)";
+        assert_eq!(
+            extract_image_urls(content),
+            vec![
+                "images/a.png#small-center".to_string(),
+                "images/b.jpg".to_string()
+            ]
         );
     }
 

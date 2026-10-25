@@ -5,6 +5,8 @@
 //! so notes remain portable outside the application.
 
 use crate::models::app_state::AppState;
+use crate::models::response_types::ImagePurgeReport;
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::State;
@@ -147,6 +149,84 @@ pub fn get_images_dir(state: State<'_, AppState>) -> Result<String, String> {
     Ok(dir.to_string_lossy().to_string())
 }
 
+/// Deletes all images in the images directory that are not referenced by any
+/// note.
+#[tauri::command]
+pub fn purge_unused_images(state: State<'_, AppState>) -> Result<ImagePurgeReport, String> {
+    let (notes_folder, note_files) = {
+        let note_manager = state.note_manager()?;
+        (
+            note_manager.notes_folder.clone(),
+            note_manager.get_sorted_note_files()?,
+        )
+    };
+
+    // Collect every image filename referenced from note markdown.
+    let mut referenced: HashSet<String> = HashSet::new();
+    for file_name in &note_files {
+        let content = fs::read_to_string(notes_folder.join(file_name)).unwrap_or_default();
+        for url in crate::utils::markdown::extract_image_urls(&content) {
+            if let Some(filename) = image_filename_from_url(&url) {
+                referenced.insert(filename);
+            }
+        }
+    }
+
+    let images_dir = notes_folder.join("images");
+    let mut report = ImagePurgeReport {
+        removed: 0,
+        freed_bytes: 0,
+    };
+
+    if images_dir.is_dir() {
+        let entries = fs::read_dir(&images_dir)
+            .map_err(|e| format!("Failed to read images directory: {}", e))?;
+        for entry in entries {
+            let entry = match entry {
+                Ok(e) => e,
+                Err(_) => continue,
+            };
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let name = match path.file_name().and_then(|n| n.to_str()) {
+                Some(n) => n.to_string(),
+                None => continue,
+            };
+            let is_image = path
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|e| ALLOWED_EXTENSIONS.contains(&e.to_lowercase().as_str()))
+                .unwrap_or(false);
+            if !is_image || referenced.contains(&name) {
+                continue;
+            }
+            let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
+            if fs::remove_file(&path).is_ok() {
+                report.removed += 1;
+                report.freed_bytes += size;
+            }
+        }
+    }
+
+    Ok(report)
+}
+
+/// Returns the image filename referenced by a note markdown URL, if the URL
+/// points into the images directory. Strips the `#<size>-<align>` fragment
+/// used for image display options.
+pub(crate) fn image_filename_from_url(url: &str) -> Option<String> {
+    let url = url.trim().split('#').next().unwrap_or("").trim();
+    let path = url.strip_prefix("images/")?;
+    let name = path.rsplit('/').next()?;
+    if name.is_empty() {
+        None
+    } else {
+        Some(name.to_string())
+    }
+}
+
 ///
 /// Unit Tests
 ///
@@ -177,5 +257,20 @@ mod tests {
         );
         assert_eq!(extension_from_content_type("text/html"), None);
         assert_eq!(extension_from_content_type(""), None);
+    }
+
+    #[test]
+    fn test_image_filename_from_url() {
+        assert_eq!(
+            image_filename_from_url("images/abc.png"),
+            Some("abc.png".to_string())
+        );
+        assert_eq!(
+            image_filename_from_url("images/abc.png#small-center"),
+            Some("abc.png".to_string())
+        );
+        assert_eq!(image_filename_from_url("https://x.io/pic.png"), None);
+        assert_eq!(image_filename_from_url("images/"), None);
+        assert_eq!(image_filename_from_url("notes/abc.png"), None);
     }
 }
