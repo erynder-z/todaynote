@@ -12,7 +12,7 @@
   import { t } from '../utils/i18n.ts';
   import { useShortcuts } from '../utils/shortcuts.ts';
   import AboutView from './AboutView.svelte';
-  import AddImageModal from './AddImageModal.svelte';
+  import AddImageURLModal from './AddImageURLModal.svelte';
   import FindInView from './FindInNote.svelte';
   import Modal from './Modal.svelte';
   import NoteBrowser from './NoteBrowser.svelte';
@@ -101,7 +101,7 @@
       </Modal>
     {:else if sessionState.activePopup === 'addImage'}
       <Modal title={$t('image.title')} size="minimal">
-        <AddImageModal />
+        <AddImageURLModal />
       </Modal>
     {/if}
   </div>

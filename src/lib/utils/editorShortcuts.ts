@@ -5,6 +5,7 @@ import type { ShortcutAction, ShortcutCallback } from "#lib/types/input.ts";
 import { tagSuggestionShortcuts } from "../config/shortcuts.ts";
 import { sessionState } from "../stores/sessionState.svelte";
 import { navigateToLastAvailable, navigateToOffset } from "./dailyNote.ts";
+import { pickLocalImage } from "./imageInput.ts";
 
 /**
  * Builds the keyboard shortcut handlers for the note editor.
@@ -112,6 +113,26 @@ export const createEditorShortcuts = (
 	};
 
 	/**
+	 * Opens the OS file picker and inserts the chosen image at the caret.
+	 */
+	const handleAddImage = (): boolean => {
+		if (sessionState.activePopup !== null) return false;
+		if (!getInstance() || !getService()) return false;
+		void pickLocalImage();
+		return true;
+	};
+
+	/**
+	 * Opens the add-image-from-URL popup.
+	 */
+	const handleAddImageFromUrl = (): boolean => {
+		if (sessionState.activePopup !== null) return false;
+		if (!getInstance()) return false;
+		sessionState.activePopup = "addImage";
+		return true;
+	};
+
+	/**
 	 * Navigates to today's note.
 	 */
 	const handleNavigateToday = async (e: Event) => {
@@ -129,6 +150,8 @@ export const createEditorShortcuts = (
 			navigateYesterday: handleNavigateYesterday,
 			navigateLastAvailable: handleNavigateLastAvailable,
 			navigateToday: handleNavigateToday,
+			addImage: handleAddImage,
+			addImageFromUrl: handleAddImageFromUrl,
 		},
 		jumpToThread,
 	};

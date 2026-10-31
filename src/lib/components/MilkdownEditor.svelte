@@ -23,6 +23,7 @@
   } from '../plugins/activeThreadPlugin.ts';
   import { imageBlockPlugin } from '../plugins/imageBlockPlugin.ts';
   import { threadMarkerPlugin } from '../plugins/threadMarkerPlugin.ts';
+  import { handleEditorPaste } from '../utils/imageInput.ts';
   import { resolveImageSrc } from '../utils/images.ts';
   import { parser } from '../utils/milkdownConfig.ts';
   import ImageSizeMenu from './ImageSizeMenu.svelte';
@@ -107,6 +108,22 @@
       const options = ctx.get(editorViewOptionsCtx);
       options.editable = () => !readonly;
     });
+  });
+
+  // Paste image support (editable editors only). The paste listener uses
+  // capture so ProseMirror's own paste handling never sees image data.
+  $effect(() => {
+    if (!container || !currentInstance || readonly) return;
+
+    const el = container;
+
+    const onPaste = (e: ClipboardEvent) => handleEditorPaste(e);
+
+    el.addEventListener('paste', onPaste, true);
+
+    return () => {
+      el.removeEventListener('paste', onPaste, true);
+    };
   });
 
   $effect(() => {

@@ -104,3 +104,75 @@ export const buildImageFragment = (
 	if (align && align !== "left") parts.push(align);
 	return parts.length ? `#${parts.join("-")}` : "";
 };
+
+/** Extensions accepted for stored image files. */
+export const IMAGE_EXTENSIONS = [
+	"png",
+	"jpg",
+	"jpeg",
+	"gif",
+	"webp",
+	"bmp",
+	"avif",
+];
+
+/**
+ * Whether a file name carries an extension accepted for stored images.
+ */
+export const hasSupportedImageExtension = (name: string): boolean => {
+	const ext = name.includes(".")
+		? (name.split(".").pop() ?? "").toLowerCase()
+		: "";
+	return IMAGE_EXTENSIONS.includes(ext);
+};
+
+/**
+ * Converts a `file://` URI into a local filesystem path. Returns null
+ * for non-file URIs, remote hosts and malformed input.
+ */
+export const fileUriToPath = (uri: string): string | null => {
+	if (!uri.startsWith("file://")) return null;
+
+	try {
+		const url = new URL(uri);
+		if (url.host && url.host !== "localhost") return null;
+
+		const path = decodeURIComponent(url.pathname);
+		// Windows drive-letter paths arrive as "/C:/...".
+		return /^\/[A-Za-z]:\//.test(path) ? path.slice(1) : path;
+	} catch {
+		return null;
+	}
+};
+
+/**
+ * Extracts local image file paths from clipboard text — a `text/uri-list`
+ * payload and/or plain text — e.g. when a file was copied in the OS file
+ * manager. Comments, remote URIs and non-image files are ignored.
+ */
+export const localImagePathsFromClipboardText = (
+	uriList: string,
+	plainText: string,
+): string[] => {
+	const candidates = uriList
+		.split("\n")
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0 && !line.startsWith("#"));
+
+	const plain = plainText.trim();
+	if (plain && !candidates.includes(plain)) candidates.push(plain);
+
+	const paths: string[] = [];
+	for (const candidate of candidates) {
+		const path = candidate.startsWith("file://")
+			? fileUriToPath(candidate)
+			: candidate.startsWith("/")
+				? candidate
+				: null;
+
+		if (path && hasSupportedImageExtension(path) && !paths.includes(path))
+			paths.push(path);
+	}
+
+	return paths;
+};

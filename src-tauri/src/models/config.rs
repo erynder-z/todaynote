@@ -300,12 +300,23 @@ impl Default for AppConfig {
             },
         );
         shortcuts.insert(
-            "threadOptionAddImage".to_string(),
+            "addImage".to_string(),
             ShortcutConfig {
                 key: "I".to_string(),
                 primary: true,
                 secondary: true,
-                description: "Add image to thread".to_string(),
+                description: "Add image".to_string(),
+            },
+        );
+        shortcuts.insert(
+            "addImageFromUrl".to_string(),
+            ShortcutConfig {
+                // Not "U": IBus grabs Ctrl+Shift+U globally for Unicode input
+                // on Linux, so the keypress never reaches the webview.
+                key: "W".to_string(),
+                primary: true,
+                secondary: true,
+                description: "Add image from URL".to_string(),
             },
         );
         shortcuts.insert(

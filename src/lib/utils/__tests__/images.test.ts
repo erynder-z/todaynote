@@ -18,6 +18,9 @@ vi.mock("../../stores/sessionState.svelte", () => ({
 // Now import the module under test and other dependencies
 import {
 	buildImageFragment,
+	fileUriToPath,
+	hasSupportedImageExtension,
+	localImagePathsFromClipboardText,
 	parseImageFragment,
 	stripImageFragment,
 } from "../images.ts";
@@ -105,5 +108,91 @@ describe("image fragment utils", () => {
 				}
 			}
 		});
+	});
+});
+
+describe("fileUriToPath", () => {
+	it("decodes local file URIs", () => {
+		expect(fileUriToPath("file:///home/user/pic.png")).toBe(
+			"/home/user/pic.png",
+		);
+		expect(
+			fileUriToPath(
+				"file:///home/stfnb/Pictures/Screenshots/Screenshot%20From%202026-05-11%2023-02-53.png",
+			),
+		).toBe(
+			"/home/stfnb/Pictures/Screenshots/Screenshot From 2026-05-11 23-02-53.png",
+		);
+	});
+
+	it("accepts localhost host", () => {
+		expect(fileUriToPath("file://localhost/home/user/pic.png")).toBe(
+			"/home/user/pic.png",
+		);
+	});
+
+	it("strips the leading slash from Windows drive paths", () => {
+		expect(fileUriToPath("file:///C:/Users/user/pic.png")).toBe(
+			"C:/Users/user/pic.png",
+		);
+	});
+
+	it("rejects non-file and remote URIs", () => {
+		expect(fileUriToPath("https://example.com/pic.png")).toBeNull();
+		expect(fileUriToPath("file://nas/share/pic.png")).toBeNull();
+		expect(fileUriToPath("not a uri")).toBeNull();
+	});
+});
+
+describe("hasSupportedImageExtension", () => {
+	it("accepts allow-listed extensions case-insensitively", () => {
+		expect(hasSupportedImageExtension("a.png")).toBe(true);
+		expect(hasSupportedImageExtension("Screenshot.JPG")).toBe(true);
+		expect(hasSupportedImageExtension("a.webp")).toBe(true);
+	});
+
+	it("rejects unsupported and missing extensions", () => {
+		expect(hasSupportedImageExtension("a.svg")).toBe(false);
+		expect(hasSupportedImageExtension("notes.txt")).toBe(false);
+		expect(hasSupportedImageExtension("noext")).toBe(false);
+	});
+});
+
+describe("localImagePathsFromClipboardText", () => {
+	it("extracts image paths from a uri-list", () => {
+		const uriList =
+			"# comment\nfile:///home/user/a.png\nfile:///home/user/b.jpg\n";
+		expect(localImagePathsFromClipboardText(uriList, "")).toEqual([
+			"/home/user/a.png",
+			"/home/user/b.jpg",
+		]);
+	});
+
+	it("ignores remote URIs and non-image files", () => {
+		const uriList =
+			"https://example.com/a.png\nfile:///home/user/notes.txt\nfile:///home/user/c.webp";
+		expect(localImagePathsFromClipboardText(uriList, "")).toEqual([
+			"/home/user/c.webp",
+		]);
+	});
+
+	it("falls back to plain text paths", () => {
+		expect(localImagePathsFromClipboardText("", "/home/user/pic.png")).toEqual([
+			"/home/user/pic.png",
+		]);
+		expect(
+			localImagePathsFromClipboardText("", "file:///home/user/pic%20one.png"),
+		).toEqual(["/home/user/pic one.png"]);
+	});
+
+	it("dedupes entries and ignores plain non-path text", () => {
+		const uriList = "file:///home/user/a.png";
+		expect(
+			localImagePathsFromClipboardText(
+				`${uriList}\n${uriList}`,
+				"file:///home/user/a.png",
+			),
+		).toEqual(["/home/user/a.png"]);
+		expect(localImagePathsFromClipboardText("", "just some text")).toEqual([]);
 	});
 });

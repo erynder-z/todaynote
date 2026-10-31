@@ -449,6 +449,27 @@ export class NotesService {
 			return null;
 		}
 	}
+
+	/**
+	 * Stores base64-encoded image bytes (clipboard paste, drag & drop) in the
+	 * notes images directory. Returns the stored path relative to the notes folder.
+	 */
+	async addImageFromBytes(
+		name: string,
+		mime: string,
+		data: string,
+	): Promise<string | null> {
+		try {
+			return (await invoke("add_image_from_bytes", {
+				name,
+				mime,
+				data,
+			})) as string;
+		} catch (error) {
+			console.error("Error adding image from data:", error);
+			return null;
+		}
+	}
 }
 
 /**

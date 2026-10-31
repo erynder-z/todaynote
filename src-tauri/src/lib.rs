@@ -8,7 +8,8 @@ use commands::folder::validate_folder;
 use commands::font::{get_system_fonts, set_font_family, set_use_custom_font};
 use commands::i18n::get_translations;
 use commands::images::{
-    add_image_from_path, add_image_from_url, get_images_dir, purge_unused_images,
+    add_image_from_bytes, add_image_from_path, add_image_from_url, get_images_dir,
+    purge_unused_images,
 };
 use commands::notes::{
     apply_default_thread_name, check_day_boundary, check_todays_note_exists, create_note,
@@ -110,6 +111,7 @@ pub fn run() {
             get_translations,
             add_image_from_path,
             add_image_from_url,
+            add_image_from_bytes,
             get_images_dir,
             purge_unused_images,
             get_theme_colors,

@@ -51,6 +51,37 @@ fn extension_from_content_type(content_type: &str) -> Option<&'static str> {
     }
 }
 
+/// Picks the storage extension for an image provided by the webview
+/// (clipboard paste, drag & drop): the MIME content type wins, the
+/// original file name's extension is the fallback.
+fn extension_from_source(mime: &str, name: &str) -> Option<String> {
+    extension_from_content_type(mime)
+        .map(|e| e.to_string())
+        .or_else(|| {
+            Path::new(name)
+                .extension()
+                .and_then(|e| e.to_str())
+                .and_then(|e| normalize_extension(e).ok())
+        })
+}
+
+/// Writes image bytes into the notes images directory under a fresh UUID
+/// filename and returns the stored path relative to the notes folder
+/// (e.g. `images/<uuid>.<ext>`).
+fn store_image_bytes(bytes: &[u8], ext: &str, state: &AppState) -> Result<String, String> {
+    if bytes.len() > MAX_DOWNLOAD_BYTES {
+        return Err("Image is too large (maximum 25 MB)".to_string());
+    }
+
+    let images_dir = ensure_images_dir(state)?;
+    let filename = format!("{}.{}", Uuid::new_v4(), ext);
+    let dest = images_dir.join(&filename);
+
+    fs::write(&dest, bytes).map_err(|e| format!("Failed to save image: {}", e))?;
+
+    Ok(format!("images/{}", filename))
+}
+
 /// Copies a locally selected image file into the notes images directory.
 ///
 /// Returns the stored path relative to the notes folder (e.g. `images/<uuid>.png`).
@@ -127,17 +158,31 @@ pub async fn add_image_from_url(url: String, state: State<'_, AppState>) -> Resu
         .await
         .map_err(|e| format!("Failed to download image: {}", e))?;
 
-    if bytes.len() > MAX_DOWNLOAD_BYTES {
-        return Err("Image is too large (maximum 25 MB)".to_string());
-    }
+    store_image_bytes(&bytes, &ext, &state)
+}
 
-    let images_dir = ensure_images_dir(&state)?;
-    let filename = format!("{}.{}", Uuid::new_v4(), ext);
-    let dest = images_dir.join(&filename);
+/// Stores image bytes sent by the webview (clipboard paste, drag & drop)
+/// in the notes images directory. `data` is the base64-encoded payload,
+/// `mime` the image's content type and `name` the original file name.
+///
+/// Returns the stored path relative to the notes folder (e.g. `images/<uuid>.png`).
+#[tauri::command]
+pub async fn add_image_from_bytes(
+    name: String,
+    mime: String,
+    data: String,
+    state: State<'_, AppState>,
+) -> Result<String, String> {
+    use base64::Engine;
 
-    fs::write(&dest, &bytes).map_err(|e| format!("Failed to save image: {}", e))?;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(data.trim())
+        .map_err(|e| format!("Invalid image data: {}", e))?;
 
-    Ok(format!("images/{}", filename))
+    let ext =
+        extension_from_source(&mime, &name).ok_or_else(|| "Unsupported image type".to_string())?;
+
+    store_image_bytes(&bytes, &ext, &state)
 }
 
 /// Returns the absolute path of the notes images directory.
@@ -251,6 +296,37 @@ mod tests {
         );
         assert_eq!(extension_from_content_type("text/html"), None);
         assert_eq!(extension_from_content_type(""), None);
+    }
+
+    #[test]
+    fn test_extension_from_source_prefers_mime() {
+        assert_eq!(
+            extension_from_source("image/png", "photo.jpg"),
+            Some("png".to_string())
+        );
+        assert_eq!(
+            extension_from_source("image/webp; charset=binary", ""),
+            Some("webp".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extension_from_source_falls_back_to_name() {
+        assert_eq!(
+            extension_from_source("", "image.jpeg"),
+            Some("jpeg".to_string())
+        );
+        assert_eq!(
+            extension_from_source("application/octet-stream", "scan.PNG"),
+            Some("png".to_string())
+        );
+    }
+
+    #[test]
+    fn test_extension_from_source_rejects_unsupported() {
+        assert_eq!(extension_from_source("image/svg+xml", "icon.svg"), None);
+        assert_eq!(extension_from_source("text/plain", "notes.txt"), None);
+        assert_eq!(extension_from_source("", ""), None);
     }
 
     #[test]
