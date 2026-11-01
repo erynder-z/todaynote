@@ -398,7 +398,7 @@ impl Default for AppConfig {
             locale: "en".to_string(),
             theme: "lobby".to_string(),
             remember_app_layout: true,
-            notes_list_layout: "list".to_string(),
+            notes_list_layout: "masonry".to_string(),
             remember_settings: true,
             search_mode: "notes".to_string(),
             search_is_fuzzy: true,
