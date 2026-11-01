@@ -177,12 +177,20 @@ class ImageBlockView implements NodeView {
 
 		this.img = document.createElement("img");
 		this.img.setAttribute("data-type", "image-block");
-		this.img.addEventListener("load", () =>
-			this.img.classList.remove("img-loading"),
-		);
-		this.img.addEventListener("error", () =>
-			this.img.classList.remove("img-loading"),
-		);
+		this.img.addEventListener("load", () => {
+			this.img.classList.remove("img-loading");
+			// Publish the intrinsic aspect ratio so the size classes can cap the rendered height of portrait images
+			const { naturalWidth, naturalHeight } = this.img;
+			if (naturalWidth > 0 && naturalHeight > 0)
+				this.dom.style.setProperty(
+					"--img-ratio",
+					String(naturalWidth / naturalHeight),
+				);
+		});
+		this.img.addEventListener("error", () => {
+			this.img.classList.remove("img-loading");
+			this.dom.style.removeProperty("--img-ratio");
+		});
 		this.dom.appendChild(this.img);
 
 		this.applyAttrs();
@@ -227,6 +235,7 @@ class ImageBlockView implements NodeView {
 		if (src && src !== this.resolvedSrc) {
 			this.resolvedSrc = src;
 			this.img.classList.add("img-loading");
+			this.dom.style.removeProperty("--img-ratio");
 			if (src.startsWith("images/")) {
 				void resolveImageSrc(src).then((resolved) => {
 					if (String(this.node.attrs.src ?? "") === src)
