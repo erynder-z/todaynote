@@ -24,6 +24,7 @@ pub struct NoteThread {
 
 /// Represents an active note session, maintaining an in-memory
 /// representation of the file's lines for real-time editing.
+#[derive(Clone)]
 pub struct NoteSession {
     /// File path of the currently open note.
     pub path: Option<PathBuf>,

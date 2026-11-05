@@ -22,8 +22,9 @@ const ALLOWED_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "bmp"
 
 /// Returns the absolute path of the images directory, creating it if needed.
 pub fn ensure_images_dir(state: &AppState) -> Result<PathBuf, String> {
-    let note_manager = state.note_manager()?;
-    let dir = note_manager.notes_folder.join("images");
+    // Clone the folder and drop the lock before doing file I/O.
+    let notes_folder = state.note_manager()?.notes_folder.clone();
+    let dir = notes_folder.join("images");
     fs::create_dir_all(&dir).map_err(|e| format!("Failed to create images directory: {}", e))?;
     Ok(dir)
 }
@@ -188,8 +189,8 @@ pub async fn add_image_from_bytes(
 /// Returns the absolute path of the notes images directory.
 #[tauri::command]
 pub fn get_images_dir(state: State<'_, AppState>) -> Result<String, String> {
-    let note_manager = state.note_manager()?;
-    let dir = note_manager.notes_folder.join("images");
+    let notes_folder = state.note_manager()?.notes_folder.clone();
+    let dir = notes_folder.join("images");
     Ok(dir.to_string_lossy().to_string())
 }
 

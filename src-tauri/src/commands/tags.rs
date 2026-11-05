@@ -1,12 +1,32 @@
 //! Tauri commands for tag-related operations.
 
-use crate::commands::notes::reconstruct_full_content;
+use crate::commands::notes::{reconstruct_full_content, session_frontmatter};
 use crate::models::app_state::AppState;
 use crate::models::note_session::NoteSession;
 use crate::models::response_types::NoteContentResponse;
 use crate::services::tag_manager::TagManager;
 use std::fs;
+use std::path::Path;
 use tauri::State;
+
+/// Returns all tags for the folder, using the cache when warm.
+///
+/// The folder scan runs without holding the tag manager lock; the lock is
+/// only taken to read or store the cache.
+fn cached_all_tags(state: &State<'_, AppState>, folder: &Path) -> Result<Vec<String>, String> {
+    {
+        let tag_manager = state.tag_manager()?;
+        if let Some(tags) = &tag_manager.cached_tags {
+            return Ok(tags.clone());
+        }
+    }
+
+    let scanned = TagManager::scan_all_tags(folder)?;
+
+    let mut tag_manager = state.tag_manager()?;
+    tag_manager.cached_tags = Some(scanned.clone());
+    Ok(scanned)
+}
 
 /// Helper to sync frontend content, perform a tag operation, and save the result.
 async fn perform_tag_operation<F>(
@@ -17,37 +37,43 @@ async fn perform_tag_operation<F>(
 where
     F: FnOnce(&TagManager, &mut NoteSession),
 {
-    let mut session = state.note_session()?;
-
-    let path = session
-        .path
-        .clone()
-        .ok_or_else(|| "No active note session".to_string())?;
+    let path = {
+        let session = state.note_session()?;
+        session
+            .path
+            .clone()
+            .ok_or_else(|| "No active note session".to_string())?
+    };
 
     // Sync session with frontend content first
     // Use the session's current frontmatter combined with the frontend's content
-    // to ensure we don't lose any backend-made changes (like thread ID comments)
-    let full_content = if let Some((_, end)) = session.frontmatter_range {
-        let frontmatter_lines = &session.lines[..=end];
-        let frontmatter = frontmatter_lines.join("\n");
-        format!("{}\n{}", frontmatter, current_content)
-    } else {
-        // No frontmatter in session, use reconstruct_full_content as fallback
-        reconstruct_full_content(&path, &current_content)?
+    // to ensure we don't lose any backend-made changes (like thread ID comments).
+    // No locks are held while reading from disk.
+    let full_content = match session_frontmatter(&state) {
+        Some(frontmatter) => format!("{}\n{}", frontmatter, current_content),
+        None => reconstruct_full_content(&path, &current_content)?,
     };
-    session.load(path.clone(), full_content);
 
-    let mut tag_manager = state.tag_manager()?;
-    operation(&tag_manager, &mut session);
-    tag_manager.invalidate_cache();
+    // Acquire in global order (tag_manager before note_session); snapshot the
+    // session and drop all guards before writing to disk.
+    let (session_snapshot, write_content) = {
+        let mut tag_manager = state.tag_manager()?;
+        let mut session = state.note_session()?;
+        session.load(path.clone(), full_content);
+        operation(&tag_manager, &mut session);
+        tag_manager.invalidate_cache();
+        session.update_last_modified();
+        (session.clone(), session.get_full_content())
+    };
 
-    session.update_last_modified();
-    let full_content = session.get_full_content();
-    fs::write(&path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+    // File I/O with no locks held.
+    fs::write(&path, &write_content).map_err(|e| format!("Failed to save note: {}", e))?;
 
+    // Build the response, acquiring locks in global order.
     let note_manager = state.note_manager()?;
+    let tag_manager = state.tag_manager()?;
     Ok(NoteContentResponse::from_session(
-        &session,
+        &session_snapshot,
         &note_manager,
         &tag_manager,
     ))
@@ -86,8 +112,7 @@ pub async fn get_all_tags(state: State<'_, AppState>) -> Result<Vec<String>, Str
         let note_manager = state.note_manager()?;
         note_manager.notes_folder.clone()
     };
-    let mut tag_manager = state.tag_manager()?;
-    tag_manager.get_all_tags(&folder_path)
+    cached_all_tags(&state, &folder_path)
 }
 
 /// Returns a filtered list of tag suggestions.
@@ -101,10 +126,18 @@ pub async fn get_tag_suggestions(
         note_manager.notes_folder.clone()
     };
 
-    let session = state.note_session()?;
-    let mut tag_manager = state.tag_manager()?;
+    // Acquire in global order (tag_manager before note_session).
+    let active_tags = {
+        let tag_manager = state.tag_manager()?;
+        let session = state.note_session()?;
+        tag_manager.get_tags_from_session(&session)
+    };
 
-    let active_tags = tag_manager.get_tags_from_session(&session);
+    // Warm the cache without holding the lock during the folder scan; the
+    // suggest call below then only reads the in-memory cache.
+    cached_all_tags(&state, &folder_path)?;
+
+    let mut tag_manager = state.tag_manager()?;
     Ok(tag_manager.suggest_tags(&folder_path, &query, &active_tags, 20))
 }
 

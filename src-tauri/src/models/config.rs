@@ -19,7 +19,7 @@ pub struct ShortcutConfig {
 ///
 /// This struct is serialized to and deserialized from a `config.json` file
 /// stored in the application's data directory.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AppConfig {
     /// Root directory for note storage.

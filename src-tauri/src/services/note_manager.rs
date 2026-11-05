@@ -5,7 +5,7 @@ use crate::models::response_types::{AppStatistics, FormattedNote, NoteListRespon
 use crate::utils;
 use chrono::{Locale, NaiveDate};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Manager responsible for note-related operations like creation, listing, and formatting.
 pub struct NoteManager {
@@ -32,8 +32,15 @@ impl NoteManager {
 
     /// Ensures that the configured notes folder exists, creating it if necessary.
     pub fn ensure_notes_folder_exists(&self) -> Result<(), String> {
-        if !self.notes_folder.exists() {
-            fs::create_dir_all(&self.notes_folder)
+        Self::ensure_notes_folder_exists_in(&self.notes_folder)
+    }
+
+    /// Associated-function variant of [`NoteManager::ensure_notes_folder_exists`]
+    /// that works on a plain folder path, so callers can drop their lock
+    /// before doing file I/O.
+    pub fn ensure_notes_folder_exists_in(notes_folder: &Path) -> Result<(), String> {
+        if !notes_folder.exists() {
+            fs::create_dir_all(notes_folder)
                 .map_err(|e| format!("Failed to create notes folder: {}", e))?;
         }
         Ok(())
@@ -41,9 +48,15 @@ impl NoteManager {
 
     /// Returns the absolute path to today's daily note file.
     pub fn get_today_note_path(&self) -> PathBuf {
+        Self::today_note_path(&self.notes_folder)
+    }
+
+    /// Associated-function variant of [`NoteManager::get_today_note_path`]
+    /// that works on a plain folder path (no file I/O).
+    pub fn today_note_path(notes_folder: &Path) -> PathBuf {
         let current_date = utils::date::get_current_date();
         let file_name = format!("{}.md", current_date);
-        self.notes_folder.join(&file_name)
+        notes_folder.join(&file_name)
     }
 
     /// Checks if today's daily note file already exists.
@@ -55,10 +68,20 @@ impl NoteManager {
     ///
     /// The note is initialized with YAML metadata. If the note header is not empty, add it below the metadata
     pub fn create_todays_note(&self, note_header: &str) -> Result<PathBuf, String> {
-        self.ensure_notes_folder_exists()?;
-        let file_path = self.get_today_note_path();
+        Self::create_todays_note_in(&self.notes_folder, note_header)
+    }
 
-        if self.todays_note_exists() {
+    /// Associated-function variant of [`NoteManager::create_todays_note`]
+    /// that works on a plain folder path, so callers can drop their lock
+    /// before doing file I/O.
+    pub fn create_todays_note_in(
+        notes_folder: &Path,
+        note_header: &str,
+    ) -> Result<PathBuf, String> {
+        Self::ensure_notes_folder_exists_in(notes_folder)?;
+        let file_path = Self::today_note_path(notes_folder);
+
+        if file_path.exists() {
             return Ok(file_path);
         }
 
@@ -78,16 +101,23 @@ impl NoteManager {
     /// If `YYYY-MM-DD.md` is still free, that name is used; otherwise a
     /// counter suffix is appended (`YYYY-MM-DD-1.md`, `-2`, ...).
     pub fn create_blank_note(&self) -> Result<PathBuf, String> {
-        self.ensure_notes_folder_exists()?;
+        Self::create_blank_note_in(&self.notes_folder)
+    }
+
+    /// Associated-function variant of [`NoteManager::create_blank_note`]
+    /// that works on a plain folder path, so callers can drop their lock
+    /// before doing file I/O.
+    pub fn create_blank_note_in(notes_folder: &Path) -> Result<PathBuf, String> {
+        Self::ensure_notes_folder_exists_in(notes_folder)?;
 
         let current_date = utils::date::get_current_date();
-        let mut file_path = self.get_today_note_path();
+        let mut file_path = Self::today_note_path(notes_folder);
         let mut counter = 0;
 
         while file_path.exists() {
             counter += 1;
             let file_name = format!("{}-{}.md", current_date, counter);
-            file_path = self.notes_folder.join(file_name);
+            file_path = notes_folder.join(file_name);
         }
 
         let note_content = NoteHeader::for_new_note(NoteType::Manual)?.render();

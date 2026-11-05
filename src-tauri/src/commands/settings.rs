@@ -13,7 +13,7 @@ pub async fn update_config(
     new_config: ConfigResponse,
     state: State<'_, AppState>,
 ) -> Result<AppPayload, String> {
-    let (folder_changed, locale_changed, theme_changed) = {
+    let (config, folder_changed, locale_changed, theme_changed) = {
         let mut config = state.config()?;
 
         let folder_changed = config.notes_folder != PathBuf::from(&new_config.notes_folder);
@@ -43,43 +43,22 @@ pub async fn update_config(
         config.font_family = new_config.font_family;
         config.use_custom_font = new_config.use_custom_font;
 
-        config.save();
-        (folder_changed, locale_changed, theme_changed)
+        // Clone and drop the guard before persisting to disk.
+        (
+            config.clone(),
+            folder_changed,
+            locale_changed,
+            theme_changed,
+        )
     };
 
+    // Persist config.json without holding the lock.
+    config.save();
+
     if folder_changed || locale_changed || theme_changed {
-        let config = state.config()?;
         let mut note_manager = state.note_manager()?;
         note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
     }
-
-    let config = {
-        let config = state.config()?;
-        AppConfig {
-            notes_folder: config.notes_folder.clone(),
-            locale: config.locale.clone(),
-            theme: config.theme.clone(),
-            remember_app_layout: config.remember_app_layout,
-            notes_list_layout: config.notes_list_layout.clone(),
-            remember_settings: config.remember_settings,
-            search_mode: config.search_mode.clone(),
-            search_is_fuzzy: config.search_is_fuzzy,
-            search_selected_tag: config.search_selected_tag.clone(),
-            sidebar_open: config.sidebar_open,
-            control_center_width: config.control_center_width,
-            default_thread_name: config.default_thread_name.clone(),
-            use_default_thread_name: config.use_default_thread_name,
-            identicon_style: config.identicon_style.clone(),
-            thread_shortcuts_mode: config.thread_shortcuts_mode.clone(),
-            date_format_style: config.date_format_style.clone(),
-            text_copy_mode: config.text_copy_mode.clone(),
-            floating_toolbar_enabled: config.floating_toolbar_enabled,
-            allow_manual_note_creation: config.allow_manual_note_creation,
-            shortcuts: config.shortcuts.clone(),
-            font_family: config.font_family.clone(),
-            use_custom_font: config.use_custom_font,
-        }
-    };
 
     setup::get_initial_state(config, state)
 }
@@ -87,8 +66,11 @@ pub async fn update_config(
 /// Sets the visibility of the sidebar.
 #[tauri::command]
 pub async fn set_sidebar_open(open: bool, state: State<'_, AppState>) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.sidebar_open = open;
+    let config = {
+        let mut config = state.config()?;
+        config.sidebar_open = open;
+        config.clone()
+    };
     config.save();
     Ok(())
 }
@@ -99,8 +81,11 @@ pub async fn set_control_center_width(
     width: f64,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.control_center_width = width;
+    let config = {
+        let mut config = state.config()?;
+        config.control_center_width = width;
+        config.clone()
+    };
     config.save();
     Ok(())
 }
@@ -111,8 +96,11 @@ pub async fn set_remember_settings(
     remember: bool,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.remember_settings = remember;
+    let config = {
+        let mut config = state.config()?;
+        config.remember_settings = remember;
+        config.clone()
+    };
     config.save();
     Ok(())
 }
@@ -120,8 +108,11 @@ pub async fn set_remember_settings(
 /// Sets the last used search mode.
 #[tauri::command]
 pub async fn set_search_mode(mode: String, state: State<'_, AppState>) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.search_mode = mode;
+    let config = {
+        let mut config = state.config()?;
+        config.search_mode = mode;
+        config.clone()
+    };
     config.save();
     Ok(())
 }
@@ -129,8 +120,11 @@ pub async fn set_search_mode(mode: String, state: State<'_, AppState>) -> Result
 /// Sets the last used fuzzy search setting.
 #[tauri::command]
 pub async fn set_search_is_fuzzy(is_fuzzy: bool, state: State<'_, AppState>) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.search_is_fuzzy = is_fuzzy;
+    let config = {
+        let mut config = state.config()?;
+        config.search_is_fuzzy = is_fuzzy;
+        config.clone()
+    };
     config.save();
     Ok(())
 }
@@ -141,8 +135,11 @@ pub async fn set_search_selected_tag(
     tag: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.search_selected_tag = tag;
+    let config = {
+        let mut config = state.config()?;
+        config.search_selected_tag = tag;
+        config.clone()
+    };
     config.save();
     Ok(())
 }
@@ -153,8 +150,11 @@ pub async fn set_notes_list_layout(
     layout: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.notes_list_layout = layout;
+    let config = {
+        let mut config = state.config()?;
+        config.notes_list_layout = layout;
+        config.clone()
+    };
     config.save();
     Ok(())
 }
@@ -165,8 +165,11 @@ pub async fn set_remember_app_layout(
     remember: bool,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.remember_app_layout = remember;
+    let config = {
+        let mut config = state.config()?;
+        config.remember_app_layout = remember;
+        config.clone()
+    };
     config.save();
     Ok(())
 }
@@ -177,30 +180,33 @@ pub async fn set_remember_app_layout(
 /// breaking the user's basic setup.
 #[tauri::command]
 pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), String> {
-    let mut config = state.config()?;
-    let default_config = AppConfig::default();
+    let config = {
+        let mut config = state.config()?;
+        let default_config = AppConfig::default();
 
-    config.theme = default_config.theme;
-    config.remember_app_layout = default_config.remember_app_layout;
-    config.notes_list_layout = default_config.notes_list_layout;
-    // Preserve remember_settings - if user turned it off, respect that choice
-    // config.remember_settings = default_config.remember_settings;
-    config.search_mode = default_config.search_mode;
-    config.search_is_fuzzy = default_config.search_is_fuzzy;
-    config.search_selected_tag = default_config.search_selected_tag;
-    config.sidebar_open = default_config.sidebar_open;
-    config.control_center_width = default_config.control_center_width;
-    config.default_thread_name = default_config.default_thread_name;
-    config.use_default_thread_name = default_config.use_default_thread_name;
-    config.identicon_style = default_config.identicon_style;
-    config.thread_shortcuts_mode = default_config.thread_shortcuts_mode;
-    config.date_format_style = default_config.date_format_style;
-    config.floating_toolbar_enabled = default_config.floating_toolbar_enabled;
-    config.allow_manual_note_creation = default_config.allow_manual_note_creation;
-    config.shortcuts = default_config.shortcuts;
-    config.font_family = default_config.font_family;
-    config.use_custom_font = default_config.use_custom_font;
+        config.theme = default_config.theme;
+        config.remember_app_layout = default_config.remember_app_layout;
+        config.notes_list_layout = default_config.notes_list_layout;
+        // Preserve remember_settings - if user turned it off, respect that choice
+        // config.remember_settings = default_config.remember_settings;
+        config.search_mode = default_config.search_mode;
+        config.search_is_fuzzy = default_config.search_is_fuzzy;
+        config.search_selected_tag = default_config.search_selected_tag;
+        config.sidebar_open = default_config.sidebar_open;
+        config.control_center_width = default_config.control_center_width;
+        config.default_thread_name = default_config.default_thread_name;
+        config.use_default_thread_name = default_config.use_default_thread_name;
+        config.identicon_style = default_config.identicon_style;
+        config.thread_shortcuts_mode = default_config.thread_shortcuts_mode;
+        config.date_format_style = default_config.date_format_style;
+        config.floating_toolbar_enabled = default_config.floating_toolbar_enabled;
+        config.allow_manual_note_creation = default_config.allow_manual_note_creation;
+        config.shortcuts = default_config.shortcuts;
+        config.font_family = default_config.font_family;
+        config.use_custom_font = default_config.use_custom_font;
 
+        config.clone()
+    };
     config.save();
     Ok(())
 }
@@ -208,16 +214,16 @@ pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), 
 /// Updates the notes folder and re-initializes the note manager.
 #[tauri::command]
 pub async fn set_notes_folder(path: String, state: State<'_, AppState>) -> Result<(), String> {
-    let (notes_folder, locale) = {
+    let config = {
         let mut config = state.config()?;
-        let new_path = PathBuf::from(path);
-        config.notes_folder = new_path.clone();
-        config.save();
-        (config.notes_folder.clone(), config.locale.clone())
+        config.notes_folder = PathBuf::from(path);
+        config.clone()
     };
+    // Persist without holding the lock.
+    config.save();
 
     let mut note_manager = state.note_manager()?;
-    note_manager.update_config(notes_folder, locale);
+    note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
 
     Ok(())
 }
@@ -225,15 +231,16 @@ pub async fn set_notes_folder(path: String, state: State<'_, AppState>) -> Resul
 /// Updates the application locale and re-initializes the note manager.
 #[tauri::command]
 pub async fn set_locale(locale: String, state: State<'_, AppState>) -> Result<(), String> {
-    let (notes_folder, locale) = {
+    let config = {
         let mut config = state.config()?;
-        config.locale = locale.clone();
-        config.save();
-        (config.notes_folder.clone(), config.locale.clone())
+        config.locale = locale;
+        config.clone()
     };
+    // Persist without holding the lock.
+    config.save();
 
     let mut note_manager = state.note_manager()?;
-    note_manager.update_config(notes_folder, locale);
+    note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
 
     Ok(())
 }
@@ -250,36 +257,12 @@ pub async fn switch_notes_folder(
 ) -> Result<AppPayload, String> {
     let config = {
         let mut config = state.config()?;
-        let new_path = PathBuf::from(path);
-        config.notes_folder = new_path.clone();
-        config.save();
-
-        // Return a clone to avoid holding the lock during get_initial_state
-        AppConfig {
-            notes_folder: config.notes_folder.clone(),
-            locale: config.locale.clone(),
-            theme: config.theme.clone(),
-            remember_app_layout: config.remember_app_layout,
-            notes_list_layout: config.notes_list_layout.clone(),
-            remember_settings: config.remember_settings,
-            search_mode: config.search_mode.clone(),
-            search_is_fuzzy: config.search_is_fuzzy,
-            search_selected_tag: config.search_selected_tag.clone(),
-            sidebar_open: config.sidebar_open,
-            control_center_width: config.control_center_width,
-            default_thread_name: config.default_thread_name.clone(),
-            use_default_thread_name: config.use_default_thread_name,
-            identicon_style: config.identicon_style.clone(),
-            thread_shortcuts_mode: config.thread_shortcuts_mode.clone(),
-            date_format_style: config.date_format_style.clone(),
-            text_copy_mode: config.text_copy_mode.clone(),
-            floating_toolbar_enabled: config.floating_toolbar_enabled,
-            allow_manual_note_creation: config.allow_manual_note_creation,
-            shortcuts: config.shortcuts.clone(),
-            font_family: config.font_family.clone(),
-            use_custom_font: config.use_custom_font,
-        }
+        config.notes_folder = PathBuf::from(path);
+        // Clone and drop the guard before persisting or running get_initial_state.
+        config.clone()
     };
+    // Persist without holding the lock.
+    config.save();
 
     {
         let mut note_manager = state.note_manager()?;

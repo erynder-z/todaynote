@@ -13,31 +13,8 @@ use tauri::State;
 pub async fn initialize_app(state: State<'_, AppState>) -> Result<AppPayload, String> {
     let config = {
         let config = state.config()?;
-        // Clone config to release lock early
-        AppConfig {
-            notes_folder: config.notes_folder.clone(),
-            locale: config.locale.clone(),
-            theme: config.theme.clone(),
-            remember_app_layout: config.remember_app_layout,
-            notes_list_layout: config.notes_list_layout.clone(),
-            remember_settings: config.remember_settings,
-            search_mode: config.search_mode.clone(),
-            search_is_fuzzy: config.search_is_fuzzy,
-            search_selected_tag: config.search_selected_tag.clone(),
-            sidebar_open: config.sidebar_open,
-            control_center_width: config.control_center_width,
-            default_thread_name: config.default_thread_name.clone(),
-            use_default_thread_name: config.use_default_thread_name,
-            identicon_style: config.identicon_style.clone(),
-            thread_shortcuts_mode: config.thread_shortcuts_mode.clone(),
-            date_format_style: config.date_format_style.clone(),
-            text_copy_mode: config.text_copy_mode.clone(),
-            floating_toolbar_enabled: config.floating_toolbar_enabled,
-            allow_manual_note_creation: config.allow_manual_note_creation,
-            shortcuts: config.shortcuts.clone(),
-            font_family: config.font_family.clone(),
-            use_custom_font: config.use_custom_font,
-        }
+        // Clone config to release the lock early
+        config.clone()
     };
 
     get_initial_state(config, state)
@@ -152,19 +129,26 @@ fn load_today_note(
     state: &State<'_, AppState>,
     translations: &HashMap<String, String>,
 ) -> Result<(Option<String>, Option<NoteContentResponse>), String> {
-    let note_manager = state.note_manager()?;
+    // Global lock order: config first; clone and drop before any file I/O.
+    let config = {
+        let config = state.config()?;
+        config.clone()
+    };
+    let note_header = create_note_header(&config, translations);
+
+    // Work on an owned snapshot so creation/read I/O runs without holding the lock.
+    let note_manager = state.note_manager_snapshot()?;
     let file_path = note_manager.get_today_note_path();
     let path_str = file_path.to_string_lossy().into_owned();
 
-    let config = state.config()?;
-    let note_header = create_note_header(&config, translations);
-
+    // Create and read the note with no locks held.
     if let Ok(created_path) = note_manager.create_todays_note(&note_header) {
         if let Ok(content) = note_manager.read_note_content(&created_path) {
-            let mut session = state.note_session()?;
-            session.load(created_path.clone(), content);
-
+            // Acquire in global order: note_manager → tag_manager → note_session.
+            let note_manager = state.note_manager()?;
             let tag_manager = state.tag_manager()?;
+            let mut session = state.note_session()?;
+            session.load(created_path, content);
 
             return Ok((
                 Some(path_str),

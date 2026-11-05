@@ -2,8 +2,15 @@ use crate::models::app_state::AppState;
 use crate::models::response_types::{
     PinnedThreadItem, SearchResult, TagSearchResult, ThreadAggregationResult, ThreadSearchResult,
 };
+use crate::services::note_manager::NoteManager;
 use crate::services::search::SearchService;
 use tauri::State;
+
+/// Returns an owned snapshot of the note manager so folder-wide scans run
+/// without holding the lock.
+fn note_manager_snapshot(state: &State<'_, AppState>) -> Result<NoteManager, String> {
+    state.note_manager_snapshot()
+}
 
 /// Performs a full-text search across all notes.
 #[tauri::command]
@@ -12,7 +19,7 @@ pub async fn search_notes(
     is_fuzzy: bool,
     state: State<'_, AppState>,
 ) -> Result<Vec<SearchResult>, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = note_manager_snapshot(&state)?;
     let service = SearchService::new(&note_manager);
     service.search(&query, is_fuzzy)
 }
@@ -24,7 +31,7 @@ pub async fn search_threads(
     is_fuzzy: bool,
     state: State<'_, AppState>,
 ) -> Result<Vec<ThreadSearchResult>, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = note_manager_snapshot(&state)?;
     let service = SearchService::new(&note_manager);
     service.search_threads(&query, is_fuzzy)
 }
@@ -36,7 +43,7 @@ pub async fn search_tags(
     is_fuzzy: bool,
     state: State<'_, AppState>,
 ) -> Result<Vec<TagSearchResult>, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = note_manager_snapshot(&state)?;
     let service = SearchService::new(&note_manager);
     service.search_tags(&query, is_fuzzy)
 }
@@ -49,7 +56,7 @@ pub async fn search_notes_by_tag(
     is_fuzzy: bool,
     state: State<'_, AppState>,
 ) -> Result<Vec<SearchResult>, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = note_manager_snapshot(&state)?;
     let service = SearchService::new(&note_manager);
     service.search_notes_by_tag(&tag, &query, is_fuzzy)
 }
@@ -60,7 +67,7 @@ pub async fn aggregate_thread(
     name: String,
     state: State<'_, AppState>,
 ) -> Result<ThreadAggregationResult, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = note_manager_snapshot(&state)?;
     let service = SearchService::new(&note_manager);
     service.aggregate_thread(&name)
 }
@@ -75,7 +82,7 @@ pub async fn process_search_results(
     sort_by: String,
     state: State<'_, AppState>,
 ) -> Result<Vec<SearchResult>, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = note_manager_snapshot(&state)?;
     let service = SearchService::new(&note_manager);
     let filename_filter_ref = filename_filter.as_deref();
     Ok(service.process_search_results(
@@ -92,7 +99,7 @@ pub async fn process_search_results(
 pub async fn get_pinned_threads(
     state: State<'_, AppState>,
 ) -> Result<Vec<PinnedThreadItem>, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = note_manager_snapshot(&state)?;
     let service = SearchService::new(&note_manager);
     service.get_pinned_threads()
 }
@@ -104,7 +111,7 @@ pub async fn get_thread_content(
     thread_id: String,
     state: State<'_, AppState>,
 ) -> Result<Option<String>, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = note_manager_snapshot(&state)?;
     let service = SearchService::new(&note_manager);
     service.get_thread_content(&filename, &thread_id)
 }

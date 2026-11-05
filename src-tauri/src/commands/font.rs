@@ -163,8 +163,12 @@ pub async fn set_font_family(
     font_family: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.font_family = Some(font_family);
+    let config = {
+        let mut config = state.config()?;
+        config.font_family = Some(font_family);
+        config.clone()
+    };
+    // Persist without holding the lock.
     config.save();
 
     Ok(())
@@ -176,8 +180,12 @@ pub async fn set_use_custom_font(
     use_custom: bool,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut config = state.config()?;
-    config.use_custom_font = use_custom;
+    let config = {
+        let mut config = state.config()?;
+        config.use_custom_font = use_custom;
+        config.clone()
+    };
+    // Persist without holding the lock.
     config.save();
 
     Ok(())

@@ -11,6 +11,14 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::State;
 
+/// Returns the active session's current frontmatter block (if any).
+pub(crate) fn session_frontmatter(state: &State<'_, AppState>) -> Option<String> {
+    let session = state.note_session().ok()?;
+    session
+        .frontmatter_range
+        .map(|(_, end)| session.lines[..=end].join("\n"))
+}
+
 /// Extracts frontmatter from file content and returns (frontmatter_lines_count, frontmatter_string).
 /// If no frontmatter exists, returns (0, String::new()).
 fn extract_frontmatter(file_content: &str) -> (usize, String) {
@@ -55,31 +63,31 @@ pub async fn save_note_content(
 ) -> Result<NoteContentResponse, String> {
     let path_buf = PathBuf::from(&path);
 
-    // For save operations, we need to merge the frontend's content with the session's frontmatter
-    let mut session = state.note_session()?;
-    let full_content = if let Some((_, end)) = session.frontmatter_range {
-        let frontmatter_lines = &session.lines[..=end];
-        let frontmatter = frontmatter_lines.join("\n");
-        format!("{}\n{}", frontmatter, content)
-    } else {
-        // No frontmatter in session, read from disk
-        reconstruct_full_content(&path_buf, &content)?
+    // For save operations, we need to merge the frontend's content with the session's frontmatter.
+    let full_content = match session_frontmatter(&state) {
+        Some(frontmatter) => format!("{}\n{}", frontmatter, content),
+        None => reconstruct_full_content(&path_buf, &content)?,
     };
 
-    // Update the active session with the new content
-    session.load(path_buf.clone(), full_content.clone());
-    session.update_last_modified();
+    // Update the active session and snapshot it for the response.
+    let (session_snapshot, write_content) = {
+        let mut session = state.note_session()?;
+        session.load(path_buf.clone(), full_content);
+        session.update_last_modified();
+        (session.clone(), session.get_full_content())
+    };
 
-    fs::write(path_buf, session.get_full_content())
-        .map_err(|e| format!("Failed to save note: {}", e))?;
+    // File I/O with no locks held.
+    fs::write(&path_buf, &write_content).map_err(|e| format!("Failed to save note: {}", e))?;
 
+    // Build the response, acquiring locks in global order.
     let note_manager = state.note_manager()?;
     let tag_manager = state.tag_manager()?;
 
     Ok(NoteContentResponse::from_session(
-        &session,
-        &*note_manager,
-        &*tag_manager,
+        &session_snapshot,
+        &note_manager,
+        &tag_manager,
     ))
 }
 
@@ -92,11 +100,16 @@ pub async fn update_note_line(
     content: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut session = state.note_session()?;
-    session.update_content_line(index, content);
-    session.update_last_modified();
-    if let Some(path) = &session.path {
-        let full_content = session.get_full_content();
+    let write = {
+        let mut session = state.note_session()?;
+        session.update_content_line(index, content);
+        session.update_last_modified();
+        session
+            .path
+            .clone()
+            .map(|path| (path, session.get_full_content()))
+    };
+    if let Some((path, full_content)) = write {
         fs::write(path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
     }
     Ok(())
@@ -111,12 +124,16 @@ pub async fn insert_note_line(
     content: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let mut session = state.note_session()?;
-    session.insert_content_line(index, content);
-    session.update_last_modified();
-
-    if let Some(path) = &session.path {
-        let full_content = session.get_full_content();
+    let write = {
+        let mut session = state.note_session()?;
+        session.insert_content_line(index, content);
+        session.update_last_modified();
+        session
+            .path
+            .clone()
+            .map(|path| (path, session.get_full_content()))
+    };
+    if let Some((path, full_content)) = write {
         fs::write(path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
     }
     Ok(())
@@ -127,12 +144,16 @@ pub async fn insert_note_line(
 /// This operation also writes the entire note to disk.
 #[tauri::command]
 pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Result<(), String> {
-    let mut session = state.note_session()?;
-    session.delete_content_line(index);
-    session.update_last_modified();
-
-    if let Some(path) = &session.path {
-        let full_content = session.get_full_content();
+    let write = {
+        let mut session = state.note_session()?;
+        session.delete_content_line(index);
+        session.update_last_modified();
+        session
+            .path
+            .clone()
+            .map(|path| (path, session.get_full_content()))
+    };
+    if let Some((path, full_content)) = write {
         fs::write(path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
     }
     Ok(())
@@ -143,7 +164,8 @@ pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Resul
 pub async fn get_last_available_note_path(
     state: State<'_, AppState>,
 ) -> Result<Option<String>, String> {
-    let note_manager = state.note_manager()?;
+    // Work on an owned snapshot so the folder scan runs without holding the lock.
+    let note_manager = state.note_manager_snapshot()?;
     let response = note_manager.list_notes(None)?;
     let today_filename = format!("{}.md", crate::utils::date::get_current_date());
 
@@ -179,7 +201,7 @@ pub async fn get_note_path_by_offset(
     offset: i32,
     state: State<'_, AppState>,
 ) -> Result<String, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = state.note_manager_snapshot()?;
     note_manager.ensure_notes_folder_exists()?;
     let file_path = crate::utils::date::get_note_path_by_offset(&note_manager.notes_folder, offset);
     Ok(file_path.to_string_lossy().into_owned())
@@ -198,7 +220,7 @@ pub async fn read_note_by_offset(
 /// Checks if today's daily note file already exists.
 #[tauri::command]
 pub async fn check_todays_note_exists(state: State<'_, AppState>) -> Result<bool, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = state.note_manager_snapshot()?;
     Ok(note_manager.todays_note_exists())
 }
 
@@ -207,7 +229,7 @@ pub async fn check_todays_note_exists(state: State<'_, AppState>) -> Result<bool
 #[tauri::command]
 pub async fn check_day_boundary(state: State<'_, AppState>) -> Result<DayBoundaryStatus, String> {
     let current_date = crate::utils::date::get_current_date();
-    let note_manager = state.note_manager()?;
+    let note_manager = state.note_manager_snapshot()?;
 
     let sorted_files = note_manager.get_sorted_note_files()?;
 
@@ -229,54 +251,50 @@ pub async fn check_day_boundary(state: State<'_, AppState>) -> Result<DayBoundar
 /// Creates today's daily note if needed and returns its loaded content.
 #[tauri::command]
 pub async fn open_todays_note(state: State<'_, AppState>) -> Result<NoteContentResponse, String> {
-    // First, create the note
-    let note_manager = state.note_manager()?;
-    let config = state.config()?;
+    // Global lock order: config first; clone and drop before any I/O.
+    let config = {
+        let config = state.config()?;
+        config.clone()
+    };
     let translations = crate::commands::i18n::get_translations(config.locale.clone());
     let note_header = crate::commands::setup::create_note_header(&config, &translations);
+
+    // Create today's note via an owned snapshot, no locks held during I/O.
+    let note_manager = state.note_manager_snapshot()?;
     let created_path = note_manager.create_todays_note(&note_header)?;
+    let content = note_manager.read_note_content(&created_path)?;
 
-    // Drop the guards we no longer need
-    drop(note_manager);
-    drop(config);
-
-    // Now read the content and load it into the session
-    let path_buf = PathBuf::from(&created_path);
+    // Acquire locks in global order: note_manager → tag_manager → note_session.
     let note_manager = state.note_manager()?;
-    let content = note_manager.read_note_content(&path_buf)?;
-
-    let mut session = state.note_session()?;
-    session.load(path_buf.clone(), content);
-
     let tag_manager = state.tag_manager()?;
+    let mut session = state.note_session()?;
+    session.load(created_path, content);
 
     Ok(NoteContentResponse::from_session(
         &session,
-        &*note_manager,
-        &*tag_manager,
+        &note_manager,
+        &tag_manager,
     ))
 }
 
 /// Creates a new blank note with a unique filename and returns its loaded content.
 #[tauri::command]
 pub async fn create_note(state: State<'_, AppState>) -> Result<NoteContentResponse, String> {
-    let note_manager = state.note_manager()?;
+    // Create the blank note via an owned snapshot, no locks held during I/O.
+    let note_manager = state.note_manager_snapshot()?;
     let created_path = note_manager.create_blank_note()?;
-    drop(note_manager);
+    let content = note_manager.read_note_content(&created_path)?;
 
-    let path_buf = PathBuf::from(&created_path);
+    // Acquire locks in global order: note_manager → tag_manager → note_session.
     let note_manager = state.note_manager()?;
-    let content = note_manager.read_note_content(&path_buf)?;
-
-    let mut session = state.note_session()?;
-    session.load(path_buf.clone(), content);
-
     let tag_manager = state.tag_manager()?;
+    let mut session = state.note_session()?;
+    session.load(created_path, content);
 
     Ok(NoteContentResponse::from_session(
         &session,
-        &*note_manager,
-        &*tag_manager,
+        &note_manager,
+        &tag_manager,
     ))
 }
 
@@ -294,18 +312,20 @@ pub async fn read_note_content(
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
     let path_buf = PathBuf::from(&path);
+    // Read the file with no locks held.
+    let content =
+        fs::read_to_string(&path_buf).map_err(|e| format!("Failed to read note content: {}", e))?;
+
+    // Acquire locks in global order: note_manager → tag_manager → note_session.
     let note_manager = state.note_manager()?;
-    let content = note_manager.read_note_content(&path_buf)?;
-
-    let mut session = state.note_session()?;
-    session.load(path_buf.clone(), content);
-
     let tag_manager = state.tag_manager()?;
+    let mut session = state.note_session()?;
+    session.load(path_buf, content);
 
     Ok(NoteContentResponse::from_session(
         &session,
-        &*note_manager,
-        &*tag_manager,
+        &note_manager,
+        &tag_manager,
     ))
 }
 
@@ -315,14 +335,14 @@ pub async fn list_notes(
     limit: Option<usize>,
     state: State<'_, AppState>,
 ) -> Result<NoteListResponse, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = state.note_manager_snapshot()?;
     note_manager.list_notes(limit)
 }
 
 /// Deletes all notes that have no content (only frontmatter and headings).
 #[tauri::command]
 pub async fn purge_empty_notes(state: State<'_, AppState>) -> Result<usize, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = state.note_manager_snapshot()?;
     note_manager.purge_empty_notes()
 }
 
@@ -331,15 +351,17 @@ pub async fn purge_empty_notes(state: State<'_, AppState>) -> Result<usize, Stri
 #[tauri::command]
 pub async fn delete_note(path: String, state: State<'_, AppState>) -> Result<(), String> {
     let path_buf = PathBuf::from(&path);
-    let note_manager = state.note_manager()?;
 
     // Clear the session if it's the currently open note
-    let mut session = state.note_session()?;
-    if session.path.as_ref() == Some(&path_buf) {
-        session.clear();
+    {
+        let mut session = state.note_session()?;
+        if session.path.as_ref() == Some(&path_buf) {
+            session.clear();
+        }
     }
-    drop(session);
 
+    // Delete the file with no locks held.
+    let note_manager = state.note_manager_snapshot()?;
     note_manager.delete_note(&path_buf)?;
 
     Ok(())
@@ -348,7 +370,7 @@ pub async fn delete_note(path: String, state: State<'_, AppState>) -> Result<(),
 /// Gathers comprehensive statistics across all notes in the configured folder.
 #[tauri::command]
 pub async fn get_statistics(state: State<'_, AppState>) -> Result<AppStatistics, String> {
-    let note_manager = state.note_manager()?;
+    let note_manager = state.note_manager_snapshot()?;
     note_manager.get_statistics()
 }
 
@@ -361,31 +383,38 @@ async fn perform_thread_operation<F>(
 where
     F: FnOnce(&mut NoteSession) -> Result<(), String>,
 {
-    let mut session = state.note_session()?;
-    let path = session
-        .path
-        .clone()
-        .ok_or_else(|| "No active note session".to_string())?;
+    let path = {
+        let session = state.note_session()?;
+        session
+            .path
+            .clone()
+            .ok_or_else(|| "No active note session".to_string())?
+    };
 
     // Reload the session with the latest content from disk to ensure we have
     // any changes made by previous operations (like thread ID comments from ensure_thread).
-    // This is critical because the session might be stale.
+    // This is critical because the session might be stale. No locks are held during I/O.
     let full_content = reconstruct_full_content(&path, &current_content)?;
-    session.load(path.clone(), full_content);
 
-    operation(&mut session)?;
+    let (session_snapshot, write_content) = {
+        let mut session = state.note_session()?;
+        session.load(path.clone(), full_content);
+        operation(&mut session)?;
+        session.update_last_modified();
+        (session.clone(), session.get_full_content())
+    };
 
-    session.update_last_modified();
-    let full_content = session.get_full_content();
-    fs::write(&path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
+    // File I/O with no locks held.
+    fs::write(&path, &write_content).map_err(|e| format!("Failed to save note: {}", e))?;
 
+    // Build the response, acquiring locks in global order.
     let note_manager = state.note_manager()?;
     let tag_manager = state.tag_manager()?;
 
     Ok(NoteContentResponse::from_session(
-        &session,
-        &*note_manager,
-        &*tag_manager,
+        &session_snapshot,
+        &note_manager,
+        &tag_manager,
     ))
 }
 
@@ -542,17 +571,7 @@ pub async fn remove_thread(
     current_content: String,
     state: State<'_, AppState>,
 ) -> Result<NoteContentResponse, String> {
-    perform_thread_operation(current_content.clone(), state, |session| {
-        // Reload session to ensure we have the latest content from disk
-        let full_content = reconstruct_full_content(
-            &session.path.clone().ok_or("No path".to_string())?,
-            &current_content,
-        )?;
-        session.load(
-            session.path.clone().ok_or("No path".to_string())?,
-            full_content,
-        );
-
+    perform_thread_operation(current_content, state, |session| {
         // Find the thread by ID from the threads list (which is populated from frontmatter)
         if let Some(thread_to_remove) = session.find_thread_by_id(&thread_id) {
             session.delete_line_range(thread_to_remove.start_line, thread_to_remove.end_line);

@@ -30,6 +30,17 @@ impl TagManager {
             return Ok(tags.clone());
         }
 
+        let result = Self::scan_all_tags(notes_folder)?;
+        self.cached_tags = Some(result.clone());
+
+        Ok(result)
+    }
+
+    /// Scans a folder for all unique tags without touching any lock or cache.
+    ///
+    /// Associated function so command handlers can run the folder scan after
+    /// dropping their `TagManager` guard, and only re-lock to store the cache.
+    pub fn scan_all_tags(notes_folder: &Path) -> Result<Vec<String>, String> {
         if !notes_folder.exists() {
             return Ok(vec![]);
         }
@@ -55,10 +66,7 @@ impl TagManager {
         // Sort by frequency (desc), then alphabetically (asc)
         tags.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
-        let result: Vec<String> = tags.into_iter().map(|(tag, _)| tag).collect();
-        self.cached_tags = Some(result.clone());
-
-        Ok(result)
+        Ok(tags.into_iter().map(|(tag, _)| tag).collect())
     }
 
     /// Returns a filtered list of tag suggestions based on a search query.
@@ -70,6 +78,16 @@ impl TagManager {
         limit: usize,
     ) -> Vec<String> {
         let all_tags = self.get_all_tags(notes_folder).unwrap_or_default();
+        Self::filter_tag_suggestions(all_tags, query, exclude, limit)
+    }
+
+    /// Pure filter over an already-collected tag list; performs no I/O.
+    pub fn filter_tag_suggestions(
+        all_tags: Vec<String>,
+        query: &str,
+        exclude: &[String],
+        limit: usize,
+    ) -> Vec<String> {
         let search = query.trim().to_lowercase();
 
         all_tags

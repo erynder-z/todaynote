@@ -10,6 +10,17 @@ use std::sync::{Mutex, MutexGuard};
 ///
 /// This struct is wrapped in a `tauri::State` and manages shared access
 /// to services and transient session data via `Mutex` for thread safety.
+///
+/// # Global lock order
+///
+/// When more than one mutex is needed, guards must be acquired in this
+/// order and never the reverse (doing so can deadlock the backend):
+///
+/// `config` → `note_manager` → `tag_manager` → `note_session`
+///
+/// Additionally, guards must be dropped before any blocking file I/O:
+/// clone the needed values (paths, locale, session state), release the
+/// guard, then perform the I/O lock-free.
 pub struct AppState {
     /// Service for managing note files and directories.
     pub note_manager: Mutex<NoteManager>,
@@ -48,6 +59,18 @@ impl AppState {
         self.note_session
             .lock()
             .map_err(|_| "Note session is currently unavailable (poisoned lock)".to_string())
+    }
+
+    /// Returns an owned snapshot of the note manager (folder + locale).
+    ///
+    /// The lock is released before this returns, so callers can run
+    /// folder-wide file I/O on the snapshot without holding the guard.
+    pub fn note_manager_snapshot(&self) -> Result<NoteManager, String> {
+        let note_manager = self.note_manager()?;
+        Ok(NoteManager::new(
+            note_manager.notes_folder.clone(),
+            note_manager.locale.clone(),
+        ))
     }
 }
 
