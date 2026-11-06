@@ -164,14 +164,16 @@ pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Resul
 pub async fn get_last_available_note_path(
     state: State<'_, AppState>,
 ) -> Result<Option<String>, String> {
-    // Work on an owned snapshot so the folder scan runs without holding the lock.
+    // Work on an owned snapshot so the folder scan runs without holding the
+    // lock, on the blocking thread pool so it never stalls IPC workers.
     let note_manager = state.note_manager_snapshot()?;
-    let response = note_manager.list_notes(None)?;
+    let notes_folder = note_manager.notes_folder.clone();
+    let response = super::run_blocking(move || note_manager.list_notes(None)).await?;
     let today_filename = format!("{}.md", crate::utils::date::get_current_date());
 
     for note in response.notes {
         if note.filename != today_filename {
-            let file_path = note_manager.notes_folder.join(note.filename);
+            let file_path = notes_folder.join(note.filename);
             return Ok(Some(file_path.to_string_lossy().into_owned()));
         }
     }
@@ -336,14 +338,14 @@ pub async fn list_notes(
     state: State<'_, AppState>,
 ) -> Result<NoteListResponse, String> {
     let note_manager = state.note_manager_snapshot()?;
-    note_manager.list_notes(limit)
+    super::run_blocking(move || note_manager.list_notes(limit)).await
 }
 
 /// Deletes all notes that have no content (only frontmatter and headings).
 #[tauri::command]
 pub async fn purge_empty_notes(state: State<'_, AppState>) -> Result<usize, String> {
     let note_manager = state.note_manager_snapshot()?;
-    note_manager.purge_empty_notes()
+    super::run_blocking(move || note_manager.purge_empty_notes()).await
 }
 
 /// Deletes a note file at the specified path.
@@ -371,7 +373,7 @@ pub async fn delete_note(path: String, state: State<'_, AppState>) -> Result<(),
 #[tauri::command]
 pub async fn get_statistics(state: State<'_, AppState>) -> Result<AppStatistics, String> {
     let note_manager = state.note_manager_snapshot()?;
-    note_manager.get_statistics()
+    super::run_blocking(move || note_manager.get_statistics()).await
 }
 
 /// Helper to sync frontend content, perform a thread operation, and save the result.
@@ -532,28 +534,38 @@ pub async fn apply_default_thread_name(
 ) -> Result<(), String> {
     let notes_folder = state.note_manager()?.notes_folder.clone();
 
-    if !notes_folder.exists() {
-        return Ok(());
-    }
+    // Folder scan and file writes run on the blocking thread pool; the
+    // session is only touched afterwards, with no I/O in between.
+    let updated = super::run_blocking(move || -> Result<Vec<(PathBuf, String)>, String> {
+        if !notes_folder.exists() {
+            return Ok(Vec::new());
+        }
 
-    let entries = fs::read_dir(&notes_folder)
-        .map_err(|e| format!("Failed to read notes directory: {}", e))?;
+        let entries = fs::read_dir(&notes_folder)
+            .map_err(|e| format!("Failed to read notes directory: {}", e))?;
 
-    for entry in entries {
-        let entry = entry.map_err(|e| format!("Error reading directory entry: {}", e))?;
-        let path = entry.path();
+        let mut updated = Vec::new();
+        for entry in entries {
+            let entry = entry.map_err(|e| format!("Error reading directory entry: {}", e))?;
+            let path = entry.path();
 
-        if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("md") {
-            let content = fs::read_to_string(&path)
-                .map_err(|e| format!("Failed to read file {:?}: {}", path, e))?;
+            if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("md") {
+                let content = fs::read_to_string(&path)
+                    .map_err(|e| format!("Failed to read file {:?}: {}", path, e))?;
 
-            if let Some(new_content) = rename_primary_thread(&content, &new_name) {
-                fs::write(&path, &new_content)
-                    .map_err(|e| format!("Failed to write file {:?}: {}", path, e))?;
-
-                update_session_if_active(&state, &path, new_content)?;
+                if let Some(new_content) = rename_primary_thread(&content, &new_name) {
+                    fs::write(&path, &new_content)
+                        .map_err(|e| format!("Failed to write file {:?}: {}", path, e))?;
+                    updated.push((path, new_content));
+                }
             }
         }
+        Ok(updated)
+    })
+    .await?;
+
+    for (path, new_content) in updated {
+        update_session_if_active(&state, &path, new_content)?;
     }
 
     Ok(())

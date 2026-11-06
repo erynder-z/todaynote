@@ -11,9 +11,12 @@ use tauri::State;
 
 /// Returns all tags for the folder, using the cache when warm.
 ///
-/// The folder scan runs without holding the tag manager lock; the lock is
-/// only taken to read or store the cache.
-fn cached_all_tags(state: &State<'_, AppState>, folder: &Path) -> Result<Vec<String>, String> {
+/// The folder scan runs on the blocking thread pool without holding the tag
+/// manager lock; the lock is only taken to read or store the cache.
+async fn cached_all_tags(
+    state: &State<'_, AppState>,
+    folder: &Path,
+) -> Result<Vec<String>, String> {
     {
         let tag_manager = state.tag_manager()?;
         if let Some(tags) = &tag_manager.cached_tags {
@@ -21,7 +24,8 @@ fn cached_all_tags(state: &State<'_, AppState>, folder: &Path) -> Result<Vec<Str
         }
     }
 
-    let scanned = TagManager::scan_all_tags(folder)?;
+    let folder = folder.to_path_buf();
+    let scanned = super::run_blocking(move || TagManager::scan_all_tags(&folder)).await?;
 
     let mut tag_manager = state.tag_manager()?;
     tag_manager.cached_tags = Some(scanned.clone());
@@ -112,7 +116,7 @@ pub async fn get_all_tags(state: State<'_, AppState>) -> Result<Vec<String>, Str
         let note_manager = state.note_manager()?;
         note_manager.notes_folder.clone()
     };
-    cached_all_tags(&state, &folder_path)
+    cached_all_tags(&state, &folder_path).await
 }
 
 /// Returns a filtered list of tag suggestions.
@@ -135,7 +139,7 @@ pub async fn get_tag_suggestions(
 
     // Warm the cache without holding the lock during the folder scan; the
     // suggest call below then only reads the in-memory cache.
-    cached_all_tags(&state, &folder_path)?;
+    cached_all_tags(&state, &folder_path).await?;
 
     let mut tag_manager = state.tag_manager()?;
     Ok(tag_manager.suggest_tags(&folder_path, &query, &active_tags, 20))

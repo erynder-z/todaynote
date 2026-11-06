@@ -20,8 +20,11 @@ pub async fn search_notes(
     state: State<'_, AppState>,
 ) -> Result<Vec<SearchResult>, String> {
     let note_manager = note_manager_snapshot(&state)?;
-    let service = SearchService::new(&note_manager);
-    service.search(&query, is_fuzzy)
+    super::run_blocking(move || {
+        let service = SearchService::new(&note_manager);
+        service.search(&query, is_fuzzy)
+    })
+    .await
 }
 
 /// Searches for unique thread names across all notes.
@@ -32,8 +35,11 @@ pub async fn search_threads(
     state: State<'_, AppState>,
 ) -> Result<Vec<ThreadSearchResult>, String> {
     let note_manager = note_manager_snapshot(&state)?;
-    let service = SearchService::new(&note_manager);
-    service.search_threads(&query, is_fuzzy)
+    super::run_blocking(move || {
+        let service = SearchService::new(&note_manager);
+        service.search_threads(&query, is_fuzzy)
+    })
+    .await
 }
 
 /// Searches for unique tags across all notes.
@@ -44,8 +50,11 @@ pub async fn search_tags(
     state: State<'_, AppState>,
 ) -> Result<Vec<TagSearchResult>, String> {
     let note_manager = note_manager_snapshot(&state)?;
-    let service = SearchService::new(&note_manager);
-    service.search_tags(&query, is_fuzzy)
+    super::run_blocking(move || {
+        let service = SearchService::new(&note_manager);
+        service.search_tags(&query, is_fuzzy)
+    })
+    .await
 }
 
 /// Finds all notes that contain a specific tag.
@@ -57,8 +66,11 @@ pub async fn search_notes_by_tag(
     state: State<'_, AppState>,
 ) -> Result<Vec<SearchResult>, String> {
     let note_manager = note_manager_snapshot(&state)?;
-    let service = SearchService::new(&note_manager);
-    service.search_notes_by_tag(&tag, &query, is_fuzzy)
+    super::run_blocking(move || {
+        let service = SearchService::new(&note_manager);
+        service.search_notes_by_tag(&tag, &query, is_fuzzy)
+    })
+    .await
 }
 
 /// Aggregates content from all threads with the given thread name.
@@ -68,8 +80,11 @@ pub async fn aggregate_thread(
     state: State<'_, AppState>,
 ) -> Result<ThreadAggregationResult, String> {
     let note_manager = note_manager_snapshot(&state)?;
-    let service = SearchService::new(&note_manager);
-    service.aggregate_thread(&name)
+    super::run_blocking(move || {
+        let service = SearchService::new(&note_manager);
+        service.aggregate_thread(&name)
+    })
+    .await
 }
 
 /// Processes search results with filtering and sorting options.
@@ -100,8 +115,11 @@ pub async fn get_pinned_threads(
     state: State<'_, AppState>,
 ) -> Result<Vec<PinnedThreadItem>, String> {
     let note_manager = note_manager_snapshot(&state)?;
-    let service = SearchService::new(&note_manager);
-    service.get_pinned_threads()
+    super::run_blocking(move || {
+        let service = SearchService::new(&note_manager);
+        service.get_pinned_threads()
+    })
+    .await
 }
 
 /// Returns the content of a specific thread from a specific note.

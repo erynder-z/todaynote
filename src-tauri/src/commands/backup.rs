@@ -30,20 +30,6 @@ const ARGON2_T_COST: u32 = 3;
 /// Argon2id parallelism.
 const ARGON2_P_COST: u32 = 4;
 
-/// Builds an in-memory zip archive containing every `.md` note in the configured
-/// folder and every supported image in its `images` subfolder.
-///
-/// Each note is stored under a `notes/` prefix and each image under an `images/`
-/// prefix, both with bare filenames, mirroring the on-disk layout. Returns the
-/// raw zip bytes.
-fn build_zip_bytes(state: &State<'_, AppState>) -> Result<Vec<u8>, String> {
-    let note_manager = state.note_manager()?;
-    let notes_folder = note_manager.notes_folder.clone();
-    let files = note_manager.get_sorted_note_files()?;
-    drop(note_manager);
-    build_archive_bytes(&notes_folder, &files)
-}
-
 /// Writes notes and images into a zip archive in memory.
 ///
 /// Only files with an allow-listed image extension are picked up from the
@@ -172,13 +158,18 @@ pub async fn export_notes_archive(
     password: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<usize, String> {
-    let zip_bytes = build_zip_bytes(&state)?;
-    let bytes = match password {
-        Some(ref pw) if !pw.is_empty() => encrypt_bytes(&zip_bytes, pw)?,
-        _ => zip_bytes,
-    };
-    fs::write(&path, &bytes).map_err(|e| format!("Failed to write archive: {}", e))?;
-    Ok(bytes.len())
+    let note_manager = state.note_manager_snapshot()?;
+    super::run_blocking(move || {
+        let note_files = note_manager.get_sorted_note_files()?;
+        let zip_bytes = build_archive_bytes(&note_manager.notes_folder, &note_files)?;
+        let bytes = match password {
+            Some(ref pw) if !pw.is_empty() => encrypt_bytes(&zip_bytes, pw)?,
+            _ => zip_bytes,
+        };
+        fs::write(&path, &bytes).map_err(|e| format!("Failed to write archive: {}", e))?;
+        Ok(bytes.len())
+    })
+    .await
 }
 
 /// Extracts notes and images from an opened archive into the notes folder.
@@ -284,32 +275,38 @@ pub async fn import_notes_archive(
     overwrite: bool,
     state: State<'_, AppState>,
 ) -> Result<ImportReport, String> {
-    let raw = fs::read(&path).map_err(|e| format!("Failed to read archive: {}", e))?;
+    let notes_folder = state.note_manager()?.notes_folder.clone();
 
-    let zip_bytes = match password {
-        Some(ref pw) if !pw.is_empty() => decrypt_bytes(&raw, pw)?,
-        _ => {
-            // Auto-detect encrypted containers even without a password hint.
-            if raw.len() >= TNBK_MAGIC.len() && &raw[..TNBK_MAGIC.len()] == TNBK_MAGIC {
-                return Err("This backup is encrypted. Please provide the password.".to_string());
+    // Reading the archive, decryption (Argon2id is CPU-heavy) and extracting
+    // every entry all run on the blocking thread pool.
+    super::run_blocking(move || {
+        crate::services::note_manager::NoteManager::ensure_notes_folder_exists_in(&notes_folder)?;
+
+        let raw = fs::read(&path).map_err(|e| format!("Failed to read archive: {}", e))?;
+
+        let zip_bytes = match password {
+            Some(ref pw) if !pw.is_empty() => decrypt_bytes(&raw, pw)?,
+            _ => {
+                // Auto-detect encrypted containers even without a password hint.
+                if raw.len() >= TNBK_MAGIC.len() && &raw[..TNBK_MAGIC.len()] == TNBK_MAGIC {
+                    return Err(
+                        "This backup is encrypted. Please provide the password.".to_string()
+                    );
+                }
+                raw
             }
-            raw
-        }
-    };
+        };
 
-    let note_manager = state.note_manager()?;
-    note_manager.ensure_notes_folder_exists()?;
-    let notes_folder = note_manager.notes_folder.clone();
-    drop(note_manager);
+        let mut archive = ZipArchive::new(Cursor::new(zip_bytes))
+            .map_err(|e| format!("Failed to open archive: {}", e))?;
 
-    let mut archive = ZipArchive::new(Cursor::new(zip_bytes))
-        .map_err(|e| format!("Failed to open archive: {}", e))?;
-
-    Ok(import_archive_entries(
-        &mut archive,
-        &notes_folder,
-        overwrite,
-    ))
+        Ok(import_archive_entries(
+            &mut archive,
+            &notes_folder,
+            overwrite,
+        ))
+    })
+    .await
 }
 
 ///

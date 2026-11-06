@@ -197,60 +197,61 @@ pub fn get_images_dir(state: State<'_, AppState>) -> Result<String, String> {
 /// Deletes all images in the images directory that are not referenced by any
 /// note. Returns the number of removed images.
 #[tauri::command]
-pub fn purge_unused_images(state: State<'_, AppState>) -> Result<usize, String> {
-    let (notes_folder, note_files) = {
-        let note_manager = state.note_manager()?;
-        (
-            note_manager.notes_folder.clone(),
-            note_manager.get_sorted_note_files()?,
-        )
-    };
+pub async fn purge_unused_images(state: State<'_, AppState>) -> Result<usize, String> {
+    // The folder-wide scan and file deletions run on the blocking thread
+    // pool, off the IPC workers.
+    let note_manager = state.note_manager_snapshot()?;
+    super::run_blocking(move || {
+        let notes_folder = &note_manager.notes_folder;
+        let note_files = note_manager.get_sorted_note_files()?;
 
-    // Collect every image filename referenced from note markdown.
-    let mut referenced: HashSet<String> = HashSet::new();
-    for file_name in &note_files {
-        let content = fs::read_to_string(notes_folder.join(file_name)).unwrap_or_default();
-        for url in crate::utils::markdown::extract_image_urls(&content) {
-            if let Some(filename) = image_filename_from_url(&url) {
-                referenced.insert(filename);
+        // Collect every image filename referenced from note markdown.
+        let mut referenced: HashSet<String> = HashSet::new();
+        for file_name in &note_files {
+            let content = fs::read_to_string(notes_folder.join(file_name)).unwrap_or_default();
+            for url in crate::utils::markdown::extract_image_urls(&content) {
+                if let Some(filename) = image_filename_from_url(&url) {
+                    referenced.insert(filename);
+                }
             }
         }
-    }
 
-    let images_dir = notes_folder.join("images");
-    let mut removed = 0;
+        let images_dir = notes_folder.join("images");
+        let mut removed = 0;
 
-    if images_dir.is_dir() {
-        let entries = fs::read_dir(&images_dir)
-            .map_err(|e| format!("Failed to read images directory: {}", e))?;
-        for entry in entries {
-            let entry = match entry {
-                Ok(e) => e,
-                Err(_) => continue,
-            };
-            let path = entry.path();
-            if !path.is_file() {
-                continue;
-            }
-            let name = match path.file_name().and_then(|n| n.to_str()) {
-                Some(n) => n.to_string(),
-                None => continue,
-            };
-            let is_image = path
-                .extension()
-                .and_then(|e| e.to_str())
-                .map(|e| ALLOWED_EXTENSIONS.contains(&e.to_lowercase().as_str()))
-                .unwrap_or(false);
-            if !is_image || referenced.contains(&name) {
-                continue;
-            }
-            if fs::remove_file(&path).is_ok() {
-                removed += 1;
+        if images_dir.is_dir() {
+            let entries = fs::read_dir(&images_dir)
+                .map_err(|e| format!("Failed to read images directory: {}", e))?;
+            for entry in entries {
+                let entry = match entry {
+                    Ok(e) => e,
+                    Err(_) => continue,
+                };
+                let path = entry.path();
+                if !path.is_file() {
+                    continue;
+                }
+                let name = match path.file_name().and_then(|n| n.to_str()) {
+                    Some(n) => n.to_string(),
+                    None => continue,
+                };
+                let is_image = path
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .map(|e| ALLOWED_EXTENSIONS.contains(&e.to_lowercase().as_str()))
+                    .unwrap_or(false);
+                if !is_image || referenced.contains(&name) {
+                    continue;
+                }
+                if fs::remove_file(&path).is_ok() {
+                    removed += 1;
+                }
             }
         }
-    }
 
-    Ok(removed)
+        Ok(removed)
+    })
+    .await
 }
 
 /// Returns the image filename referenced by a note markdown URL, if the URL
