@@ -160,30 +160,37 @@ impl NoteManager {
             .map(|header| header.created.format("%Y-%m-%d").to_string())
     }
 
-    /// Extracts the `note-type` from a note's YAML frontmatter.
-    ///
-    /// Returns "manual" or "auto"; notes without a parseable header or
-    /// without the field default to "auto".
-    pub fn extract_note_type(&self, content: &str) -> String {
-        NoteHeader::parse(content)
-            .map(|header| header.note_type.to_string())
-            .unwrap_or_else(|_| NoteType::Auto.to_string())
-    }
-
-    /// Transforms a note filename into a FormattedNote by reading and processing its content.
+    /// Transforms a note filename into a FormattedNote by reading and processing its content..
     fn format_note_file(&self, file_name: &str) -> Option<FormattedNote> {
         let path = self.notes_folder.join(file_name);
         let content = fs::read_to_string(&path).unwrap_or_default();
+
+        let (created, note_type, tags) = match NoteHeader::parse(&content) {
+            Ok(header) => (
+                Some(header.created.format("%Y-%m-%d").to_string()),
+                header.note_type.to_string(),
+                header.tags,
+            ),
+            Err(_) => (
+                None,
+                NoteType::Auto.to_string(),
+                crate::utils::tag_parser::parse_tags_from_content(&content),
+            ),
+        };
+
+        // Word count and code detection share a single pass.
+        let (word_count, has_code) = crate::utils::text::count_words(&content);
+
         Some(FormattedNote {
             filename: file_name.to_string(),
             formatted_name: self.format_note_name(file_name),
-            created: self.extract_created_date(&content),
-            note_type: self.extract_note_type(&content),
+            created,
+            note_type,
             preview: self.extract_preview(&content),
-            tags: crate::utils::tag_parser::parse_tags_from_content(&content),
+            tags,
             threads: self.extract_threads(&content, 5),
-            word_count: crate::utils::text::count_words(&content).0,
-            has_code: crate::utils::text::count_words(&content).1,
+            word_count,
+            has_code,
             has_images: crate::utils::text::has_images(&content),
         })
     }
@@ -217,23 +224,28 @@ impl NoteManager {
             .collect()
     }
 
-    /// Extracts a short preview from the note content, skipping frontmatter and headings.
-    fn extract_preview(&self, content: &str) -> String {
-        let lines: Vec<&str> = content.lines().collect();
-        let mut start_idx = 0;
-
-        // Skip frontmatter
-        if lines.first().map(|l| l.trim()) == Some("---") {
-            for (i, line) in lines.iter().enumerate().skip(1) {
-                if line.trim() == "---" {
-                    start_idx = i + 1;
-                    break;
-                }
+    /// Returns the index of the first line after the YAML frontmatter block,
+    /// or 0 when the content has no (closed) frontmatter block.
+    fn body_start_line(content: &str) -> usize {
+        let mut lines = content.lines();
+        if lines.next().map(|l| l.trim()) != Some("---") {
+            return 0;
+        }
+        for (i, line) in lines.enumerate() {
+            if line.trim() == "---" {
+                // Closing fence is line i + 1; the body starts at i + 2.
+                return i + 2;
             }
         }
+        0
+    }
+
+    /// Extracts a short preview from the note content, skipping frontmatter and headings.
+    fn extract_preview(&self, content: &str) -> String {
+        let start_idx = Self::body_start_line(content);
 
         let mut preview_text = Vec::new();
-        for line in lines.iter().skip(start_idx) {
+        for line in content.lines().skip(start_idx) {
             let stripped = crate::utils::markdown::strip_markdown_line(line);
             if stripped.is_empty() {
                 continue;
@@ -832,31 +844,6 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_note_type_from_frontmatter() {
-        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
-
-        let manual = "---\ncreated: 2024-01-15\nnote-type: manual\ntags: []\n---\nbody";
-        assert_eq!(manager.extract_note_type(manual), "manual".to_string());
-
-        // Legacy note without the note-type field defaults to auto
-        let legacy = "---\ncreated: 2024-01-15\ntags: []\n---\nbody";
-        assert_eq!(manager.extract_note_type(legacy), "auto".to_string());
-    }
-
-    #[test]
-    fn test_extract_note_type_missing_or_invalid() {
-        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
-
-        // No frontmatter
-        assert_eq!(manager.extract_note_type("just body"), "auto".to_string());
-        // Missing required created key makes the header unparseable
-        assert_eq!(
-            manager.extract_note_type("---\ntags: []\n---\nbody"),
-            "auto".to_string()
-        );
-    }
-
-    #[test]
     fn test_format_note_file_exposes_note_type() {
         let temp_dir = tempdir().expect("Failed to create temp dir");
         let notes_path = temp_dir.path().to_path_buf();
@@ -867,11 +854,30 @@ mod tests {
             "---\ncreated: 2024-01-15\nnote-type: manual\ntags: []\n---\nbody",
         )
         .expect("Failed to write note");
+        // Legacy note without note-type, and one with an unparseable header,
+        // both default to "auto".
+        fs::write(
+            notes_path.join("legacy-note.md"),
+            "---\ncreated: 2024-01-16\ntags: []\n---\nbody",
+        )
+        .expect("Failed to write note");
+        fs::write(notes_path.join("no-header.md"), "just body").expect("Failed to write note");
 
         let manager = NoteManager::new(notes_path, "en".to_string());
         let response = manager.list_notes(None).expect("list_notes should succeed");
 
-        assert_eq!(response.notes[0].note_type, "manual".to_string());
+        let by_name = |name: &str| {
+            response
+                .notes
+                .iter()
+                .find(|n| n.filename == name)
+                .unwrap()
+                .note_type
+                .clone()
+        };
+        assert_eq!(by_name("my-note.md"), "manual".to_string());
+        assert_eq!(by_name("legacy-note.md"), "auto".to_string());
+        assert_eq!(by_name("no-header.md"), "auto".to_string());
     }
 
     ///
