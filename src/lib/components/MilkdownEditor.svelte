@@ -216,6 +216,7 @@
   .milkdown-editor-wrapper :global(.milkdown figure.img-figure) {
     margin: 1rem 0;
     position: relative;
+    width: min(100%, calc(72dvh * var(--img-ratio, 1.333)));
   }
 
   .milkdown-editor-wrapper :global(.milkdown figure.img-figure img) {
@@ -226,15 +227,15 @@
   }
 
   .milkdown-editor-wrapper :global(.milkdown figure.img-size-small) {
-    width: 25%;
+    width: min(25%, calc(26dvh * var(--img-ratio, 1.333)));
   }
 
   .milkdown-editor-wrapper :global(.milkdown figure.img-size-medium) {
-    width: 60%;
+    width: min(60%, calc(48dvh * var(--img-ratio, 1.333)));
   }
 
   .milkdown-editor-wrapper :global(.milkdown figure.img-size-large) {
-    width: 100%;
+    width: min(100%, calc(72dvh * var(--img-ratio, 1.333)));
   }
 
   .milkdown-editor-wrapper :global(.milkdown figure.img-align-center) {
