@@ -164,16 +164,14 @@ pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Resul
 pub async fn get_last_available_note_path(
     state: State<'_, AppState>,
 ) -> Result<Option<String>, String> {
-    // Work on an owned snapshot so the folder scan runs without holding the
-    // lock, on the blocking thread pool so it never stalls IPC workers.
     let note_manager = state.note_manager_snapshot()?;
     let notes_folder = note_manager.notes_folder.clone();
-    let response = super::run_blocking(move || note_manager.list_notes(None)).await?;
+    let sorted_files = super::run_blocking(move || note_manager.get_sorted_note_files()).await?;
     let today_filename = format!("{}.md", crate::utils::date::get_current_date());
 
-    for note in response.notes {
-        if note.filename != today_filename {
-            let file_path = notes_folder.join(note.filename);
+    for filename in sorted_files {
+        if filename != today_filename {
+            let file_path = notes_folder.join(filename);
             return Ok(Some(file_path.to_string_lossy().into_owned()));
         }
     }
