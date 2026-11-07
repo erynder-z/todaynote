@@ -1,6 +1,6 @@
 //! Tauri commands for font management.
 
-use crate::models::app_state::AppState;
+use crate::models::app_state::{schedule_config_save, AppState};
 use tauri::State;
 
 /// Retrieves a list of available system fonts.
@@ -163,13 +163,12 @@ pub async fn set_font_family(
     font_family: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.font_family = Some(font_family);
-        config.clone()
-    };
-    // Persist without holding the lock.
-    config.save();
+    }
+    // Debounced write; the lock is already released.
+    schedule_config_save();
 
     Ok(())
 }
@@ -180,13 +179,12 @@ pub async fn set_use_custom_font(
     use_custom: bool,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.use_custom_font = use_custom;
-        config.clone()
-    };
-    // Persist without holding the lock.
-    config.save();
+    }
+    // Debounced write; the lock is already released.
+    schedule_config_save();
 
     Ok(())
 }

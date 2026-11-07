@@ -1,7 +1,7 @@
 //! Tauri commands for application settings management.
 
 use crate::commands::setup;
-use crate::models::app_state::AppState;
+use crate::models::app_state::{schedule_config_save, AppState};
 use crate::models::config::AppConfig;
 use crate::models::response_types::{AppPayload, ConfigResponse};
 use std::path::PathBuf;
@@ -52,26 +52,30 @@ pub async fn update_config(
         )
     };
 
-    // Persist config.json without holding the lock.
-    config.save();
+    // Debounced write of config.json; the in-memory config is already updated.
+    schedule_config_save();
 
     if folder_changed || locale_changed || theme_changed {
-        let mut note_manager = state.note_manager()?;
-        note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
-    }
+        {
+            let mut note_manager = state.note_manager()?;
+            note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
+        }
 
-    setup::get_initial_state(config, state)
+        setup::get_initial_state(config, state)
+    } else {
+        // Pure UI change: skip the note read, session reload, and JSON re-parsing.
+        Ok(setup::get_light_state(config))
+    }
 }
 
 /// Sets the visibility of the sidebar.
 #[tauri::command]
 pub async fn set_sidebar_open(open: bool, state: State<'_, AppState>) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.sidebar_open = open;
-        config.clone()
-    };
-    config.save();
+    }
+    schedule_config_save();
     Ok(())
 }
 
@@ -81,12 +85,11 @@ pub async fn set_control_center_width(
     width: f64,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.control_center_width = width;
-        config.clone()
-    };
-    config.save();
+    }
+    schedule_config_save();
     Ok(())
 }
 
@@ -96,36 +99,33 @@ pub async fn set_remember_settings(
     remember: bool,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.remember_settings = remember;
-        config.clone()
-    };
-    config.save();
+    }
+    schedule_config_save();
     Ok(())
 }
 
 /// Sets the last used search mode.
 #[tauri::command]
 pub async fn set_search_mode(mode: String, state: State<'_, AppState>) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.search_mode = mode;
-        config.clone()
-    };
-    config.save();
+    }
+    schedule_config_save();
     Ok(())
 }
 
 /// Sets the last used fuzzy search setting.
 #[tauri::command]
 pub async fn set_search_is_fuzzy(is_fuzzy: bool, state: State<'_, AppState>) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.search_is_fuzzy = is_fuzzy;
-        config.clone()
-    };
-    config.save();
+    }
+    schedule_config_save();
     Ok(())
 }
 
@@ -135,12 +135,11 @@ pub async fn set_search_selected_tag(
     tag: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.search_selected_tag = tag;
-        config.clone()
-    };
-    config.save();
+    }
+    schedule_config_save();
     Ok(())
 }
 
@@ -150,12 +149,11 @@ pub async fn set_notes_list_layout(
     layout: String,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.notes_list_layout = layout;
-        config.clone()
-    };
-    config.save();
+    }
+    schedule_config_save();
     Ok(())
 }
 
@@ -165,12 +163,11 @@ pub async fn set_remember_app_layout(
     remember: bool,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         config.remember_app_layout = remember;
-        config.clone()
-    };
-    config.save();
+    }
+    schedule_config_save();
     Ok(())
 }
 
@@ -180,7 +177,7 @@ pub async fn set_remember_app_layout(
 /// breaking the user's basic setup.
 #[tauri::command]
 pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), String> {
-    let config = {
+    {
         let mut config = state.config()?;
         let default_config = AppConfig::default();
 
@@ -204,10 +201,8 @@ pub async fn reset_config_to_defaults(state: State<'_, AppState>) -> Result<(), 
         config.shortcuts = default_config.shortcuts;
         config.font_family = default_config.font_family;
         config.use_custom_font = default_config.use_custom_font;
-
-        config.clone()
-    };
-    config.save();
+    }
+    schedule_config_save();
     Ok(())
 }
 
@@ -219,8 +214,8 @@ pub async fn set_notes_folder(path: String, state: State<'_, AppState>) -> Resul
         config.notes_folder = PathBuf::from(path);
         config.clone()
     };
-    // Persist without holding the lock.
-    config.save();
+    // Debounced write; the lock is already released.
+    schedule_config_save();
 
     let mut note_manager = state.note_manager()?;
     note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
@@ -236,8 +231,8 @@ pub async fn set_locale(locale: String, state: State<'_, AppState>) -> Result<()
         config.locale = locale;
         config.clone()
     };
-    // Persist without holding the lock.
-    config.save();
+    // Debounced write; the lock is already released.
+    schedule_config_save();
 
     let mut note_manager = state.note_manager()?;
     note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
@@ -261,8 +256,8 @@ pub async fn switch_notes_folder(
         // Clone and drop the guard before persisting or running get_initial_state.
         config.clone()
     };
-    // Persist without holding the lock.
-    config.save();
+    // Debounced write; the lock is already released.
+    schedule_config_save();
 
     {
         let mut note_manager = state.note_manager()?;

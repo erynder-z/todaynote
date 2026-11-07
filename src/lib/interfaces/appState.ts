@@ -51,10 +51,10 @@ export interface AppPayload {
 	allowManualNoteCreation: boolean;
 	fontFamily: string | null;
 	useCustomFont: boolean;
-	availableLocales: LocaleInfo[];
-	availableThemes: ThemeInfo[];
-	translations: Record<string, string>;
-	themeColors: Record<string, string>;
+	availableLocales: LocaleInfo[] | null;
+	availableThemes: ThemeInfo[] | null;
+	translations: Record<string, string> | null;
+	themeColors: Record<string, string> | null;
 	todayNotePath: string | null;
 	todayNoteContent: NoteContentResponse | null;
 	isMac: boolean;

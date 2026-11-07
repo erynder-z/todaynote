@@ -1,6 +1,6 @@
 //! Tauri commands for theme management and visual customization.
 
-use crate::models::app_state::AppState;
+use crate::models::app_state::{schedule_config_save, AppState};
 use include_dir::{include_dir, Dir};
 use std::collections::HashMap;
 use tauri::State;
@@ -36,8 +36,8 @@ pub async fn set_theme(theme: String, state: State<'_, AppState>) -> Result<(), 
         config.theme = theme;
         config.clone()
     };
-    // Persist without holding the lock.
-    config.save();
+    // Debounced write; the lock is already released.
+    schedule_config_save();
 
     let mut note_manager = state.note_manager()?;
     note_manager.update_config(config.notes_folder.clone(), config.locale.clone());

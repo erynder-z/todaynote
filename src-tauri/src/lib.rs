@@ -49,7 +49,9 @@ use utils::window::show_window;
 /// 5. Configures the initial window state.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Load the config once; the setup closure reuses this instance.
     let config = AppConfig::load();
+    let setup_config = config.clone();
     let note_manager = NoteManager::new(config.notes_folder.clone(), config.locale.clone());
 
     let mut builder = tauri::Builder::default()
@@ -67,7 +69,7 @@ pub fn run() {
         );
     }
 
-    builder
+    let app = builder
         .manage(AppState {
             note_manager: Mutex::new(note_manager),
             tag_manager: Mutex::new(TagManager::new()),
@@ -139,8 +141,10 @@ pub fn run() {
             update_config,
             validate_folder
         ])
-        .setup(|app| {
-            let config = AppConfig::load();
+        .setup(move |app| {
+            models::app_state::init_config_saver(app.handle());
+
+            let config = setup_config;
             if !config.remember_app_layout {
                 let _ = utils::window::setup_main_window(app.handle());
             }
@@ -153,6 +157,13 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|_app_handle, event| {
+        if let tauri::RunEvent::Exit = event {
+            // Persist any settings changes that were still pending debounce.
+            models::app_state::flush_pending_config_save();
+        }
+    });
 }

@@ -29,14 +29,41 @@ pub fn get_initial_state(
     let (available_themes, available_locales, translations, theme_colors) =
         get_ui_metadata(&config);
 
-    let mut response = AppPayload {
+    let mut response = base_payload(config, notes_folder);
+    response.available_locales = Some(available_locales);
+    response.available_themes = Some(available_themes);
+    response.translations = Some(translations.clone());
+    response.theme_colors = Some(theme_colors);
+
+    if response.notes_folder.is_some() {
+        let (path, content) = load_today_note(&state, &translations)?;
+        response.today_note_path = path;
+        response.today_note_content = content;
+    }
+
+    Ok(response)
+}
+
+/// Builds a lightweight payload from the config alone.
+///
+/// Used for settings changes that don't affect the notes folder, locale, or
+/// theme: the heavy fields stay `None` so no note is read from disk and no
+/// translation/theme JSON is re-parsed.
+pub fn get_light_state(config: AppConfig) -> AppPayload {
+    let notes_folder = Some(config.notes_folder.to_string_lossy().into_owned());
+    base_payload(config, notes_folder)
+}
+
+/// Constructs the config-derived part of an `AppPayload`, with all heavy fields empty.
+fn base_payload(config: AppConfig, notes_folder: Option<String>) -> AppPayload {
+    AppPayload {
         notes_folder,
-        locale: config.locale.clone(),
-        theme: config.theme.clone(),
+        locale: config.locale,
+        theme: config.theme,
         remember_app_layout: config.remember_app_layout,
-        notes_list_layout: config.notes_list_layout.clone(),
+        notes_list_layout: config.notes_list_layout,
         remember_settings: config.remember_settings,
-        search_mode: config.search_mode.clone(),
+        search_mode: config.search_mode,
         search_is_fuzzy: config.search_is_fuzzy,
         search_selected_tag: config.search_selected_tag,
         sidebar_open: config.sidebar_open,
@@ -46,29 +73,21 @@ pub fn get_initial_state(
         identicon_style: config.identicon_style,
         thread_shortcuts_mode: config.thread_shortcuts_mode,
         date_format_style: config.date_format_style,
-        text_copy_mode: config.text_copy_mode.clone(),
+        text_copy_mode: config.text_copy_mode,
         floating_toolbar_enabled: config.floating_toolbar_enabled,
         allow_manual_note_creation: config.allow_manual_note_creation,
+        shortcuts: config.shortcuts,
         font_family: config.font_family,
         use_custom_font: config.use_custom_font,
-        shortcuts: config.shortcuts,
-        available_locales,
-        available_themes,
-        translations,
-        theme_colors,
+        available_locales: None,
+        available_themes: None,
+        translations: None,
+        theme_colors: None,
         today_note_path: None,
         today_note_content: None,
         is_mac: cfg!(target_os = "macos"),
         is_linux: cfg!(target_os = "linux"),
-    };
-
-    if response.notes_folder.is_some() {
-        let (path, content) = load_today_note(&state, &response.translations)?;
-        response.today_note_path = path;
-        response.today_note_content = content;
     }
-
-    Ok(response)
 }
 
 /// Ensures the notes folder exists and returns its path.
@@ -356,16 +375,16 @@ mod tests {
             shortcuts: HashMap::new(),
             font_family: Some("Fira Code".to_string()),
             use_custom_font: true,
-            available_locales: vec![LocaleInfo {
+            available_locales: Some(vec![LocaleInfo {
                 id: "en".to_string(),
                 name: "English".to_string(),
-            }],
-            available_themes: vec![ThemeInfo {
+            }]),
+            available_themes: Some(vec![ThemeInfo {
                 id: "lobby".to_string(),
                 name: "Lobby".to_string(),
-            }],
-            translations: HashMap::new(),
-            theme_colors: HashMap::new(),
+            }]),
+            translations: Some(HashMap::new()),
+            theme_colors: Some(HashMap::new()),
             today_note_path: Some("/tmp/notes/today.md".to_string()),
             today_note_content: None,
             is_mac: false,
@@ -408,8 +427,11 @@ mod tests {
         assert!(!deserialized.use_default_thread_name);
         assert_eq!(deserialized.font_family, Some("Fira Code".to_string()));
         assert!(deserialized.use_custom_font);
-        assert_eq!(deserialized.available_locales.len(), 1);
-        assert_eq!(deserialized.available_themes[0].id, "lobby");
+        assert_eq!(deserialized.available_locales.as_ref().unwrap().len(), 1);
+        assert_eq!(
+            deserialized.available_themes.as_ref().unwrap()[0].id,
+            "lobby"
+        );
         assert_eq!(
             deserialized.today_note_path,
             Some("/tmp/notes/today.md".to_string())

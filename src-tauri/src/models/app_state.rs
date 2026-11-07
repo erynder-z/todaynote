@@ -4,7 +4,10 @@ use crate::models::config::AppConfig;
 use crate::models::note_session::NoteSession;
 use crate::services::note_manager::NoteManager;
 use crate::services::tag_manager::TagManager;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Mutex, MutexGuard, OnceLock};
+use std::time::Duration;
+use tauri::Manager;
 
 /// Global state accessible to all Tauri command handlers.
 ///
@@ -71,6 +74,67 @@ impl AppState {
             note_manager.notes_folder.clone(),
             note_manager.locale.clone(),
         ))
+    }
+}
+
+/// How long to wait after the last settings change before writing `config.json`.
+const CONFIG_SAVE_DELAY: Duration = Duration::from_millis(500);
+
+/// App handle used by the debounced config saver; set once during setup.
+static CONFIG_APP_HANDLE: OnceLock<tauri::AppHandle> = OnceLock::new();
+/// Set when the in-memory config differs from the on-disk `config.json`.
+static CONFIG_DIRTY: AtomicBool = AtomicBool::new(false);
+/// Set while a debounced flush task is pending, so bursts spawn only one task.
+static CONFIG_FLUSH_SCHEDULED: AtomicBool = AtomicBool::new(false);
+
+/// Registers the app handle used by the debounced config saver. Call once in setup.
+pub fn init_config_saver(app: &tauri::AppHandle) {
+    let _ = CONFIG_APP_HANDLE.set(app.clone());
+}
+
+/// Marks the config as dirty and schedules a debounced write of `config.json`.
+///
+/// Bursts of settings changes (sidebar resize, toggles) collapse into a single
+/// disk write. No-op when the saver was not initialized (e.g. in tests).
+pub fn schedule_config_save() {
+    let Some(handle) = CONFIG_APP_HANDLE.get() else {
+        return;
+    };
+    CONFIG_DIRTY.store(true, Ordering::SeqCst);
+    if CONFIG_FLUSH_SCHEDULED.swap(true, Ordering::SeqCst) {
+        return;
+    }
+    let handle = handle.clone();
+    // Debounce on a blocking thread so neither the sleep nor the write
+    // occupies an async worker thread.
+    tauri::async_runtime::spawn_blocking(move || {
+        std::thread::sleep(CONFIG_SAVE_DELAY);
+        flush_config_save(&handle);
+    });
+}
+
+/// Writes `config.json` if the config is dirty. Also called on app exit.
+pub fn flush_config_save(app: &tauri::AppHandle) {
+    CONFIG_FLUSH_SCHEDULED.store(false, Ordering::SeqCst);
+    if !CONFIG_DIRTY.swap(false, Ordering::SeqCst) {
+        return;
+    }
+    // Clone and drop the guard before the blocking write.
+    let snapshot = {
+        let state = app.state::<AppState>();
+        let snapshot = match state.config() {
+            Ok(config) => config.clone(),
+            Err(_) => return,
+        };
+        snapshot
+    };
+    snapshot.save();
+}
+
+/// Flushes a pending dirty config using the registered handle (app exit path).
+pub fn flush_pending_config_save() {
+    if let Some(handle) = CONFIG_APP_HANDLE.get() {
+        flush_config_save(handle);
     }
 }
 
@@ -147,5 +211,13 @@ mod tests {
             state.note_session().err().unwrap(),
             "Note session is currently unavailable (poisoned lock)"
         );
+    }
+
+    #[test]
+    fn test_config_saver_noop_without_handle() {
+        // No handle is registered in tests; scheduling and flushing must not panic.
+        schedule_config_save();
+        flush_pending_config_save();
+        assert!(!CONFIG_DIRTY.load(Ordering::SeqCst));
     }
 }

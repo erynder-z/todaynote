@@ -127,7 +127,12 @@ pub struct PinnedThreadItem {
     pub line_number: usize,
 }
 
-/// The complete state payload sent to the frontend during initialization.
+/// The state payload sent to the frontend during initialization and settings changes.
+///
+/// The heavy fields (`available_locales`, `available_themes`, `translations`,
+/// `theme_colors`, `today_note_path`, `today_note_content`) are `None` in the
+/// lightweight payload returned for pure UI settings changes; the frontend
+/// keeps its current values for those.
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppPayload {
@@ -153,10 +158,10 @@ pub struct AppPayload {
     pub shortcuts: HashMap<String, ShortcutConfig>,
     pub font_family: Option<String>,
     pub use_custom_font: bool,
-    pub available_locales: Vec<LocaleInfo>,
-    pub available_themes: Vec<ThemeInfo>,
-    pub translations: HashMap<String, String>,
-    pub theme_colors: HashMap<String, String>,
+    pub available_locales: Option<Vec<LocaleInfo>>,
+    pub available_themes: Option<Vec<ThemeInfo>>,
+    pub translations: Option<HashMap<String, String>>,
+    pub theme_colors: Option<HashMap<String, String>>,
     pub today_note_path: Option<String>,
     pub today_note_content: Option<NoteContentResponse>,
     pub is_mac: bool,

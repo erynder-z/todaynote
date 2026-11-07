@@ -50,18 +50,18 @@ export class AppInitializer {
 	 * Synchronizes translation-related stores.
 	 */
 	syncI18nState(state: AppPayload) {
-		translations.set(state.translations);
+		if (state.translations) translations.set(state.translations);
 		locale.set(state.locale);
-		availableLocales.set(state.availableLocales);
+		if (state.availableLocales) availableLocales.set(state.availableLocales);
 	}
 
 	/**
 	 * Synchronizes theme-related stores and applies UI colors.
 	 */
 	syncThemeState(state: AppPayload) {
-		availableThemes.set(state.availableThemes);
+		if (state.availableThemes) availableThemes.set(state.availableThemes);
 		currentTheme.set(state.theme);
-		applyThemeColors(state.themeColors);
+		if (state.themeColors) applyThemeColors(state.themeColors);
 	}
 
 	/**
