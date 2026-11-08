@@ -295,7 +295,7 @@ mod tests {
         assert!(config.search_is_fuzzy);
         assert!(config.sidebar_open);
         assert_eq!(config.control_center_width, 22.0);
-        assert_eq!(config.notes_list_layout, "list");
+        assert_eq!(config.notes_list_layout, "masonry");
         assert!(config.remember_app_layout);
         assert!(config.remember_settings);
         assert!(config.use_default_thread_name);
@@ -528,7 +528,7 @@ mod tests {
         assert!(config.search_is_fuzzy);
         assert!(config.sidebar_open);
         assert_eq!(config.control_center_width, 22.0);
-        assert_eq!(config.notes_list_layout, "list");
+        assert_eq!(config.notes_list_layout, "masonry");
         assert!(config.use_default_thread_name);
         assert_eq!(config.identicon_style, "dotmatrix");
         assert_eq!(config.thread_shortcuts_mode, "navigation");

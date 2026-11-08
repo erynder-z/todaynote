@@ -494,7 +494,7 @@ mod tests {
 
         assert_eq!(config.locale, "en");
         assert_eq!(config.theme, "lobby");
-        assert_eq!(config.notes_list_layout, "list");
+        assert_eq!(config.notes_list_layout, "masonry");
         assert!(config.remember_app_layout);
         assert!(config.search_is_fuzzy);
         assert!(config.sidebar_open);
