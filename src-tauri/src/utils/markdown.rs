@@ -47,18 +47,16 @@ pub fn strip_markdown_line(line: &str) -> String {
     // 2. Strip inline markers (basic)
     // First extract link/image text: ![alt](url) → alt, [text](url) → text.
     // Images before links so the `!` prefix is consumed first.
-    let after_links = IMAGE_RE.replace_all(s, "$1");
-    let after_links = LINK_RE.replace_all(&after_links, "$1");
-
-    // We remove longer markers first to avoid leaving orphans
-    let mut result = after_links
-        .replace("***", "")
-        .replace("___", "")
-        .replace("**", "")
-        .replace("__", "")
-        .replace("`", "")
-        .replace("*", "")
-        .replace("_", "");
+    let mut result = if s.bytes().any(|b| matches!(b, b'*' | b'_' | b'`' | b'[')) {
+        let after_images = IMAGE_RE.replace_all(s, "$1");
+        let after_links = LINK_RE.replace_all(&after_images, "$1");
+        after_links
+            .chars()
+            .filter(|c| !matches!(c, '*' | '_' | '`'))
+            .collect::<String>()
+    } else {
+        s.to_string()
+    };
 
     // 3. Strip trailing line-break backslashes
     if result.ends_with('\\') {

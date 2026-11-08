@@ -3,10 +3,11 @@
 /// Generates an excerpt from a text string, centered around the matching indices if provided.
 /// Returns (excerpt_string, adjusted_indices).
 pub fn generate_excerpt(line: &str, indices: &[u32], max_length: usize) -> (String, Vec<u32>) {
-    let chars: Vec<char> = line.chars().collect();
-    if chars.len() <= max_length {
+    // Common case: the whole line fits, no need to collect chars into a Vec.
+    if line.chars().count() <= max_length {
         return (line.to_string(), indices.to_vec());
     }
+    let chars: Vec<char> = line.chars().collect();
 
     let first = *indices.first().unwrap_or(&0) as usize;
     let last = *indices.last().unwrap_or(&(chars.len() as u32 - 1)) as usize;

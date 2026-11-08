@@ -7,6 +7,7 @@ use crate::models::response_types::{
 use nucleo_matcher::{Config, Matcher, Utf32Str};
 use std::collections::HashMap;
 use std::fs;
+use std::path::{Path, PathBuf};
 
 use super::note_manager::NoteManager;
 
@@ -21,33 +22,52 @@ impl<'a> SearchService<'a> {
         Self { note_manager }
     }
 
+    /// Returns the number of lines occupied by the YAML frontmatter block
+    /// (0 when the content has no closed frontmatter block). Allocation-free,
+    /// for use on hot paths that only need the body start offset.
+    fn frontmatter_line_count(content: &str) -> usize {
+        let mut lines = content.lines();
+        if lines.next().map(|l| l.trim()) != Some("---") {
+            return 0;
+        }
+        for (i, line) in lines.enumerate() {
+            if line.trim() == "---" {
+                // `lines.next()` above consumed line 0, so the closing fence
+                // is at line index i + 1 and the block covers i + 2 lines.
+                return i + 2;
+            }
+        }
+        0
+    }
+
     /// Extracts frontmatter from file content.
     /// Returns (frontmatter_lines_count, frontmatter_string).
     fn extract_frontmatter(file_content: &str) -> (usize, String) {
-        let lines: Vec<&str> = file_content.split('\n').collect();
-
-        if lines.first().map(|l| l.trim()) != Some("---") {
+        let count = Self::frontmatter_line_count(file_content);
+        if count == 0 {
             return (0, String::new());
         }
-
-        for (i, line) in lines.iter().enumerate().skip(1) {
-            if line.trim() == "---" {
-                let count = i + 1;
-                let frontmatter = lines[..count].join("\n");
-                return (count, frontmatter);
-            }
-        }
-
-        (0, String::new())
+        let frontmatter = file_content
+            .lines()
+            .take(count)
+            .collect::<Vec<_>>()
+            .join("\n");
+        (count, frontmatter)
     }
 
     /// Performs a fuzzy match using nucleo-matcher.
     /// Returns Some((score, indices)) if matched, None otherwise.
+    ///
+    /// `buf` is a reusable scratch buffer for the line's UTF-32 encoding
+    /// (`Utf32Str::new` clears it when needed), avoiding a per-line
+    /// allocation. Panics from the matcher are caught once per file by the
+    /// caller, not per line.
     fn fuzzy_match(
         matcher: &mut Matcher,
         line: &str,
         query: &Utf32Str,
         query_str: &str,
+        buf: &mut Vec<char>,
     ) -> Option<(i64, Vec<u32>)> {
         let trimmed_line = line.trim();
 
@@ -55,83 +75,95 @@ impl<'a> SearchService<'a> {
             return None;
         }
 
-        let mut line_buf = Vec::new();
-        let line_utf32 = Utf32Str::new(trimmed_line, &mut line_buf);
+        let line_utf32 = Utf32Str::new(trimmed_line, buf);
 
         let mut indices = Vec::new();
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            matcher.fuzzy_indices(line_utf32, *query, &mut indices)
-        }));
-
-        match result {
-            Ok(Some(score)) => {
+        match matcher.fuzzy_indices(line_utf32, *query, &mut indices) {
+            Some(score) => {
                 indices.sort_unstable();
                 Some((score as i64, indices))
             }
-            Ok(None) => None,
-            Err(_) => None,
+            None => None,
         }
     }
 
     /// Searches a single note file for matches against the query.
     /// Returns all SearchResult matches found in the file.
+    ///
+    /// `line_buf` is a reusable scratch buffer for UTF-32 encoding. A panic
+    /// inside the matcher aborts only this file; results collected so far are
+    /// kept and the matcher is reset by the caller before the next file.
     fn search_file(
-        &self,
-        path: &std::path::Path,
+        note_manager: &NoteManager,
+        path: &Path,
         is_fuzzy: bool,
         query_utf32: &Utf32Str,
         query_normalized: &str,
         matcher: &mut Matcher,
+        line_buf: &mut Vec<char>,
     ) -> Vec<SearchResult> {
         let content = match fs::read_to_string(path) {
             Ok(c) => c,
             Err(_) => return vec![],
         };
-        let (frontmatter_len, _) = Self::extract_frontmatter(&content);
+        let frontmatter_len = Self::frontmatter_line_count(&content);
         let filename = path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or_default();
-        let formatted_name = self.note_manager.format_note_name(&filename);
-        let created = self.note_manager.extract_created_date(&content);
+        let filename_owned = filename.to_string();
+        let formatted_name = note_manager.format_note_name(filename);
+        let created = note_manager.extract_created_date(&content);
         let mut results = Vec::new();
 
-        for (i, line) in content.lines().enumerate().skip(frontmatter_len) {
-            let stripped = crate::utils::markdown::strip_markdown_line(line);
-            if stripped.is_empty() {
-                continue;
-            }
+        let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            for (i, line) in content.lines().enumerate().skip(frontmatter_len) {
+                let stripped = crate::utils::markdown::strip_markdown_line(line);
+                if stripped.is_empty() {
+                    continue;
+                }
 
-            if let Some((score, indices)) =
-                self.find_match(matcher, query_utf32, query_normalized, is_fuzzy, &stripped)
-            {
-                let (excerpt, adjusted) =
-                    crate::utils::text::generate_excerpt(&stripped, &indices, 100);
-                results.push(SearchResult {
-                    filename: filename.to_string(),
-                    formatted_name: formatted_name.clone(),
-                    created: created.clone(),
-                    excerpt,
-                    line_number: i,
-                    score,
-                    indices: adjusted,
-                });
+                if let Some((score, indices)) = Self::find_match(
+                    matcher,
+                    query_utf32,
+                    query_normalized,
+                    is_fuzzy,
+                    &stripped,
+                    line_buf,
+                ) {
+                    let (excerpt, adjusted) =
+                        crate::utils::text::generate_excerpt(&stripped, &indices, 100);
+                    results.push(SearchResult {
+                        filename: filename_owned.clone(),
+                        formatted_name: formatted_name.clone(),
+                        created: created.clone(),
+                        excerpt,
+                        line_number: i,
+                        score,
+                        indices: adjusted,
+                    });
+                }
             }
+        }));
+        if outcome.is_err() {
+            // The matcher may be in an inconsistent state after a panic;
+            // reset it before it is reused for the next file.
+            *matcher = Matcher::new(Config::DEFAULT);
         }
         results
     }
 
     /// Finds match score and character indices for a line.
     fn find_match(
-        &self,
         matcher: &mut Matcher,
         query_utf32: &Utf32Str,
         query_normalized: &str,
         is_fuzzy: bool,
         line: &str,
+        line_buf: &mut Vec<char>,
     ) -> Option<(i64, Vec<u32>)> {
         if is_fuzzy {
-            Self::fuzzy_match(matcher, line, query_utf32, query_normalized)
+            Self::fuzzy_match(matcher, line, query_utf32, query_normalized, line_buf)
         } else {
             Self::find_exact_match_indices(line, query_normalized)
         }
@@ -139,62 +171,79 @@ impl<'a> SearchService<'a> {
 
     /// Finds character indices for an exact match.
     fn find_exact_match_indices(line: &str, query: &str) -> Option<(i64, Vec<u32>)> {
-        line.to_lowercase().find(query).map(|pos| {
-            let chars: Vec<char> = line.chars().collect();
-            let mut current_byte = 0;
-            let start_idx = chars
-                .iter()
-                .enumerate()
-                .find_map(|(idx, c)| {
-                    if current_byte == pos {
-                        Some(idx)
-                    } else {
-                        current_byte += c.len_utf8();
-                        None
-                    }
-                })
-                .unwrap_or(0);
-            let indices: Vec<u32> = (start_idx..start_idx + query.chars().count())
-                .map(|i| i as u32)
-                .collect();
-            (0, indices)
-        })
+        let pos = line.to_lowercase().find(query)?;
+        // Map the byte position in the lowercased string back to a char index
+        // in the original line. `get` returns None when lowercasing changed
+        // the byte layout before the match (multibyte expansion); fall back
+        // to 0 like the previous implementation did.
+        let start_idx = line
+            .get(..pos)
+            .map(|prefix| prefix.chars().count())
+            .unwrap_or(0);
+        let indices: Vec<u32> = (start_idx..start_idx + query.chars().count())
+            .map(|i| i as u32)
+            .collect();
+        Some((0, indices))
     }
 
     /// Retrieves all markdown note files, sorted by filename descending.
-    fn get_note_files(&self) -> Result<Vec<std::path::PathBuf>, String> {
-        if !self.note_manager.notes_folder.exists() {
-            return Ok(vec![]);
-        }
-
-        let entries = fs::read_dir(&self.note_manager.notes_folder)
-            .map_err(|e| format!("Failed to read directory: {}", e))?;
-
-        let mut files: Vec<_> = entries
-            .filter_map(|e| e.ok())
-            .filter(|e| e.path().extension().and_then(|s| s.to_str()) == Some("md"))
-            .map(|e| e.path())
+    /// Dotfiles are skipped, consistent with `NoteManager::get_sorted_note_files`.
+    fn get_note_files(&self) -> Result<Vec<PathBuf>, String> {
+        let files = self
+            .note_manager
+            .get_sorted_note_files()?
+            .into_iter()
+            .map(|name| self.note_manager.notes_folder.join(name))
             .collect();
-
-        files.sort_by(|a, b| {
-            b.file_name()
-                .unwrap_or_default()
-                .cmp(a.file_name().unwrap_or_default())
-        });
-
         Ok(files)
+    }
+
+    /// Runs `chunk_fn` over the note files in parallel using scoped threads
+    /// and merges the per-chunk results in file (descending name) order.
+    ///
+    /// Each chunk gets one invocation of `chunk_fn`, so per-chunk scratch
+    /// state (e.g. a nucleo `Matcher` and UTF-32 buffers) is created once per
+    /// chunk instead of once per file.
+    fn par_map_files<T, F>(&self, chunk_fn: F) -> Result<Vec<T>, String>
+    where
+        T: Send,
+        F: Fn(&NoteManager, &[PathBuf]) -> Vec<T> + Sync,
+    {
+        let files = self.get_note_files()?;
+        if files.is_empty() {
+            return Ok(Vec::new());
+        }
+        let workers = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(1)
+            .min(files.len())
+            .max(1);
+        let chunk_size = files.len().div_ceil(workers);
+        let note_manager = self.note_manager;
+        let chunk_fn = &chunk_fn;
+        let results = std::thread::scope(|scope| {
+            let handles: Vec<_> = files
+                .chunks(chunk_size)
+                .map(|chunk| scope.spawn(move || chunk_fn(note_manager, chunk)))
+                .collect();
+            handles
+                .into_iter()
+                .flat_map(|h| h.join().unwrap_or_default())
+                .collect::<Vec<_>>()
+        });
+        Ok(results)
     }
 
     /// Extracts all unique thread names (lines starting with !!!) from markdown content.
     fn extract_thread_names(content: &str) -> Vec<String> {
-        let (frontmatter_len, _) = Self::extract_frontmatter(content);
+        let frontmatter_len = Self::frontmatter_line_count(content);
         let mut names = Vec::new();
 
         for line in content.lines().skip(frontmatter_len) {
-            if line.starts_with("!!! ") {
-                let name = line[4..].trim().to_string();
+            if let Some(name) = line.strip_prefix("!!! ") {
+                let name = name.trim();
                 if !name.is_empty() {
-                    names.push(name);
+                    names.push(name.to_string());
                 }
             }
         }
@@ -415,22 +464,33 @@ impl<'a> SearchService<'a> {
             let query_normalized = query.to_lowercase();
             let mut query_buf = Vec::new();
             let query_utf32 = Utf32Str::new(&query_normalized, &mut query_buf);
+            let mut line_buf = Vec::new();
 
-            for (name, count) in thread_counts {
-                let matched = if is_fuzzy {
-                    Self::fuzzy_match(&mut matcher, &name, &query_utf32, &query_normalized)
+            // One catch_unwind for the whole loop: a matcher panic skips the
+            // remaining names instead of aborting per name.
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                for (name, count) in thread_counts {
+                    let matched = if is_fuzzy {
+                        Self::fuzzy_match(
+                            &mut matcher,
+                            &name,
+                            &query_utf32,
+                            &query_normalized,
+                            &mut line_buf,
+                        )
                         .is_some()
-                } else {
-                    name.to_lowercase().contains(&query_normalized)
-                };
+                    } else {
+                        name.to_lowercase().contains(&query_normalized)
+                    };
 
-                if matched {
-                    results.push(ThreadSearchResult {
-                        name,
-                        note_count: count,
-                    });
+                    if matched {
+                        results.push(ThreadSearchResult {
+                            name,
+                            note_count: count,
+                        });
+                    }
                 }
-            }
+            }));
         }
 
         // Sort by note count descending, then by name
@@ -438,41 +498,64 @@ impl<'a> SearchService<'a> {
         results
     }
 
+    /// Keeps at most `max` results. For fuzzy search this is a bounded
+    /// top-`max` selection by score (O(n) `select_nth_unstable` instead of
+    /// sorting everything); for exact search the merged results are already in
+    /// descending filename order because files are scanned newest-first, so a
+    /// plain truncation suffices.
+    fn cap_results(
+        mut results: Vec<SearchResult>,
+        is_fuzzy: bool,
+        max: usize,
+    ) -> Vec<SearchResult> {
+        if is_fuzzy {
+            if results.len() > max {
+                results.select_nth_unstable_by(max - 1, |a, b| b.score.cmp(&a.score));
+                results.truncate(max);
+            }
+            // Deterministic order: score desc, then newest file, then line.
+            results.sort_by(|a, b| {
+                b.score
+                    .cmp(&a.score)
+                    .then_with(|| b.filename.cmp(&a.filename))
+                    .then_with(|| a.line_number.cmp(&b.line_number))
+            });
+        } else {
+            results.truncate(max);
+        }
+        results
+    }
+
     /// Searches all notes in the notes folder for the given query.
     /// Returns up to 100 results, sorted by score (fuzzy) or filename (exact).
+    /// Files are scanned in parallel across scoped threads.
     pub fn search(&self, query: &str, is_fuzzy: bool) -> Result<Vec<SearchResult>, String> {
         if query.trim().is_empty() {
             return Ok(vec![]);
         }
 
-        let mut matcher = Matcher::new(Config::DEFAULT);
         let query_normalized = query.to_lowercase();
-        let mut query_buf = Vec::new();
-        let query_utf32 = Utf32Str::new(&query_normalized, &mut query_buf);
-
-        let files = self.get_note_files()?;
-
-        let mut all_results: Vec<SearchResult> = files
-            .iter()
-            .flat_map(|path| {
-                self.search_file(
+        let results = self.par_map_files(|note_manager, chunk| {
+            let mut matcher = Matcher::new(Config::DEFAULT);
+            let mut query_buf = Vec::new();
+            let query_utf32 = Utf32Str::new(query_normalized.as_str(), &mut query_buf);
+            let mut line_buf = Vec::new();
+            let mut out = Vec::new();
+            for path in chunk {
+                out.extend(Self::search_file(
+                    note_manager,
                     path,
                     is_fuzzy,
                     &query_utf32,
                     &query_normalized,
                     &mut matcher,
-                )
-            })
-            .collect();
+                    &mut line_buf,
+                ));
+            }
+            out
+        })?;
 
-        if is_fuzzy {
-            all_results.sort_by(|a, b| b.score.cmp(&a.score));
-        } else {
-            all_results.sort_by(|a, b| b.filename.cmp(&a.filename));
-        }
-
-        all_results.truncate(100);
-        Ok(all_results)
+        Ok(Self::cap_results(results, is_fuzzy, 100))
     }
 
     /// Searches for unique thread names (lines starting with !!!) across all notes.
@@ -481,17 +564,19 @@ impl<'a> SearchService<'a> {
         query: &str,
         is_fuzzy: bool,
     ) -> Result<Vec<ThreadSearchResult>, String> {
-        let files = self.get_note_files()?;
-        let mut thread_counts: HashMap<String, usize> = HashMap::new();
-
-        for path in files {
-            let content = match fs::read_to_string(path) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
-            for name in Self::extract_thread_names(&content) {
-                *thread_counts.entry(name).or_insert(0) += 1;
+        let names = self.par_map_files(|_note_manager, chunk| {
+            let mut names = Vec::new();
+            for path in chunk {
+                if let Ok(content) = fs::read_to_string(path) {
+                    names.extend(Self::extract_thread_names(&content));
+                }
             }
+            names
+        })?;
+
+        let mut thread_counts: HashMap<String, usize> = HashMap::new();
+        for name in names {
+            *thread_counts.entry(name).or_insert(0) += 1;
         }
 
         Ok(self.filter_thread_results(thread_counts, query, is_fuzzy))
@@ -499,18 +584,19 @@ impl<'a> SearchService<'a> {
 
     /// Searches for unique tags across all notes.
     pub fn search_tags(&self, query: &str, is_fuzzy: bool) -> Result<Vec<TagSearchResult>, String> {
-        let files = self.get_note_files()?;
-        let mut tag_counts: HashMap<String, usize> = HashMap::new();
-
-        for path in files {
-            let content = match fs::read_to_string(path) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
-            let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
-            for tag in tags {
-                *tag_counts.entry(tag).or_insert(0) += 1;
+        let tags = self.par_map_files(|_note_manager, chunk| {
+            let mut tags = Vec::new();
+            for path in chunk {
+                if let Ok(content) = fs::read_to_string(path) {
+                    tags.extend(crate::utils::tag_parser::parse_tags_from_content(&content));
+                }
             }
+            tags
+        })?;
+
+        let mut tag_counts: HashMap<String, usize> = HashMap::new();
+        for tag in tags {
+            *tag_counts.entry(tag).or_insert(0) += 1;
         }
 
         Ok(self.filter_tag_results(tag_counts, query, is_fuzzy))
@@ -538,22 +624,32 @@ impl<'a> SearchService<'a> {
             let query_normalized = query.to_lowercase();
             let mut query_buf = Vec::new();
             let query_utf32 = Utf32Str::new(&query_normalized, &mut query_buf);
+            let mut line_buf = Vec::new();
 
-            for (name, count) in tag_counts {
-                let matched = if is_fuzzy {
-                    Self::fuzzy_match(&mut matcher, &name, &query_utf32, &query_normalized)
+            // One catch_unwind for the whole loop (see filter_thread_results).
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                for (name, count) in tag_counts {
+                    let matched = if is_fuzzy {
+                        Self::fuzzy_match(
+                            &mut matcher,
+                            &name,
+                            &query_utf32,
+                            &query_normalized,
+                            &mut line_buf,
+                        )
                         .is_some()
-                } else {
-                    name.to_lowercase().contains(&query_normalized)
-                };
+                    } else {
+                        name.to_lowercase().contains(&query_normalized)
+                    };
 
-                if matched {
-                    results.push(TagSearchResult {
-                        name,
-                        note_count: count,
-                    });
+                    if matched {
+                        results.push(TagSearchResult {
+                            name,
+                            note_count: count,
+                        });
+                    }
                 }
-            }
+            }));
         }
 
         // Sort by note count descending, then by name
@@ -568,62 +664,69 @@ impl<'a> SearchService<'a> {
         query: &str,
         is_fuzzy: bool,
     ) -> Result<Vec<SearchResult>, String> {
-        let files = self.get_note_files()?;
-        let mut results = Vec::new();
-
-        let mut matcher = Matcher::new(Config::DEFAULT);
         let query_normalized = query.to_lowercase();
-        let mut query_buf = Vec::new();
-        let query_utf32 = Utf32Str::new(&query_normalized, &mut query_buf);
+        let tag_lower = tag.to_lowercase();
+        let query_empty = query.trim().is_empty();
 
-        for path in files {
-            let content = match fs::read_to_string(&path) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
+        let mut results = self.par_map_files(|note_manager, chunk| {
+            let mut matcher = Matcher::new(Config::DEFAULT);
+            let mut query_buf = Vec::new();
+            let query_utf32 = Utf32Str::new(query_normalized.as_str(), &mut query_buf);
+            let mut line_buf = Vec::new();
+            let mut out = Vec::new();
 
-            let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
-            if !tags.iter().any(|t| t.to_lowercase() == tag.to_lowercase()) {
-                continue;
+            for path in chunk {
+                let content = match fs::read_to_string(path) {
+                    Ok(c) => c,
+                    Err(_) => continue,
+                };
+
+                let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
+                if !tags.iter().any(|t| t.to_lowercase() == tag_lower) {
+                    continue;
+                }
+
+                if query_empty {
+                    let filename = path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or_default();
+                    let formatted_name = note_manager.format_note_name(filename);
+
+                    let fm_len = Self::frontmatter_line_count(&content);
+                    // Find first non-empty line after frontmatter
+                    let first_line = content
+                        .lines()
+                        .skip(fm_len)
+                        .find(|l| !l.trim().is_empty())
+                        .map(|l| l.trim().to_string())
+                        .unwrap_or_else(|| formatted_name.clone());
+
+                    out.push(SearchResult {
+                        filename: filename.to_string(),
+                        formatted_name,
+                        created: note_manager.extract_created_date(&content),
+                        excerpt: first_line,
+                        line_number: fm_len,
+                        score: 0,
+                        indices: vec![],
+                    });
+                } else {
+                    out.extend(Self::search_file(
+                        note_manager,
+                        path,
+                        is_fuzzy,
+                        &query_utf32,
+                        &query_normalized,
+                        &mut matcher,
+                        &mut line_buf,
+                    ));
+                }
             }
+            out
+        })?;
 
-            if query.trim().is_empty() {
-                let filename = path
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or_default();
-                let formatted_name = self.note_manager.format_note_name(filename);
-
-                let (fm_len, _) = Self::extract_frontmatter(&content);
-                // Find first non-empty line after frontmatter
-                let first_line = content
-                    .lines()
-                    .skip(fm_len)
-                    .find(|l| !l.trim().is_empty())
-                    .map(|l| l.trim().to_string())
-                    .unwrap_or_else(|| formatted_name.clone());
-
-                results.push(SearchResult {
-                    filename: filename.to_string(),
-                    formatted_name,
-                    created: self.note_manager.extract_created_date(&content),
-                    excerpt: first_line,
-                    line_number: fm_len,
-                    score: 0,
-                    indices: vec![],
-                });
-            } else {
-                results.extend(self.search_file(
-                    &path,
-                    is_fuzzy,
-                    &query_utf32,
-                    &query_normalized,
-                    &mut matcher,
-                ));
-            }
-        }
-
-        if is_fuzzy && !query.trim().is_empty() {
+        if is_fuzzy && !query_empty {
             results.sort_by(|a, b| b.score.cmp(&a.score));
         } else {
             // Sort by filename descending (newest notes first)
@@ -635,34 +738,36 @@ impl<'a> SearchService<'a> {
 
     /// Aggregates content from all threads matching the given name across all notes.
     pub fn aggregate_thread(&self, thread_name: &str) -> Result<ThreadAggregationResult, String> {
-        let files = self.get_note_files()?;
-        let mut items = Vec::new();
+        let items = self.par_map_files(|note_manager, chunk| {
+            let mut items = Vec::new();
 
-        for path in files {
-            let content = match fs::read_to_string(&path) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
+            for path in chunk {
+                let content = match fs::read_to_string(path) {
+                    Ok(c) => c,
+                    Err(_) => continue,
+                };
 
-            // Extract all thread blocks with the matching name from this note
-            let thread_blocks = Self::extract_all_thread_blocks_with_id(&content, thread_name);
+                // Extract all thread blocks with the matching name from this note
+                let thread_blocks = Self::extract_all_thread_blocks_with_id(&content, thread_name);
 
-            let filename = path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or_default()
-                .to_string();
+                let filename = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default()
+                    .to_string();
 
-            for (block_content, thread_id) in thread_blocks {
-                items.push(ThreadAggregationItem {
-                    filename: filename.clone(),
-                    formatted_date: self.note_manager.format_note_name(&filename),
-                    created: self.note_manager.extract_created_date(&content),
-                    content: block_content,
-                    thread_id,
-                });
+                for (block_content, thread_id) in thread_blocks {
+                    items.push(ThreadAggregationItem {
+                        filename: filename.clone(),
+                        formatted_date: note_manager.format_note_name(&filename),
+                        created: note_manager.extract_created_date(&content),
+                        content: block_content,
+                        thread_id,
+                    });
+                }
             }
-        }
+            items
+        })?;
 
         Ok(ThreadAggregationResult {
             thread_name: thread_name.to_string(),
@@ -674,65 +779,67 @@ impl<'a> SearchService<'a> {
     pub fn get_pinned_threads(&self) -> Result<Vec<PinnedThreadItem>, String> {
         use crate::models::note_session::NoteSession;
 
-        let files = self.get_note_files()?;
-        let mut pinned_threads = Vec::new();
+        let mut pinned_threads = self.par_map_files(|note_manager, chunk| {
+            let mut pinned = Vec::new();
 
-        for path in files {
-            let content = match fs::read_to_string(&path) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
+            for path in chunk {
+                let content = match fs::read_to_string(path) {
+                    Ok(c) => c,
+                    Err(_) => continue,
+                };
 
-            let filename = path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or_default()
-                .to_string();
-            let formatted_date = self.note_manager.format_note_name(&filename);
+                let filename = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default()
+                    .to_string();
+                let formatted_date = note_manager.format_note_name(&filename);
 
-            // Load the session to get thread metadata including pinned status
-            let mut session = NoteSession::new();
-            session.load(path, content.clone());
+                // Load the session to get thread metadata including pinned status
+                let mut session = NoteSession::new();
+                session.load(path.to_path_buf(), content.clone());
 
-            // Find pinned threads
-            for thread in &session.threads {
-                if thread.pinned {
-                    // Extract excerpt from the thread content
-                    let (frontmatter_len, _) = Self::extract_frontmatter(&content);
-                    let lines: Vec<&str> = content.lines().collect();
+                // Find pinned threads
+                for thread in &session.threads {
+                    if thread.pinned {
+                        // Extract excerpt from the thread content
+                        let frontmatter_len = Self::frontmatter_line_count(&content);
+                        let lines: Vec<&str> = content.lines().collect();
 
-                    // Get the first non-empty line of the thread for excerpt
-                    let mut excerpt = String::new();
-                    let start = thread.start_line.max(frontmatter_len);
-                    let end = thread.end_line.min(lines.len());
+                        // Get the first non-empty line of the thread for excerpt
+                        let mut excerpt = String::new();
+                        let start = thread.start_line.max(frontmatter_len);
+                        let end = thread.end_line.min(lines.len());
 
-                    for i in start..end {
-                        let line = lines[i].trim();
-                        if !line.is_empty() && !line.starts_with("!!!") {
-                            let stripped = crate::utils::markdown::strip_markdown_line(line);
-                            if !stripped.is_empty() {
-                                excerpt = stripped;
-                                break;
+                        for i in start..end {
+                            let line = lines[i].trim();
+                            if !line.is_empty() && !line.starts_with("!!!") {
+                                let stripped = crate::utils::markdown::strip_markdown_line(line);
+                                if !stripped.is_empty() {
+                                    excerpt = stripped;
+                                    break;
+                                }
                             }
                         }
-                    }
 
-                    // If no content found, use thread name as excerpt
-                    if excerpt.is_empty() {
-                        excerpt = thread.name.clone();
-                    }
+                        // If no content found, use thread name as excerpt
+                        if excerpt.is_empty() {
+                            excerpt = thread.name.clone();
+                        }
 
-                    pinned_threads.push(PinnedThreadItem {
-                        thread_id: thread.id.clone(),
-                        thread_name: thread.name.clone(),
-                        filename: filename.clone(),
-                        formatted_date: formatted_date.clone(),
-                        excerpt,
-                        line_number: thread.start_line,
-                    });
+                        pinned.push(PinnedThreadItem {
+                            thread_id: thread.id.clone(),
+                            thread_name: thread.name.clone(),
+                            filename: filename.clone(),
+                            formatted_date: formatted_date.clone(),
+                            excerpt,
+                            line_number: thread.start_line,
+                        });
+                    }
                 }
             }
-        }
+            pinned
+        })?;
 
         // Sort by filename descending (newest first), then by thread name
         pinned_threads.sort_by(|a, b| {
@@ -1411,6 +1518,131 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
             files[2].file_name().unwrap().to_string_lossy(),
             "2024-01-01.md"
         );
+    }
+
+    #[test]
+    fn test_get_note_files_skips_dotfiles() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+
+        fs::write(notes_path.join("2024-01-01.md"), "# Note").expect("Failed to write file");
+        fs::write(notes_path.join(".hidden.md"), "# Hidden").expect("Failed to write file");
+        fs::write(notes_path.join(".DS_Store.md"), "junk").expect("Failed to write file");
+
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let files = search_service
+            .get_note_files()
+            .expect("get_note_files failed");
+        assert_eq!(files.len(), 1);
+        assert_eq!(
+            files[0].file_name().unwrap().to_string_lossy(),
+            "2024-01-01.md"
+        );
+    }
+
+    ///
+    /// Search Tests (parallel scan, bounded top-100)
+    ///
+    #[test]
+    fn test_search_exact_caps_at_100() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+
+        let content = (0..150)
+            .map(|i| format!("test line {}", i))
+            .collect::<Vec<_>>()
+            .join("\n");
+        fs::write(notes_path.join("2024-01-01.md"), content).expect("Failed to write file");
+
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service.search("test", false).expect("Search failed");
+        assert_eq!(results.len(), 100, "Exact search should cap at 100 results");
+        // Files are scanned newest-first and lines in order, so the first 100
+        // matching lines are kept.
+        assert_eq!(results[0].line_number, 0);
+        assert_eq!(results[99].line_number, 99);
+    }
+
+    #[test]
+    fn test_search_fuzzy_caps_at_100_and_sorted_by_score() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+
+        let content = (0..150)
+            .map(|i| format!("test line number {}", i))
+            .collect::<Vec<_>>()
+            .join("\n");
+        fs::write(notes_path.join("2024-01-01.md"), content).expect("Failed to write file");
+
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service.search("tst", true).expect("Search failed");
+        assert_eq!(results.len(), 100, "Fuzzy search should cap at 100 results");
+        assert!(
+            results.windows(2).all(|w| w[0].score >= w[1].score),
+            "Results should be sorted by score descending"
+        );
+    }
+
+    #[test]
+    fn test_search_exact_orders_newest_file_first_across_files() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+
+        for day in 1..=5 {
+            let content = format!("needle in note {}", day);
+            fs::write(notes_path.join(format!("2024-01-{:02}.md", day)), content)
+                .expect("Failed to write file");
+        }
+
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service
+            .search("needle", false)
+            .expect("Search failed");
+        assert_eq!(results.len(), 5);
+        let filenames: Vec<&str> = results.iter().map(|r| r.filename.as_str()).collect();
+        assert_eq!(
+            filenames,
+            vec![
+                "2024-01-05.md",
+                "2024-01-04.md",
+                "2024-01-03.md",
+                "2024-01-02.md",
+                "2024-01-01.md"
+            ],
+            "Parallel scan must merge results in descending filename order"
+        );
+    }
+
+    #[test]
+    fn test_search_skips_dotfiles() {
+        let temp_dir = tempdir().expect("Failed to create temp dir");
+        let notes_path = temp_dir.path().to_path_buf();
+        fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
+
+        fs::write(notes_path.join("2024-01-01.md"), "visible needle")
+            .expect("Failed to write file");
+        fs::write(notes_path.join(".hidden.md"), "hidden needle").expect("Failed to write file");
+
+        let note_manager = NoteManager::new(notes_path, "en".to_string());
+        let search_service = SearchService::new(&note_manager);
+
+        let results = search_service
+            .search("needle", false)
+            .expect("Search failed");
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].filename, "2024-01-01.md");
     }
 
     ///
