@@ -2,44 +2,45 @@
 
 use include_dir::{include_dir, Dir};
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 /// Directory containing JSON translation files.
 static TRANSLATIONS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/translations");
+
+/// Parsed translation maps keyed by locale id, parsed once on first use.
+static TRANSLATIONS: LazyLock<HashMap<String, HashMap<String, String>>> = LazyLock::new(|| {
+    TRANSLATIONS_DIR
+        .files()
+        .filter_map(|file| {
+            let id = file.path().file_stem()?.to_str()?.to_string();
+            let map = serde_json::from_str(file.contents_utf8()?).ok()?;
+            Some((id, map))
+        })
+        .collect()
+});
 
 /// Returns the translation map for a specific locale.
 ///
 /// If the requested locale is not found, it defaults to English ('en').
 #[tauri::command]
 pub fn get_translations(locale: String) -> HashMap<String, String> {
-    let filename = format!("{}.json", locale);
-
-    TRANSLATIONS_DIR
-        .get_file(&filename)
-        .and_then(|file| file.contents_utf8())
-        .and_then(|contents| serde_json::from_str(contents).ok())
-        .unwrap_or_else(|| {
-            TRANSLATIONS_DIR
-                .get_file("en.json")
-                .and_then(|file| file.contents_utf8())
-                .and_then(|contents| serde_json::from_str(contents).ok())
-                .unwrap_or_default()
-        })
+    TRANSLATIONS
+        .get(&locale)
+        .or_else(|| TRANSLATIONS.get("en"))
+        .cloned()
+        .unwrap_or_default()
 }
 
 /// Returns a list of all available locales based on the JSON files in the translations directory.
 pub fn get_available_locales() -> Vec<(String, String)> {
-    TRANSLATIONS_DIR
-        .files()
-        .filter_map(|file| {
-            let id = file.path().file_stem()?.to_str()?.to_string();
-            let contents = file.contents_utf8()?;
-            let json: HashMap<String, String> = serde_json::from_str(contents).ok()?;
-            let name = json
+    TRANSLATIONS
+        .iter()
+        .map(|(id, map)| {
+            let name = map
                 .get("locale.name")
                 .cloned()
                 .unwrap_or_else(|| id.clone());
-
-            Some((id, name))
+            (id.clone(), name)
         })
         .collect()
 }

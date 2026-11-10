@@ -3,29 +3,34 @@
 use crate::models::app_state::{schedule_config_save, AppState};
 use include_dir::{include_dir, Dir};
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use tauri::State;
 
 /// Directory containing JSON theme definition files.
 static THEMES_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/themes");
 
+/// Parsed color maps keyed by theme id, parsed once on first use.
+static THEMES: LazyLock<HashMap<String, HashMap<String, String>>> = LazyLock::new(|| {
+    THEMES_DIR
+        .files()
+        .filter_map(|file| {
+            let id = file.path().file_stem()?.to_str()?.to_string();
+            let map = serde_json::from_str(file.contents_utf8()?).ok()?;
+            Some((id, map))
+        })
+        .collect()
+});
+
 /// Returns the color mapping for a specific theme.
 ///
-/// If the requested theme is not found, it defaults to the 'light' theme.
+/// If the requested theme is not found, it defaults to the 'lobby' theme.
 #[tauri::command]
 pub fn get_theme_colors(theme: String) -> HashMap<String, String> {
-    let filename = format!("{}.json", theme);
-
-    THEMES_DIR
-        .get_file(&filename)
-        .and_then(|file| file.contents_utf8())
-        .and_then(|contents| serde_json::from_str(contents).ok())
-        .unwrap_or_else(|| {
-            THEMES_DIR
-                .get_file("lobby.json")
-                .and_then(|file| file.contents_utf8())
-                .and_then(|contents| serde_json::from_str(contents).ok())
-                .unwrap_or_default()
-        })
+    THEMES
+        .get(&theme)
+        .or_else(|| THEMES.get("lobby"))
+        .cloned()
+        .unwrap_or_default()
 }
 
 /// Updates the current application theme.
