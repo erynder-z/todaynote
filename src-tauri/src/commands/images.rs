@@ -66,6 +66,14 @@ fn extension_from_source(mime: &str, name: &str) -> Option<String> {
         })
 }
 
+/// Conservative size pre-check for base64 payloads: a payload of
+/// `encoded_len` bytes decodes to at most `encoded_len * 3 / 4` bytes, so
+/// anything that could exceed `max` decoded bytes is rejected before the
+/// decode allocates.
+fn base64_exceeds_limit(encoded_len: usize, max: usize) -> bool {
+    encoded_len.saturating_mul(3) / 4 > max
+}
+
 /// Writes image bytes into the notes images directory under a fresh UUID
 /// filename and returns the stored path relative to the notes folder
 /// (e.g. `images/<uuid>.<ext>`).
@@ -120,7 +128,7 @@ pub async fn add_image_from_url(url: String, state: State<'_, AppState>) -> Resu
         return Err("Only http:// and https:// URLs are supported".to_string());
     }
 
-    let response = reqwest::get(&url)
+    let mut response = reqwest::get(&url)
         .await
         .map_err(|e| format!("Failed to download image: {}", e))?;
 
@@ -129,6 +137,13 @@ pub async fn add_image_from_url(url: String, state: State<'_, AppState>) -> Resu
             "Failed to download image: HTTP {}",
             response.status()
         ));
+    }
+
+    // Reject up front when the server declares a body larger than the cap
+    if let Some(len) = response.content_length() {
+        if len > MAX_DOWNLOAD_BYTES as u64 {
+            return Err("Image is too large (maximum 25 MB)".to_string());
+        }
     }
 
     let content_type = response
@@ -154,10 +169,24 @@ pub async fn add_image_from_url(url: String, state: State<'_, AppState>) -> Resu
             .to_string(),
     };
 
-    let bytes = response
-        .bytes()
+    // Stream the body with a hard cap instead of buffering it whole: the
+    // Content-Length header may be missing or wrong, so the limit is
+    // enforced while reading and the download is aborted as soon as it is
+    // exceeded.
+    let mut bytes = Vec::new();
+    if let Some(len) = response.content_length() {
+        bytes.reserve(len as usize);
+    }
+    while let Some(chunk) = response
+        .chunk()
         .await
-        .map_err(|e| format!("Failed to download image: {}", e))?;
+        .map_err(|e| format!("Failed to download image: {}", e))?
+    {
+        bytes.extend_from_slice(&chunk);
+        if bytes.len() > MAX_DOWNLOAD_BYTES {
+            return Err("Image is too large (maximum 25 MB)".to_string());
+        }
+    }
 
     store_image_bytes(&bytes, &ext, &state)
 }
@@ -176,8 +205,15 @@ pub async fn add_image_from_bytes(
 ) -> Result<String, String> {
     use base64::Engine;
 
+    let data = data.trim();
+    // A base64 payload decodes to at most 3/4 of its encoded length; reject
+    // oversized payloads before allocating the decoded buffer.
+    if base64_exceeds_limit(data.len(), MAX_DOWNLOAD_BYTES) {
+        return Err("Image is too large (maximum 25 MB)".to_string());
+    }
+
     let bytes = base64::engine::general_purpose::STANDARD
-        .decode(data.trim())
+        .decode(data)
         .map_err(|e| format!("Invalid image data: {}", e))?;
 
     let ext =
@@ -329,6 +365,16 @@ mod tests {
         assert_eq!(extension_from_source("image/svg+xml", "icon.svg"), None);
         assert_eq!(extension_from_source("text/plain", "notes.txt"), None);
         assert_eq!(extension_from_source("", ""), None);
+    }
+
+    #[test]
+    fn test_base64_exceeds_limit() {
+        // 25 MB decoded needs 25 MB * 4/3 encoded; anything larger is rejected.
+        let max = MAX_DOWNLOAD_BYTES;
+        assert!(!base64_exceeds_limit(0, max));
+        assert!(!base64_exceeds_limit(max * 4 / 3, max));
+        assert!(base64_exceeds_limit(max * 4 / 3 + 4, max));
+        assert!(base64_exceeds_limit(usize::MAX, max));
     }
 
     #[test]
