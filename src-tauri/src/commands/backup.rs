@@ -1,15 +1,16 @@
 // Backup commands: export and import the notes folder (notes plus embedded
 // images) as a zip archive, with optional app-level encryption
 // (XChaCha20-Poly1305 + Argon2id).
+//
 use crate::models::app_state::AppState;
 use crate::models::response_types::ImportReport;
 use chacha20poly1305::{
-    aead::{Aead, KeyInit},
+    aead::{AeadInOut, KeyInit, Tag},
     XChaCha20Poly1305, XNonce,
 };
 use rand::{rngs::SysRng, TryRng};
 use std::fs;
-use std::io::{Cursor, Read, Seek, Write};
+use std::io::{self, Cursor, Read, Seek, SeekFrom, Write};
 use std::path::Path;
 use tauri::State;
 use zip::write::SimpleFileOptions;
@@ -21,33 +22,145 @@ const TNBK_MAGIC: &[u8; 8] = b"tnbk\x00\x01\x00\x00";
 const SALT_LEN: usize = 16;
 /// XChaCha20-Poly1305 nonce length in bytes.
 const NONCE_LEN: usize = 24;
+/// Poly1305 tag length in bytes.
+const TAG_LEN: usize = 16;
 /// Argon2id output key length (256 bits for XChaCha20-Poly1305).
 const KEY_LEN: usize = 32;
-/// Argon2id memory cost (32 MiB).
-const ARGON2_M_COST: u32 = 32 * 1024;
+/// Total container header: magic (8) + salt (16) + nonce (24).
+const HEADER_LEN: usize = TNBK_MAGIC.len() + SALT_LEN + NONCE_LEN;
+/// Argon2id memory cost (19 MiB) — the minimum configuration the OWASP
+/// password-storage cheat sheet lists for Argon2id.
+const ARGON2_M_COST: u32 = 19 * 1024;
 /// Argon2id time cost (iterations).
-const ARGON2_T_COST: u32 = 3;
+const ARGON2_T_COST: u32 = 2;
 /// Argon2id parallelism.
-const ARGON2_P_COST: u32 = 4;
+const ARGON2_P_COST: u32 = 1;
 
-/// Writes notes and images into a zip archive in memory.
+/// Derives a 256-bit key from a passphrase and salt using Argon2id.
+fn derive_key(passphrase: &str, salt: &[u8]) -> Result<[u8; KEY_LEN], String> {
+    let params = argon2::Params::new(ARGON2_M_COST, ARGON2_T_COST, ARGON2_P_COST, Some(KEY_LEN))
+        .map_err(|e| format!("Argon2 params error: {}", e))?;
+    let argon2 = argon2::Argon2::new(argon2::Algorithm::Argon2id, argon2::Version::V0x13, params);
+    let mut key = [0u8; KEY_LEN];
+    argon2
+        .hash_password_into(passphrase.as_bytes(), salt, &mut key)
+        .map_err(|e| format!("Key derivation failed: {}", e))?;
+    Ok(key)
+}
+
+/// Encrypts `buf` in place (the Poly1305 tag is appended) and returns the
+/// container header (magic + salt + nonce) to prepend.
+fn encrypt_buffer_in_place(
+    buf: &mut Vec<u8>,
+    passphrase: &str,
+) -> Result<[u8; HEADER_LEN], String> {
+    let mut header = [0u8; HEADER_LEN];
+    header[..TNBK_MAGIC.len()].copy_from_slice(TNBK_MAGIC);
+    let mut rng = SysRng;
+    rng.try_fill_bytes(&mut header[TNBK_MAGIC.len()..TNBK_MAGIC.len() + SALT_LEN])
+        .map_err(|e| format!("Failed to generate salt: {e}"))?;
+    rng.try_fill_bytes(&mut header[TNBK_MAGIC.len() + SALT_LEN..HEADER_LEN])
+        .map_err(|e| format!("Failed to generate nonce: {e}"))?;
+
+    let key = derive_key(
+        passphrase,
+        &header[TNBK_MAGIC.len()..TNBK_MAGIC.len() + SALT_LEN],
+    )?;
+    let cipher = XChaCha20Poly1305::new(&key.into());
+    let nonce_arr: [u8; NONCE_LEN] = header[TNBK_MAGIC.len() + SALT_LEN..HEADER_LEN]
+        .try_into()
+        .map_err(|_| "Invalid nonce in backup header".to_string())?;
+    let nonce: XNonce = nonce_arr.into();
+    let tag = cipher
+        .encrypt_inout_detached(&nonce, b"", buf.as_mut_slice().into())
+        .map_err(|e| format!("Encryption failed: {}", e))?;
+    buf.extend_from_slice(&tag);
+    Ok(header)
+}
+
+/// Decrypts a `.tnbk` container in place: on success `buf` (header +
+/// ciphertext + tag) is truncated to just the plaintext.
+fn decrypt_buffer_in_place(buf: &mut Vec<u8>, passphrase: &str) -> Result<(), String> {
+    if buf.len() < HEADER_LEN {
+        return Err("File is too small to be a valid encrypted backup".to_string());
+    }
+    if &buf[..TNBK_MAGIC.len()] != TNBK_MAGIC {
+        return Err("File is not a valid encrypted backup".to_string());
+    }
+    if buf.len() < HEADER_LEN + TAG_LEN {
+        return Err("File is too small to be a valid encrypted backup".to_string());
+    }
+    let key = derive_key(
+        passphrase,
+        &buf[TNBK_MAGIC.len()..TNBK_MAGIC.len() + SALT_LEN],
+    )?;
+    let cipher = XChaCha20Poly1305::new(&key.into());
+    let nonce_arr: [u8; NONCE_LEN] = buf[TNBK_MAGIC.len() + SALT_LEN..HEADER_LEN]
+        .try_into()
+        .map_err(|_| "Invalid nonce in backup header".to_string())?;
+    let nonce: XNonce = nonce_arr.into();
+
+    let body_len = buf.len() - HEADER_LEN;
+    let (ct, tag_bytes) = buf[HEADER_LEN..].split_at_mut(body_len - TAG_LEN);
+    let tag_arr: [u8; TAG_LEN] = tag_bytes
+        .try_into()
+        .map_err(|_| "Invalid tag in backup".to_string())?;
+    let tag: Tag<XChaCha20Poly1305> = tag_arr.into();
+    cipher
+        .decrypt_inout_detached(&nonce, b"", ct.into(), &tag)
+        .map_err(|_| "Wrong password or corrupted backup".to_string())?;
+    buf.truncate(HEADER_LEN + body_len - TAG_LEN);
+    buf.drain(..HEADER_LEN);
+    Ok(())
+}
+
+/// Encrypts the given plaintext bytes into the `.tnbk` container format:
+/// `magic (8) | salt (16) | nonce (24) | ciphertext | tag`.
+/// Test helper; production export streams to files via [`export_archive_to_path`].
+#[cfg(test)]
+fn encrypt_bytes(plaintext: &[u8], passphrase: &str) -> Result<Vec<u8>, String> {
+    let mut buf = plaintext.to_vec();
+    let header = encrypt_buffer_in_place(&mut buf, passphrase)?;
+    let mut out = Vec::with_capacity(HEADER_LEN + buf.len());
+    out.extend_from_slice(&header);
+    out.extend_from_slice(&buf);
+    Ok(out)
+}
+
+/// Decrypts `.tnbk` container bytes using the given passphrase.
+/// Returns the recovered plaintext (the zip bytes) or an error on wrong password / corruption.
+/// Test helper; production import uses [`decrypt_buffer_in_place`] on the file buffer.
+#[cfg(test)]
+fn decrypt_bytes(data: &[u8], passphrase: &str) -> Result<Vec<u8>, String> {
+    let mut buf = data.to_vec();
+    decrypt_buffer_in_place(&mut buf, passphrase)?;
+    Ok(buf)
+}
+
+/// Streams notes and images into a zip archive written to `writer`, returning
+/// the writer on success.
 ///
-/// Only files with an allow-listed image extension are picked up from the
-/// `images` subfolder; anything else there is skipped, mirroring how notes
-/// listing filters non-`.md` files.
-fn build_archive_bytes(notes_folder: &Path, note_files: &[String]) -> Result<Vec<u8>, String> {
-    let buf = Cursor::new(Vec::new());
-    let mut zip = ZipWriter::new(buf);
+/// Each source file is copied into its archive entry with `io::copy`, so no
+/// individual file is ever fully buffered in memory. Only files with an
+/// allow-listed image extension are picked up from the `images` subfolder;
+/// anything else there is skipped, mirroring how notes listing filters
+/// non-`.md` files.
+fn write_archive<W: Write + Seek>(
+    writer: W,
+    notes_folder: &Path,
+    note_files: &[String],
+) -> Result<W, String> {
+    let mut zip = ZipWriter::new(writer);
     let options = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
 
     for filename in note_files {
         let path = notes_folder.join(filename);
-        let content =
-            fs::read(&path).map_err(|e| format!("Failed to read note '{}': {}", filename, e))?;
+        let mut file = fs::File::open(&path)
+            .map_err(|e| format!("Failed to read note '{}': {}", filename, e))?;
         let entry_name = format!("notes/{}", filename);
         zip.start_file(&entry_name, options)
             .map_err(|e| format!("Failed to add '{}' to archive: {}", filename, e))?;
-        zip.write_all(&content)
+        io::copy(&mut file, &mut zip)
             .map_err(|e| format!("Failed to write '{}' to archive: {}", filename, e))?;
     }
 
@@ -66,110 +179,75 @@ fn build_archive_bytes(notes_folder: &Path, note_files: &[String]) -> Result<Vec
                 Some(ext) if super::images::normalize_extension(ext).is_ok() => {}
                 _ => continue,
             }
-            let content = fs::read(&path)
+            let mut file = fs::File::open(&path)
                 .map_err(|e| format!("Failed to read image '{}': {}", filename, e))?;
             let entry_name = format!("images/{}", filename);
             zip.start_file(&entry_name, options)
                 .map_err(|e| format!("Failed to add '{}' to archive: {}", filename, e))?;
-            zip.write_all(&content)
+            io::copy(&mut file, &mut zip)
                 .map_err(|e| format!("Failed to write '{}' to archive: {}", filename, e))?;
         }
     }
 
-    let buf = zip
-        .finish()
-        .map_err(|e| format!("Failed to finalize archive: {}", e))?;
-    Ok(buf.into_inner())
+    zip.finish()
+        .map_err(|e| format!("Failed to finalize archive: {}", e))
 }
 
-/// Derives a 256-bit key from a passphrase and salt using Argon2id.
-fn derive_key(passphrase: &str, salt: &[u8]) -> Result<[u8; KEY_LEN], String> {
-    let params = argon2::Params::new(ARGON2_M_COST, ARGON2_T_COST, ARGON2_P_COST, Some(KEY_LEN))
-        .map_err(|e| format!("Argon2 params error: {}", e))?;
-    let argon2 = argon2::Argon2::new(argon2::Algorithm::Argon2id, argon2::Version::V0x13, params);
-    let mut key = [0u8; KEY_LEN];
-    argon2
-        .hash_password_into(passphrase.as_bytes(), salt, &mut key)
-        .map_err(|e| format!("Key derivation failed: {}", e))?;
-    Ok(key)
+/// Builds the archive in memory. Only used by unit tests; production export
+/// streams to a file via [`write_archive`].
+#[cfg(test)]
+fn build_archive_bytes(notes_folder: &Path, note_files: &[String]) -> Result<Vec<u8>, String> {
+    let cursor = write_archive(Cursor::new(Vec::new()), notes_folder, note_files)?;
+    Ok(cursor.into_inner())
 }
 
-/// Encrypts the given plaintext bytes into the `.tnbk` container format:
-/// `magic (8) | salt (16) | nonce (24) | ciphertext`.
-fn encrypt_bytes(plaintext: &[u8], passphrase: &str) -> Result<Vec<u8>, String> {
-    let mut salt = [0u8; SALT_LEN];
-    let mut nonce_bytes = [0u8; NONCE_LEN];
-    let mut rng = SysRng;
-
-    rng.try_fill_bytes(&mut salt)
-        .map_err(|e| format!("Failed to generate salt: {e}"))?;
-
-    rng.try_fill_bytes(&mut nonce_bytes)
-        .map_err(|e| format!("Failed to generate nonce: {e}"))?;
-
-    let key = derive_key(passphrase, &salt)?;
-    let cipher = XChaCha20Poly1305::new(&key.into());
-    let nonce: XNonce = nonce_bytes.into();
-    let ciphertext = cipher
-        .encrypt(&nonce, plaintext.as_ref())
-        .map_err(|e| format!("Encryption failed: {}", e))?;
-
-    let mut out = Vec::with_capacity(TNBK_MAGIC.len() + SALT_LEN + NONCE_LEN + ciphertext.len());
-    out.extend_from_slice(TNBK_MAGIC);
-    out.extend_from_slice(&salt);
-    out.extend_from_slice(&nonce_bytes);
-    out.extend_from_slice(&ciphertext);
-    Ok(out)
-}
-
-/// Decrypts `.tnbk` container bytes using the given passphrase.
-/// Returns the recovered plaintext (the zip bytes) or an error on wrong password / corruption.
-fn decrypt_bytes(data: &[u8], passphrase: &str) -> Result<Vec<u8>, String> {
-    let header = TNBK_MAGIC.len() + SALT_LEN + NONCE_LEN;
-    if data.len() < header {
-        return Err("File is too small to be a valid encrypted backup".to_string());
-    }
-    if &data[..TNBK_MAGIC.len()] != TNBK_MAGIC {
-        return Err("File is not a valid encrypted backup".to_string());
-    }
-    let salt = &data[TNBK_MAGIC.len()..TNBK_MAGIC.len() + SALT_LEN];
-    let nonce_bytes = &data[TNBK_MAGIC.len() + SALT_LEN..header];
-    let ciphertext = &data[header..];
-
-    let key = derive_key(passphrase, salt)?;
-    let cipher = XChaCha20Poly1305::new(&key.into());
-    let mut nonce_arr = [0u8; NONCE_LEN];
-    nonce_arr.copy_from_slice(nonce_bytes);
-    let nonce: XNonce = nonce_arr.into();
-    cipher
-        .decrypt(&nonce, ciphertext)
-        .map_err(|_| "Wrong password or corrupted backup".to_string())
-}
-
-/// Exports all notes and embedded images in the configured folder to a zip
-/// archive (optionally encrypted) written to a path chosen by the user via the
-/// native save dialog.
+/// Exports the notes folder to `dest` as a plain `.zip` or, when `password`
+/// is given, an encrypted `.tnbk` container. Returns the number of bytes
+/// written.
 ///
-/// When `password` is provided, the zip bytes are encrypted into the `.tnbk` container
-/// format before being written. Otherwise a plain `.zip` is written.
-#[tauri::command]
-pub async fn export_notes_archive(
-    path: String,
-    password: Option<String>,
-    state: State<'_, AppState>,
+/// Plain exports stream the zip straight to the destination file. Encrypted
+/// exports first stream the zip to a temp file, then encrypt that single
+/// buffer in place and write header + ciphertext to `dest`.
+fn export_archive_to_path(
+    notes_folder: &Path,
+    note_files: &[String],
+    dest: &Path,
+    password: Option<&str>,
 ) -> Result<usize, String> {
-    let note_manager = state.note_manager_snapshot()?;
-    super::run_blocking(move || {
-        let note_files = note_manager.get_sorted_note_files()?;
-        let zip_bytes = build_archive_bytes(&note_manager.notes_folder, &note_files)?;
-        let bytes = match password {
-            Some(ref pw) if !pw.is_empty() => encrypt_bytes(&zip_bytes, pw)?,
-            _ => zip_bytes,
-        };
-        fs::write(&path, &bytes).map_err(|e| format!("Failed to write archive: {}", e))?;
-        Ok(bytes.len())
-    })
-    .await
+    match password.filter(|p| !p.is_empty()) {
+        Some(pw) => {
+            let tmp =
+                std::env::temp_dir().join(format!("todaynote-export-{}.tmp", uuid::Uuid::new_v4()));
+            let result: Result<usize, String> = (|| {
+                let tmp_file = fs::File::create(&tmp)
+                    .map_err(|e| format!("Failed to create temp archive: {}", e))?;
+                write_archive(tmp_file, notes_folder, note_files)?;
+                let mut file = fs::File::open(&tmp)
+                    .map_err(|e| format!("Failed to read temp archive: {}", e))?;
+                let size = file.metadata().map(|m| m.len() as usize).unwrap_or(0);
+                // Reserve room for the tag up front so appending it cannot realloc.
+                let mut buf = Vec::with_capacity(size + TAG_LEN);
+                file.read_to_end(&mut buf)
+                    .map_err(|e| format!("Failed to read temp archive: {}", e))?;
+                let header = encrypt_buffer_in_place(&mut buf, pw)?;
+                let mut out = fs::File::create(dest)
+                    .map_err(|e| format!("Failed to write archive: {}", e))?;
+                out.write_all(&header)
+                    .and_then(|_| out.write_all(&buf))
+                    .and_then(|_| out.flush())
+                    .map_err(|e| format!("Failed to write archive: {}", e))?;
+                Ok(HEADER_LEN + buf.len())
+            })();
+            let _ = fs::remove_file(&tmp);
+            result
+        }
+        None => {
+            let file =
+                fs::File::create(dest).map_err(|e| format!("Failed to write archive: {}", e))?;
+            write_archive(file, notes_folder, note_files)?;
+            Ok(fs::metadata(dest).map(|m| m.len() as usize).unwrap_or(0))
+        }
+    }
 }
 
 /// Extracts notes and images from an opened archive into the notes folder.
@@ -178,7 +256,8 @@ pub async fn export_notes_archive(
 /// the image extension allow-list) in its `images` subfolder. Entry names are
 /// sanitized to their basename, so archives with or without `notes/`/`images/`
 /// prefixes import the same way. When `overwrite` is false, existing files with
-/// the same name are skipped.
+/// the same name are skipped. Each entry is streamed to disk with `io::copy`
+/// instead of being buffered whole in memory.
 fn import_archive_entries<R: Read + Seek>(
     archive: &mut ZipArchive<R>,
     notes_folder: &Path,
@@ -241,13 +320,14 @@ fn import_archive_entries<R: Read + Seek>(
             continue;
         }
 
-        let mut content = Vec::new();
-        if let Err(e) = entry.read_to_end(&mut content) {
-            errors.push(format!("Failed to read '{}': {}", basename, e));
-            continue;
-        }
-
-        if let Err(e) = fs::write(&dest, &content) {
+        let mut out = match fs::File::create(&dest) {
+            Ok(f) => f,
+            Err(e) => {
+                errors.push(format!("Failed to write '{}': {}", basename, e));
+                continue;
+            }
+        };
+        if let Err(e) = io::copy(&mut entry, &mut out) {
             errors.push(format!("Failed to write '{}': {}", basename, e));
             continue;
         }
@@ -259,6 +339,82 @@ fn import_archive_entries<R: Read + Seek>(
         skipped,
         errors,
     }
+}
+
+/// Imports a plain `.zip` or encrypted `.tnbk` archive from `src` into
+/// `notes_folder` and returns an [`ImportReport`].
+fn import_archive_from_path(
+    src: &Path,
+    notes_folder: &Path,
+    password: Option<&str>,
+    overwrite: bool,
+) -> Result<ImportReport, String> {
+    crate::services::note_manager::NoteManager::ensure_notes_folder_exists_in(notes_folder)?;
+
+    let mut file = fs::File::open(src).map_err(|e| format!("Failed to read archive: {}", e))?;
+    let mut prefix = [0u8; 8];
+    let n = (&file)
+        .read(&mut prefix)
+        .map_err(|e| format!("Failed to read archive: {}", e))?;
+    let magic_match = n >= TNBK_MAGIC.len() && &prefix[..TNBK_MAGIC.len()] == TNBK_MAGIC;
+
+    match password.filter(|p| !p.is_empty()) {
+        Some(pw) => {
+            file.seek(SeekFrom::Start(0))
+                .map_err(|e| format!("Failed to read archive: {}", e))?;
+            let size = file.metadata().map(|m| m.len() as usize).unwrap_or(0);
+            let mut buf = Vec::with_capacity(size);
+            file.read_to_end(&mut buf)
+                .map_err(|e| format!("Failed to read archive: {}", e))?;
+            decrypt_buffer_in_place(&mut buf, pw)?;
+            let mut archive = ZipArchive::new(Cursor::new(buf))
+                .map_err(|e| format!("Failed to open archive: {}", e))?;
+            Ok(import_archive_entries(
+                &mut archive,
+                notes_folder,
+                overwrite,
+            ))
+        }
+        None if magic_match => {
+            Err("This backup is encrypted. Please provide the password.".to_string())
+        }
+        None => {
+            file.seek(SeekFrom::Start(0))
+                .map_err(|e| format!("Failed to read archive: {}", e))?;
+            let mut archive =
+                ZipArchive::new(file).map_err(|e| format!("Failed to open archive: {}", e))?;
+            Ok(import_archive_entries(
+                &mut archive,
+                notes_folder,
+                overwrite,
+            ))
+        }
+    }
+}
+
+/// Exports all notes and embedded images in the configured folder to a zip
+/// archive (optionally encrypted) written to a path chosen by the user via the
+/// native save dialog.
+///
+/// When `password` is provided, the archive is encrypted into the `.tnbk`
+/// container format before being written. Otherwise a plain `.zip` is written.
+#[tauri::command]
+pub async fn export_notes_archive(
+    path: String,
+    password: Option<String>,
+    state: State<'_, AppState>,
+) -> Result<usize, String> {
+    let note_manager = state.note_manager_snapshot()?;
+    super::run_blocking(move || {
+        let note_files = note_manager.get_sorted_note_files()?;
+        export_archive_to_path(
+            &note_manager.notes_folder,
+            &note_files,
+            Path::new(&path),
+            password.as_deref(),
+        )
+    })
+    .await
 }
 
 /// Imports notes and images from a backup archive at the given path.
@@ -280,31 +436,12 @@ pub async fn import_notes_archive(
     // Reading the archive, decryption (Argon2id is CPU-heavy) and extracting
     // every entry all run on the blocking thread pool.
     super::run_blocking(move || {
-        crate::services::note_manager::NoteManager::ensure_notes_folder_exists_in(&notes_folder)?;
-
-        let raw = fs::read(&path).map_err(|e| format!("Failed to read archive: {}", e))?;
-
-        let zip_bytes = match password {
-            Some(ref pw) if !pw.is_empty() => decrypt_bytes(&raw, pw)?,
-            _ => {
-                // Auto-detect encrypted containers even without a password hint.
-                if raw.len() >= TNBK_MAGIC.len() && &raw[..TNBK_MAGIC.len()] == TNBK_MAGIC {
-                    return Err(
-                        "This backup is encrypted. Please provide the password.".to_string()
-                    );
-                }
-                raw
-            }
-        };
-
-        let mut archive = ZipArchive::new(Cursor::new(zip_bytes))
-            .map_err(|e| format!("Failed to open archive: {}", e))?;
-
-        Ok(import_archive_entries(
-            &mut archive,
+        import_archive_from_path(
+            Path::new(&path),
             &notes_folder,
+            password.as_deref(),
             overwrite,
-        ))
+        )
     })
     .await
 }
@@ -331,10 +468,10 @@ mod tests {
             TNBK_MAGIC,
             "Magic bytes mismatch"
         );
-        let expected_min_size = TNBK_MAGIC.len() + SALT_LEN + NONCE_LEN + plaintext.len();
+        let expected_min_size = HEADER_LEN + plaintext.len() + TAG_LEN;
         assert!(
             encrypted.len() >= expected_min_size,
-            "Encrypted size should be at least header + plaintext (actual: {}, expected: {})",
+            "Encrypted size should be at least header + plaintext + tag (actual: {}, expected: {})",
             encrypted.len(),
             expected_min_size
         );
@@ -523,10 +660,9 @@ mod tests {
         let encrypted = encrypt_bytes(plaintext, password).expect("Encryption failed");
 
         let total_len = encrypted.len();
-        let header_len = TNBK_MAGIC.len() + SALT_LEN + NONCE_LEN;
 
         assert!(
-            total_len > header_len,
+            total_len > HEADER_LEN,
             "Encrypted data should be larger than header"
         );
 
@@ -553,7 +689,11 @@ mod tests {
         );
 
         let ciphertext = &encrypted[nonce_end..];
-        assert!(!ciphertext.is_empty(), "Ciphertext should not be empty");
+        assert_eq!(
+            ciphertext.len(),
+            plaintext.len() + TAG_LEN,
+            "Ciphertext should be plaintext plus tag"
+        );
     }
 
     #[test]
@@ -578,7 +718,7 @@ mod tests {
         );
 
         assert!(
-            encrypted.len() >= TNBK_MAGIC.len() + SALT_LEN + NONCE_LEN,
+            encrypted.len() >= HEADER_LEN + TAG_LEN,
             "Encrypted container should have complete header"
         );
     }
@@ -596,20 +736,22 @@ mod tests {
             NONCE_LEN, 24,
             "Nonce length should be 24 bytes for XChaCha20-Poly1305"
         );
+        assert_eq!(TAG_LEN, 16, "Poly1305 tag length should be 16 bytes");
         assert_eq!(
             KEY_LEN, 32,
             "Key length should be 32 bytes (256 bits) for XChaCha20-Poly1305"
         );
+        assert_eq!(HEADER_LEN, 48, "Header should be 8 + 16 + 24 = 48 bytes");
         assert_eq!(
             ARGON2_M_COST,
-            32 * 1024,
-            "Argon2 memory cost should be 32 MiB"
+            19 * 1024,
+            "Argon2 memory cost should be 19 MiB (OWASP minimum)"
         );
         assert_eq!(
-            ARGON2_T_COST, 3,
-            "Argon2 time cost (iterations) should be 3"
+            ARGON2_T_COST, 2,
+            "Argon2 time cost (iterations) should be 2"
         );
-        assert_eq!(ARGON2_P_COST, 4, "Argon2 parallelism should be 4");
+        assert_eq!(ARGON2_P_COST, 1, "Argon2 parallelism should be 1");
     }
 
     // ImportReport Tests
@@ -790,6 +932,7 @@ mod tests {
         assert_eq!(magic_end, 8, "Magic bytes end at position 8");
         assert_eq!(salt_end, 24, "Salt ends at position 24 (8 + 16)");
         assert_eq!(nonce_end, 48, "Nonce ends at position 48 (24 + 24)");
+        assert_eq!(nonce_end, HEADER_LEN);
 
         let _magic: &[u8] = &encrypted[0..magic_end];
         let _salt: &[u8] = &encrypted[magic_end..salt_end];
@@ -799,7 +942,7 @@ mod tests {
         assert_eq!(_magic.len(), TNBK_MAGIC.len());
         assert_eq!(_salt.len(), SALT_LEN);
         assert_eq!(_nonce.len(), NONCE_LEN);
-        assert!(_ciphertext.len() > 0);
+        assert!(!_ciphertext.is_empty());
     }
 
     // Archive Build / Import Tests
@@ -953,5 +1096,98 @@ mod tests {
         assert_eq!(report.imported, 1);
         assert!(dest.path().join("2026-01-01.md").exists());
         assert!(!dest.path().join("notes").exists());
+    }
+
+    // File-level export / import roundtrips (the streaming paths used in production)
+
+    #[test]
+    fn test_export_import_file_roundtrip_plain() {
+        let (_src, notes_folder, note_files) = setup_source_folder();
+        let out_dir = tempdir().expect("temp dir");
+        let archive_path = out_dir.path().join("backup.zip");
+
+        let written = export_archive_to_path(&notes_folder, &note_files, &archive_path, None)
+            .expect("export failed");
+        assert_eq!(
+            written,
+            fs::metadata(&archive_path).expect("archive missing").len() as usize
+        );
+        assert!(written > 0);
+        // A plain zip must not look like an encrypted container.
+        let raw = fs::read(&archive_path).expect("read archive");
+        assert!(
+            raw.len() < TNBK_MAGIC.len() || &raw[..TNBK_MAGIC.len()] != TNBK_MAGIC,
+            "plain zip should not carry the tnbk magic"
+        );
+
+        let dest = tempdir().expect("temp dir");
+        let report = import_archive_from_path(&archive_path, dest.path(), None, false)
+            .expect("import failed");
+        assert_eq!(report.imported, 4);
+        assert!(report.errors.is_empty(), "Errors: {:?}", report.errors);
+        assert_eq!(
+            fs::read(dest.path().join("2026-01-01.md")).expect("note missing"),
+            b"note a"
+        );
+        assert_eq!(
+            fs::read(dest.path().join("images").join("abc.png")).expect("image missing"),
+            b"png-bytes"
+        );
+        assert!(!dest.path().join("images").join("evil.svg").exists());
+    }
+
+    #[test]
+    fn test_export_import_file_roundtrip_encrypted() {
+        let (_src, notes_folder, note_files) = setup_source_folder();
+        let out_dir = tempdir().expect("temp dir");
+        let archive_path = out_dir.path().join("backup.tnbk");
+        let password = "s3cret-pässword";
+
+        let written =
+            export_archive_to_path(&notes_folder, &note_files, &archive_path, Some(password))
+                .expect("export failed");
+        let raw = fs::read(&archive_path).expect("read archive");
+        assert_eq!(raw.len(), written, "reported size should match file size");
+        assert_eq!(&raw[..TNBK_MAGIC.len()], TNBK_MAGIC);
+
+        // Encrypted archive without a password is rejected with a clear error.
+        let dest = tempdir().expect("temp dir");
+        let err = import_archive_from_path(&archive_path, dest.path(), None, false).unwrap_err();
+        assert_eq!(
+            err,
+            "This backup is encrypted. Please provide the password."
+        );
+
+        // Wrong password fails with the usual message.
+        let dest_wrong = tempdir().expect("temp dir");
+        let err = import_archive_from_path(&archive_path, dest_wrong.path(), Some("wrong"), false)
+            .unwrap_err();
+        assert_eq!(err, "Wrong password or corrupted backup");
+
+        let report = import_archive_from_path(&archive_path, dest.path(), Some(password), false)
+            .expect("import failed");
+        assert_eq!(report.imported, 4);
+        assert!(report.errors.is_empty(), "Errors: {:?}", report.errors);
+        assert_eq!(
+            fs::read(dest.path().join("2026-01-02.md")).expect("note missing"),
+            b"note b"
+        );
+        assert_eq!(
+            fs::read(dest.path().join("images").join("def.jpg")).expect("image missing"),
+            b"jpg-bytes"
+        );
+    }
+
+    #[test]
+    fn test_import_plain_zip_with_password_fails_cleanly() {
+        let (_src, notes_folder, note_files) = setup_source_folder();
+        let out_dir = tempdir().expect("temp dir");
+        let archive_path = out_dir.path().join("backup.zip");
+        export_archive_to_path(&notes_folder, &note_files, &archive_path, None).expect("export");
+
+        let dest = tempdir().expect("temp dir");
+        let err =
+            import_archive_from_path(&archive_path, dest.path(), Some("pw"), false).unwrap_err();
+        assert_eq!(err, "File is not a valid encrypted backup");
     }
 }
