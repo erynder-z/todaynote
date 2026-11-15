@@ -74,6 +74,8 @@ pub async fn save_note_content(
     let (session_snapshot, write_content) = {
         let mut session = state.note_session()?;
         session.load(path_buf.clone(), full_content);
+        // Persist thread metadata only when it actually changed (no-op otherwise).
+        session.update_threads_in_frontmatter();
         session.update_last_modified();
         (session.clone(), session.get_full_content())
     };
@@ -90,74 +92,6 @@ pub async fn save_note_content(
         &note_manager,
         &tag_manager,
     ))
-}
-
-/// Updates the content of a specific line in the current note session.
-///
-/// This operation also writes the entire note to disk.
-#[tauri::command]
-pub async fn update_note_line(
-    index: usize,
-    content: String,
-    state: State<'_, AppState>,
-) -> Result<(), String> {
-    let write = {
-        let mut session = state.note_session()?;
-        session.update_content_line(index, content);
-        session.update_last_modified();
-        session
-            .path
-            .clone()
-            .map(|path| (path, session.get_full_content()))
-    };
-    if let Some((path, full_content)) = write {
-        fs::write(path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
-    }
-    Ok(())
-}
-
-/// Inserts a new line into the current note session at the specified index.
-///
-/// This operation also writes the entire note to disk.
-#[tauri::command]
-pub async fn insert_note_line(
-    index: usize,
-    content: String,
-    state: State<'_, AppState>,
-) -> Result<(), String> {
-    let write = {
-        let mut session = state.note_session()?;
-        session.insert_content_line(index, content);
-        session.update_last_modified();
-        session
-            .path
-            .clone()
-            .map(|path| (path, session.get_full_content()))
-    };
-    if let Some((path, full_content)) = write {
-        fs::write(path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
-    }
-    Ok(())
-}
-
-/// Deletes the line at the specified index from the current note session.
-///
-/// This operation also writes the entire note to disk.
-#[tauri::command]
-pub async fn delete_note_line(index: usize, state: State<'_, AppState>) -> Result<(), String> {
-    let write = {
-        let mut session = state.note_session()?;
-        session.delete_content_line(index);
-        session.update_last_modified();
-        session
-            .path
-            .clone()
-            .map(|path| (path, session.get_full_content()))
-    };
-    if let Some((path, full_content)) = write {
-        fs::write(path, &full_content).map_err(|e| format!("Failed to save note: {}", e))?;
-    }
-    Ok(())
 }
 
 /// Returns the absolute path to the most recent note that is not today's note.
@@ -417,6 +351,8 @@ where
         let mut session = state.note_session()?;
         session.load(path.clone(), full_content);
         operation(&mut session)?;
+        // Persist thread metadata only when it actually changed (no-op otherwise).
+        session.update_threads_in_frontmatter();
         session.update_last_modified();
         (session.clone(), session.get_full_content())
     };

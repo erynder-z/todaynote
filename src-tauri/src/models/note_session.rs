@@ -81,8 +81,7 @@ impl NoteSession {
         }
         self.frontmatter_range = None;
     }
-    /// Scans the lines to identify threads based on `#` headings.
-    /// Only top-level headings (#) are considered threads.
+    /// Scans the lines to identify thread markers (`!!! `).
     /// Uses thread IDs from frontmatter if available, otherwise generates new UUIDs.
     pub fn detect_threads(&mut self) {
         use uuid::Uuid;
@@ -135,9 +134,6 @@ impl NoteSession {
                 }
             }
         }
-
-        // Update frontmatter with current thread metadata
-        self.update_threads_in_frontmatter();
     }
 
     /// Ensures that the frontmatter block exists.
@@ -173,31 +169,10 @@ impl NoteSession {
         metadata
     }
 
-    /// Replaces the content of a specific line in the session.
-    pub fn update_line(&mut self, index: usize, content: String) {
-        if index < self.lines.len() {
-            self.lines[index] = content;
-            // If the first line changed, or we are within a frontmatter block, re-detect
-            if index == 0 || self.frontmatter_range.is_some() {
-                self.detect_frontmatter();
-            }
-            self.detect_threads();
-        }
-    }
-
     /// Inserts a new line at the specified index.
     pub fn insert_line(&mut self, index: usize, content: String) {
         if index <= self.lines.len() {
             self.lines.insert(index, content);
-            self.detect_frontmatter();
-            self.detect_threads();
-        }
-    }
-
-    /// Removes a specific line from the session.
-    pub fn delete_line(&mut self, index: usize) {
-        if index < self.lines.len() && self.lines.len() > 1 {
-            self.lines.remove(index);
             self.detect_frontmatter();
             self.detect_threads();
         }
@@ -219,29 +194,6 @@ impl NoteSession {
             Some((_, end)) => end + 1,
             None => 0,
         }
-    }
-
-    /// Maps a relative index (from the editor's perspective) to the absolute line index.
-    pub fn to_absolute_index(&self, relative_index: usize) -> usize {
-        self.get_content_start_index() + relative_index
-    }
-
-    /// Replaces the content of a specific line in the session using a relative index.
-    pub fn update_content_line(&mut self, relative_index: usize, content: String) {
-        let abs_index = self.to_absolute_index(relative_index);
-        self.update_line(abs_index, content);
-    }
-
-    /// Inserts a new line at the specified relative index.
-    pub fn insert_content_line(&mut self, relative_index: usize, content: String) {
-        let abs_index = self.to_absolute_index(relative_index);
-        self.insert_line(abs_index, content);
-    }
-
-    /// Removes a specific line from the session using a relative index.
-    pub fn delete_content_line(&mut self, relative_index: usize) {
-        let abs_index = self.to_absolute_index(relative_index);
-        self.delete_line(abs_index);
     }
 
     /// Ensures that the session ends with enough empty lines to allow for a new paragraph.
@@ -274,13 +226,29 @@ impl NoteSession {
         self.lines.join("\n")
     }
 
-    /// Updates the threads metadata in the frontmatter.
+    /// Writes the threads metadata into the frontmatter `threads:` line.
     /// Stores thread IDs, relative line positions, and optional pinned flags
     /// as a YAML array (see `NoteHeader::render_threads_value`).
-    pub fn update_threads_in_frontmatter(&mut self) {
-        self.ensure_frontmatter();
-        let (start, end) = self.frontmatter_range.unwrap();
-        let content_start = self.get_content_start_index();
+    ///
+    /// Conditional: when the stored line already matches the rendered value,
+    /// the session is left untouched and `false` is returned, so repeated
+    /// calls on an unchanged note cost a single string comparison.
+    ///
+    /// Returns `true` when the frontmatter was modified.
+    pub fn update_threads_in_frontmatter(&mut self) -> bool {
+        // Without a frontmatter block there is nothing to update unless
+        // threads exist that need persisting.
+        let (start, end) = match self.frontmatter_range {
+            Some(range) => range,
+            None => {
+                if self.threads.is_empty() {
+                    return false;
+                }
+                self.ensure_frontmatter();
+                self.frontmatter_range.unwrap()
+            }
+        };
+        let content_start = end + 1;
 
         let thread_refs: Vec<ThreadRef> = self
             .threads
@@ -303,21 +271,24 @@ impl NoteSession {
 
         // Find and update or add the threads line in frontmatter
         let threads_key = format!("{}:", keys::THREADS);
-        let mut found = false;
 
         for i in (start + 1)..end {
             if self.lines[i].trim().starts_with(&threads_key) {
-                self.lines[i] = threads_line.clone();
-                found = true;
-                break;
+                if self.lines[i].trim() == threads_line.trim() {
+                    return false; // already up to date
+                }
+                self.lines[i] = threads_line;
+                return true;
             }
         }
 
         // If not found, add it before the closing ---
-        if !found && end > start + 1 {
+        if end > start + 1 {
             self.lines.insert(end, threads_line);
             self.frontmatter_range = Some((start, end + 1));
+            return true;
         }
+        false
     }
 
     /// Parses thread metadata from the frontmatter.
@@ -377,8 +348,8 @@ mod tests {
     use super::*;
     use crate::utils::date::get_current_date;
 
-    /// Builds a session with frontmatter already present so that line operations
-    /// (which auto-trigger detect_threads → ensure_frontmatter) don't shift indices.
+    /// Builds a session with a frontmatter block already present so line
+    /// operations don't shift indices.
     fn make_session(content_lines: &[&str]) -> NoteSession {
         let mut lines = vec![
             "---".to_string(),
@@ -416,13 +387,18 @@ mod tests {
         session.load(PathBuf::from("/tmp/note.md"), content.to_string());
 
         assert_eq!(session.path, Some(PathBuf::from("/tmp/note.md")));
-        // detect_threads inserts a threads: line, expanding frontmatter.
-        assert_eq!(session.frontmatter_range, Some((0, 3)));
+        // detect_threads is pure: loading does not touch the frontmatter.
+        assert_eq!(session.frontmatter_range, Some((0, 2)));
         assert_eq!(session.threads.len(), 2);
         assert_eq!(session.threads[0].name, "Work");
         assert_eq!(session.threads[1].name, "Personal");
         // Thread end_line should be set to the next thread's start.
         assert_eq!(session.threads[0].end_line, session.threads[1].start_line);
+
+        // Persisting inserts the threads: line and expands the frontmatter.
+        assert!(session.update_threads_in_frontmatter());
+        assert_eq!(session.frontmatter_range, Some((0, 3)));
+        assert!(session.lines.iter().any(|l| l.starts_with("threads:")));
     }
     ///
     /// detect_frontmatter tests
@@ -500,18 +476,12 @@ mod tests {
     /// line operations tests
     ///
     #[test]
-    fn test_update_insert_delete_line() {
+    fn test_insert_line() {
         let mut session = make_session(&["a", "b", "c"]);
-
-        session.update_line(4, "B".into());
-        assert_eq!(session.lines[4], "B");
 
         session.insert_line(3, "first".into());
         assert_eq!(session.lines[3], "first");
         assert_eq!(session.lines.len(), 7);
-
-        session.delete_line(3);
-        assert_eq!(session.lines[3], "a");
     }
 
     #[test]
@@ -522,23 +492,15 @@ mod tests {
         assert_eq!(session.lines[4], "d");
     }
     ///
-    /// relative index operations tests
+    /// content start index tests
     ///
     #[test]
-    fn test_content_relative_indexing() {
-        let mut session = make_session(&["body"]);
-
+    fn test_content_start_index() {
+        let session = make_session(&["body"]);
         assert_eq!(session.get_content_start_index(), 3);
-        assert_eq!(session.to_absolute_index(0), 3);
 
-        session.insert_content_line(0, "new".into());
-        assert_eq!(session.lines[3], "new");
-
-        session.update_content_line(1, "updated".into());
-        assert_eq!(session.lines[4], "updated");
-
-        session.delete_content_line(0);
-        assert_eq!(session.lines[3], "updated");
+        let no_fm = NoteSession::new();
+        assert_eq!(no_fm.get_content_start_index(), 0);
     }
     ///
     /// ensure_trailing_empty_line tests
@@ -618,6 +580,8 @@ mod tests {
 
         // The frontmatter ID is kept stable and re-rendered as an array
         assert_eq!(session.threads[0].id, "abc");
+        // The stored line already matches the rendered value: no write.
+        assert!(!session.update_threads_in_frontmatter());
         let threads_line = session
             .lines
             .iter()
@@ -657,8 +621,52 @@ mod tests {
         session.frontmatter_range = Some((0, 2));
         session.detect_threads();
 
+        // detect_threads is pure: no threads line yet.
+        assert!(session.lines.iter().all(|l| !l.starts_with("threads:")));
+        // Persisting adds it (changed → true), a second call is a no-op.
+        assert!(session.update_threads_in_frontmatter());
         let threads_line = session.lines.iter().find(|l| l.starts_with("threads:"));
         assert!(threads_line.is_some(), "threads: line should be added");
+        assert!(!session.update_threads_in_frontmatter());
+    }
+
+    #[test]
+    fn test_detect_threads_does_not_modify_lines() {
+        let mut session = make_session(&["!!! Work", "task"]);
+        let before = session.lines.clone();
+        session.detect_threads();
+        assert_eq!(session.lines, before, "detect_threads must be pure");
+        assert_eq!(session.threads.len(), 1);
+    }
+
+    #[test]
+    fn test_update_threads_in_frontmatter_no_frontmatter_no_threads() {
+        let mut session = NoteSession::new();
+        session.lines = vec!["just body".into()];
+        // No threads and no frontmatter: nothing to persist, nothing created.
+        assert!(!session.update_threads_in_frontmatter());
+        assert!(session.frontmatter_range.is_none());
+        assert_eq!(session.lines, vec!["just body".to_string()]);
+    }
+
+    #[test]
+    fn test_update_threads_in_frontmatter_inserts_into_existing_frontmatter() {
+        let mut session = NoteSession::new();
+        session.lines = vec![
+            "---".into(),
+            "tags: []".into(),
+            "---".into(),
+            "!!! Work".into(),
+            "task".into(),
+        ];
+        session.frontmatter_range = Some((0, 2));
+        session.detect_threads();
+        assert!(session.update_threads_in_frontmatter());
+        assert_eq!(session.frontmatter_range, Some((0, 3)));
+        assert!(session
+            .lines
+            .iter()
+            .any(|l| l.starts_with("threads: [{id:")));
     }
     ///
     /// find_thread_by_id tests

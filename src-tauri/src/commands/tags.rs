@@ -71,6 +71,8 @@ where
         session.load(path.clone(), full_content);
         operation(&tag_manager, &mut session);
         tag_manager.invalidate_cache();
+        // Persist thread metadata only when it actually changed
+        session.update_threads_in_frontmatter();
         session.update_last_modified();
         (session.clone(), session.get_full_content())
     };
