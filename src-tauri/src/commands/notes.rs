@@ -7,9 +7,10 @@ use crate::models::note_session::{NoteSession, NoteThread};
 use crate::models::response_types::{
     AppStatistics, DayBoundaryStatus, NoteContentResponse, NoteListResponse,
 };
+use crate::services::folder_index;
 use std::fs;
 use std::path::PathBuf;
-use tauri::State;
+use tauri::{Manager, State};
 
 /// Returns the active session's current frontmatter block (if any).
 pub(crate) fn session_frontmatter(state: &State<'_, AppState>) -> Option<String> {
@@ -341,9 +342,17 @@ pub async fn list_notes(
 
 /// Deletes all notes that have no content (only frontmatter and headings).
 #[tauri::command]
-pub async fn purge_empty_notes(state: State<'_, AppState>) -> Result<usize, String> {
+pub async fn purge_empty_notes(
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+) -> Result<usize, String> {
     let note_manager = state.note_manager_snapshot()?;
-    super::run_blocking(move || note_manager.purge_empty_notes()).await
+    super::run_blocking(move || {
+        let state = app.state::<AppState>();
+        let index = folder_index::get_or_refresh(&state, &note_manager.notes_folder)?;
+        note_manager.purge_empty_notes(&index)
+    })
+    .await
 }
 
 /// Deletes a note file at the specified path.
@@ -369,9 +378,17 @@ pub async fn delete_note(path: String, state: State<'_, AppState>) -> Result<(),
 
 /// Gathers comprehensive statistics across all notes in the configured folder.
 #[tauri::command]
-pub async fn get_statistics(state: State<'_, AppState>) -> Result<AppStatistics, String> {
+pub async fn get_statistics(
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+) -> Result<AppStatistics, String> {
     let note_manager = state.note_manager_snapshot()?;
-    super::run_blocking(move || note_manager.get_statistics()).await
+    super::run_blocking(move || {
+        let state = app.state::<AppState>();
+        let index = folder_index::get_or_refresh(&state, &note_manager.notes_folder)?;
+        crate::services::statistics::get_statistics(&index)
+    })
+    .await
 }
 
 /// Helper to sync frontend content, perform a thread operation, and save the result.

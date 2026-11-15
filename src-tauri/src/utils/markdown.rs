@@ -71,6 +71,36 @@ pub fn line_has_image(line: &str) -> bool {
     IMAGE_RE.is_match(line)
 }
 
+/// Returns the number of lines occupied by the YAML frontmatter block
+/// (0 when the content has no closed frontmatter block).
+pub fn frontmatter_line_count(content: &str) -> usize {
+    let mut lines = content.lines();
+    if lines.next().map(|l| l.trim()) != Some("---") {
+        return 0;
+    }
+    for (i, line) in lines.enumerate() {
+        if line.trim() == "---" {
+            // `lines.next()` above consumed line 0, so the closing fence is
+            // at line index i + 1 and the block covers i + 2 lines.
+            return i + 2;
+        }
+    }
+    0
+}
+
+/// Extracts all unique-in-file thread names (lines starting with `!!! `)
+/// from the note body, skipping the frontmatter block.
+pub fn thread_names(content: &str) -> Vec<String> {
+    let body_start = frontmatter_line_count(content);
+    content
+        .lines()
+        .skip(body_start)
+        .filter_map(|l| l.strip_prefix("!!! ").map(|n| n.trim()))
+        .filter(|n| !n.is_empty())
+        .map(|n| n.to_string())
+        .collect()
+}
+
 /// Extracts the URLs of all markdown images (`![alt](url)`) in the content.
 pub fn extract_image_urls(content: &str) -> Vec<String> {
     IMAGE_RE
@@ -159,5 +189,30 @@ mod tests {
         assert_eq!(strip_markdown_line("text\\"), "text");
         // Only a single trailing backslash is popped.
         assert_eq!(strip_markdown_line("text\\\\"), "text\\");
+    }
+
+    #[test]
+    fn test_frontmatter_line_count() {
+        assert_eq!(frontmatter_line_count(""), 0);
+        assert_eq!(frontmatter_line_count("no frontmatter"), 0);
+        assert_eq!(frontmatter_line_count("---\nunclosed\n"), 0);
+        assert_eq!(frontmatter_line_count("---\n---\nbody"), 2);
+        assert_eq!(frontmatter_line_count("---\na: 1\nb: 2\n---\nbody"), 4);
+        assert_eq!(frontmatter_line_count("  ---\n a: 1 \n  ---\nx"), 3);
+    }
+
+    #[test]
+    fn test_thread_names() {
+        assert_eq!(thread_names(""), Vec::<String>::new());
+        assert_eq!(
+            thread_names("---\ntags: []\n---\n!!! A\ntext\n!!! B\n"),
+            vec!["A", "B"]
+        );
+        // `!!! ` inside the frontmatter block is not a thread marker.
+        assert_eq!(
+            thread_names("---\n!!! not-a-thread\n---\n!!! real\n"),
+            vec!["real"]
+        );
+        assert_eq!(thread_names("!!! \n!!!   \n!!! ok"), vec!["ok"]);
     }
 }

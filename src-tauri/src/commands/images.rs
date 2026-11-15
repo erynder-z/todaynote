@@ -8,7 +8,7 @@ use crate::models::app_state::AppState;
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use tauri::State;
+use tauri::{Manager, State};
 use uuid::Uuid;
 
 /// Maximum accepted size for downloaded remote images (25 MB).
@@ -233,23 +233,23 @@ pub fn get_images_dir(state: State<'_, AppState>) -> Result<String, String> {
 /// Deletes all images in the images directory that are not referenced by any
 /// note. Returns the number of removed images.
 #[tauri::command]
-pub async fn purge_unused_images(state: State<'_, AppState>) -> Result<usize, String> {
-    // The folder-wide scan and file deletions run on the blocking thread
-    // pool, off the IPC workers.
+pub async fn purge_unused_images(
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+) -> Result<usize, String> {
+    // The folder-wide index refresh and file deletions run on the blocking
+    // thread pool, off the IPC workers.
     let note_manager = state.note_manager_snapshot()?;
     super::run_blocking(move || {
+        let state = app.state::<AppState>();
+        let index =
+            crate::services::folder_index::get_or_refresh(&state, &note_manager.notes_folder)?;
         let notes_folder = &note_manager.notes_folder;
-        let note_files = note_manager.get_sorted_note_files()?;
 
-        // Collect every image filename referenced from note markdown.
+        // Collect every image filename referenced from note markdown
         let mut referenced: HashSet<String> = HashSet::new();
-        for file_name in &note_files {
-            let content = fs::read_to_string(notes_folder.join(file_name)).unwrap_or_default();
-            for url in crate::utils::markdown::extract_image_urls(&content) {
-                if let Some(filename) = image_filename_from_url(&url) {
-                    referenced.insert(filename);
-                }
-            }
+        for meta in index.entries.values() {
+            referenced.extend(meta.image_files.iter().cloned());
         }
 
         let images_dir = notes_folder.join("images");

@@ -3,6 +3,7 @@
 use crate::models::response_types::{
     AppStatistics, DailyStat, InsightResponse, TagStat, ThreadStat,
 };
+use crate::services::folder_index::FolderIndex;
 use chrono::{Datelike, NaiveDate};
 use std::collections::HashMap;
 
@@ -180,10 +181,9 @@ pub fn generate_insights(
     insights
 }
 
-/// Collects statistics data from note files.
+/// Collects statistics data from a folder index (no file I/O).
 pub fn collect_note_statistics(
-    note_manager: &crate::services::note_manager::NoteManager,
-    all_files: &[String],
+    index: &FolderIndex,
 ) -> (
     usize,
     usize,
@@ -210,53 +210,48 @@ pub fn collect_note_statistics(
     let mut note_dates: Vec<NaiveDate> = Vec::new();
     let mut weekday_distribution = vec![0; 7];
 
-    for file_name in all_files {
-        let path = note_manager.notes_folder.join(file_name);
-        if let Ok(content) = std::fs::read_to_string(&path) {
-            total_notes += 1;
+    for (file_name, meta) in &index.entries {
+        total_notes += 1;
 
-            let char_count = content.chars().count();
-            let (word_count, _) = crate::utils::text::count_words(&content);
+        let char_count = meta.char_count;
+        let word_count = meta.word_count;
 
-            total_characters += char_count;
-            total_words += word_count;
+        total_characters += char_count;
+        total_words += word_count;
 
-            // Extract date for streaks and distribution
-            let date_str = file_name.replace(".md", "");
-            if let Ok(date) = NaiveDate::parse_from_str(&date_str, "%Y-%m-%d") {
-                note_dates.push(date);
-                // chrono weekday 0=Mon, 6=Sun
-                let day_idx = date.weekday().num_days_from_monday() as usize;
-                weekday_distribution[day_idx] += word_count;
+        // Extract date for streaks and distribution
+        let date_str = file_name.replace(".md", "");
+        if let Ok(date) = NaiveDate::parse_from_str(&date_str, "%Y-%m-%d") {
+            note_dates.push(date);
+            // chrono weekday 0=Mon, 6=Sun
+            let day_idx = date.weekday().num_days_from_monday() as usize;
+            weekday_distribution[day_idx] += word_count;
 
-                // Count threads
-                let threads = note_manager.extract_threads(&content, 100);
-                total_threads += threads.len();
-                for thread in threads {
-                    *thread_counts.entry(thread.clone()).or_insert(0) += 1;
-                    let last = thread_last_used.entry(thread).or_insert(date);
-                    if date > *last {
-                        *last = date;
-                    }
-                }
-
-                // Count tags
-                let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
-                for tag in tags {
-                    *tag_counts.entry(tag.clone()).or_insert(0) += 1;
-                    let last = tag_last_used.entry(tag).or_insert(date);
-                    if date > *last {
-                        *last = date;
-                    }
+            // Count threads
+            total_threads += meta.thread_names.len();
+            for thread in &meta.thread_names {
+                *thread_counts.entry(thread.clone()).or_insert(0) += 1;
+                let last = thread_last_used.entry(thread.clone()).or_insert(date);
+                if date > *last {
+                    *last = date;
                 }
             }
 
-            daily_stats.push(DailyStat {
-                date: date_str,
-                character_count: char_count,
-                word_count,
-            });
+            // Count tags
+            for tag in &meta.tags {
+                *tag_counts.entry(tag.clone()).or_insert(0) += 1;
+                let last = tag_last_used.entry(tag.clone()).or_insert(date);
+                if date > *last {
+                    *last = date;
+                }
+            }
         }
+
+        daily_stats.push(DailyStat {
+            date: date_str,
+            character_count: char_count,
+            word_count,
+        });
     }
 
     (
@@ -305,11 +300,8 @@ pub fn process_tag_and_thread_stats(
     (top_tags, top_threads)
 }
 
-/// Gathers comprehensive statistics across all notes in the configured folder.
-pub fn get_statistics(
-    note_manager: &crate::services::note_manager::NoteManager,
-) -> Result<AppStatistics, String> {
-    let all_files = note_manager.get_sorted_note_files()?;
+/// Gathers comprehensive statistics across all notes in the folder index.
+pub fn get_statistics(index: &FolderIndex) -> Result<AppStatistics, String> {
     let today = crate::utils::date::get_current_date();
     let today_date = NaiveDate::parse_from_str(&today, "%Y-%m-%d").unwrap();
 
@@ -326,7 +318,7 @@ pub fn get_statistics(
         mut daily_stats,
         mut note_dates,
         weekday_distribution,
-    ) = collect_note_statistics(note_manager, &all_files);
+    ) = collect_note_statistics(index);
 
     // Calculate streaks
     note_dates.sort_by(|a, b| b.cmp(a));

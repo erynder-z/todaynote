@@ -1,7 +1,8 @@
 //! Manager to handle note operations and formatting.
 
 use crate::models::note_header::{NoteHeader, NoteType};
-use crate::models::response_types::{AppStatistics, FormattedNote, NoteListResponse};
+use crate::models::response_types::{FormattedNote, NoteListResponse};
+use crate::services::folder_index::FolderIndex;
 use crate::utils;
 use chrono::{Locale, NaiveDate};
 use std::fs;
@@ -293,26 +294,29 @@ impl NoteManager {
         fs::read_to_string(path).map_err(|e| format!("Failed to read note content: {}", e))
     }
 
-    /// Deletes all notes that have no content (only frontmatter, headings, and thread markers).
-    pub fn purge_empty_notes(&self) -> Result<usize, String> {
-        let all_files = self.get_sorted_note_files()?;
-        let mut purged_count = 0;
+    /// Deletes all notes flagged as empty in the folder index
+    /// (only frontmatter, headings, and thread markers).
+    pub fn purge_empty_notes(&self, index: &FolderIndex) -> Result<usize, String> {
+        let mut empty_files: Vec<String> = index
+            .entries
+            .iter()
+            .filter(|(_, meta)| meta.is_empty)
+            .map(|(name, _)| name.clone())
+            .collect();
+        empty_files.sort_by(|a, b| b.cmp(a));
 
-        for file_name in all_files {
+        let mut purged_count = 0;
+        for file_name in empty_files {
             let path = self.notes_folder.join(&file_name);
-            if let Ok(content) = fs::read_to_string(&path) {
-                if self.is_note_empty(&content) {
-                    fs::remove_file(&path)
-                        .map_err(|e| format!("Failed to delete empty note {}: {}", file_name, e))?;
-                    purged_count += 1;
-                }
-            }
+            fs::remove_file(&path)
+                .map_err(|e| format!("Failed to delete empty note {}: {}", file_name, e))?;
+            purged_count += 1;
         }
         Ok(purged_count)
     }
 
     /// Determines if a note is considered "empty" (no tags and no content beyond headings and thread markers).
-    fn is_note_empty(&self, content: &str) -> bool {
+    pub fn is_note_empty(content: &str) -> bool {
         // If it has tags, it's not empty
         let tags = crate::utils::tag_parser::parse_tags_from_content(content);
         if !tags.is_empty() {
@@ -342,11 +346,6 @@ impl NoteManager {
         }
 
         true
-    }
-
-    /// Gathers comprehensive statistics across all notes in the configured folder.
-    pub fn get_statistics(&self) -> Result<AppStatistics, String> {
-        crate::services::statistics::get_statistics(self)
     }
 
     /// Deletes a note file from the filesystem.
@@ -1032,45 +1031,39 @@ mod tests {
     ///
     #[test]
     fn test_is_note_empty_with_only_frontmatter() {
-        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
         let content = "---\ncreated: 2024-01-01\ntags: []\n---\n";
-        assert!(manager.is_note_empty(content));
+        assert!(NoteManager::is_note_empty(content));
     }
 
     #[test]
     fn test_is_note_empty_with_headings() {
-        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
         // Only level 1 headings (starting with "# ") are skipped
         let content = "---\ntags: []\n---\n# Heading 1\n# Heading 2\n";
-        assert!(manager.is_note_empty(content));
+        assert!(NoteManager::is_note_empty(content));
     }
 
     #[test]
     fn test_is_note_empty_with_thread_markers() {
-        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
         let content = "---\ntags: []\n---\n!!! Thread 1\n!!! Thread 2\n";
-        assert!(manager.is_note_empty(content));
+        assert!(NoteManager::is_note_empty(content));
     }
 
     #[test]
     fn test_is_note_empty_with_tags_not_empty() {
-        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
         let content = "---\ntags: [work]\n---\n";
-        assert!(!manager.is_note_empty(content));
+        assert!(!NoteManager::is_note_empty(content));
     }
 
     #[test]
     fn test_is_note_empty_with_content_not_empty() {
-        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
         let content = "---\ntags: []\n---\n# Heading\nSome actual content here";
-        assert!(!manager.is_note_empty(content));
+        assert!(!NoteManager::is_note_empty(content));
     }
 
     #[test]
     fn test_is_note_empty_with_whitespace_only() {
-        let manager = NoteManager::new(PathBuf::from("/tmp"), "en".to_string());
         let content = "---\ntags: []\n---\n   \n\n  \n";
-        assert!(manager.is_note_empty(content));
+        assert!(NoteManager::is_note_empty(content));
     }
 
     ///
@@ -1093,7 +1086,8 @@ mod tests {
         .expect("Failed to write file");
 
         let manager = NoteManager::new(notes_path.clone(), "en".to_string());
-        let result = manager.purge_empty_notes();
+        let index = FolderIndex::scan(&notes_path).expect("scan failed");
+        let result = manager.purge_empty_notes(&index);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 1);
@@ -1112,7 +1106,8 @@ mod tests {
             .expect("Failed to write file");
 
         let manager = NoteManager::new(notes_path.clone(), "en".to_string());
-        let result = manager.purge_empty_notes();
+        let index = FolderIndex::scan(&notes_path).expect("scan failed");
+        let result = manager.purge_empty_notes(&index);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 0);
@@ -1126,8 +1121,9 @@ mod tests {
 
         fs::create_dir_all(&notes_path).expect("Failed to create notes dir");
 
-        let manager = NoteManager::new(notes_path, "en".to_string());
-        let result = manager.purge_empty_notes();
+        let manager = NoteManager::new(notes_path.clone(), "en".to_string());
+        let index = FolderIndex::scan(&notes_path).expect("scan failed");
+        let result = manager.purge_empty_notes(&index);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 0);

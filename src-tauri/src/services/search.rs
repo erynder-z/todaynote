@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use super::folder_index::{FolderIndex, NoteMeta};
 use super::note_manager::NoteManager;
 
 /// Service for searching note content.
@@ -198,31 +199,26 @@ impl<'a> SearchService<'a> {
         Ok(files)
     }
 
-    /// Runs `chunk_fn` over the note files in parallel using scoped threads
-    /// and merges the per-chunk results in file (descending name) order.
-    ///
-    /// Each chunk gets one invocation of `chunk_fn`, so per-chunk scratch
-    /// state (e.g. a nucleo `Matcher` and UTF-32 buffers) is created once per
-    /// chunk instead of once per file.
-    fn par_map_files<T, F>(&self, chunk_fn: F) -> Result<Vec<T>, String>
+    /// Runs `chunk_fn` over `paths` in parallel using scoped threads and
+    /// merges the per-chunk results in the given (descending name) order.
+    fn par_map_paths<T, F>(&self, paths: &[PathBuf], chunk_fn: F) -> Vec<T>
     where
         T: Send,
         F: Fn(&NoteManager, &[PathBuf]) -> Vec<T> + Sync,
     {
-        let files = self.get_note_files()?;
-        if files.is_empty() {
-            return Ok(Vec::new());
+        if paths.is_empty() {
+            return Vec::new();
         }
         let workers = std::thread::available_parallelism()
             .map(|n| n.get())
             .unwrap_or(1)
-            .min(files.len())
+            .min(paths.len())
             .max(1);
-        let chunk_size = files.len().div_ceil(workers);
+        let chunk_size = paths.len().div_ceil(workers);
         let note_manager = self.note_manager;
         let chunk_fn = &chunk_fn;
-        let results = std::thread::scope(|scope| {
-            let handles: Vec<_> = files
+        std::thread::scope(|scope| {
+            let handles: Vec<_> = paths
                 .chunks(chunk_size)
                 .map(|chunk| scope.spawn(move || chunk_fn(note_manager, chunk)))
                 .collect();
@@ -230,24 +226,33 @@ impl<'a> SearchService<'a> {
                 .into_iter()
                 .flat_map(|h| h.join().unwrap_or_default())
                 .collect::<Vec<_>>()
-        });
-        Ok(results)
+        })
     }
 
-    /// Extracts all unique thread names (lines starting with !!!) from markdown content.
-    fn extract_thread_names(content: &str) -> Vec<String> {
-        let frontmatter_len = Self::frontmatter_line_count(content);
-        let mut names = Vec::new();
+    /// Runs `chunk_fn` over all note files in parallel (see [`Self::par_map_paths`]).
+    fn par_map_files<T, F>(&self, chunk_fn: F) -> Result<Vec<T>, String>
+    where
+        T: Send,
+        F: Fn(&NoteManager, &[PathBuf]) -> Vec<T> + Sync,
+    {
+        let files = self.get_note_files()?;
+        Ok(self.par_map_paths(&files, chunk_fn))
+    }
 
-        for line in content.lines().skip(frontmatter_len) {
-            if let Some(name) = line.strip_prefix("!!! ") {
-                let name = name.trim();
-                if !name.is_empty() {
-                    names.push(name.to_string());
-                }
-            }
-        }
+    /// Returns the paths of the index entries matching `pred`, in descending
+    /// filename order (most recent first).
+    fn index_paths(&self, index: &FolderIndex, pred: impl Fn(&NoteMeta) -> bool) -> Vec<PathBuf> {
+        let mut names: Vec<&String> = index
+            .entries
+            .iter()
+            .filter(|(_, meta)| pred(meta))
+            .map(|(name, _)| name)
+            .collect();
+        names.sort_by(|a, b| b.cmp(a));
         names
+            .into_iter()
+            .map(|name| self.note_manager.notes_folder.join(name))
+            .collect()
     }
 
     /// Filters search results based on various criteria.
@@ -561,42 +566,32 @@ impl<'a> SearchService<'a> {
     /// Searches for unique thread names (lines starting with !!!) across all notes.
     pub fn search_threads(
         &self,
+        index: &FolderIndex,
         query: &str,
         is_fuzzy: bool,
     ) -> Result<Vec<ThreadSearchResult>, String> {
-        let names = self.par_map_files(|_note_manager, chunk| {
-            let mut names = Vec::new();
-            for path in chunk {
-                if let Ok(content) = fs::read_to_string(path) {
-                    names.extend(Self::extract_thread_names(&content));
-                }
-            }
-            names
-        })?;
-
         let mut thread_counts: HashMap<String, usize> = HashMap::new();
-        for name in names {
-            *thread_counts.entry(name).or_insert(0) += 1;
+        for meta in index.entries.values() {
+            for name in &meta.thread_names {
+                *thread_counts.entry(name.clone()).or_insert(0) += 1;
+            }
         }
 
         Ok(self.filter_thread_results(thread_counts, query, is_fuzzy))
     }
 
     /// Searches for unique tags across all notes.
-    pub fn search_tags(&self, query: &str, is_fuzzy: bool) -> Result<Vec<TagSearchResult>, String> {
-        let tags = self.par_map_files(|_note_manager, chunk| {
-            let mut tags = Vec::new();
-            for path in chunk {
-                if let Ok(content) = fs::read_to_string(path) {
-                    tags.extend(crate::utils::tag_parser::parse_tags_from_content(&content));
-                }
-            }
-            tags
-        })?;
-
+    pub fn search_tags(
+        &self,
+        index: &FolderIndex,
+        query: &str,
+        is_fuzzy: bool,
+    ) -> Result<Vec<TagSearchResult>, String> {
         let mut tag_counts: HashMap<String, usize> = HashMap::new();
-        for tag in tags {
-            *tag_counts.entry(tag).or_insert(0) += 1;
+        for meta in index.entries.values() {
+            for tag in &meta.tags {
+                *tag_counts.entry(tag.clone()).or_insert(0) += 1;
+            }
         }
 
         Ok(self.filter_tag_results(tag_counts, query, is_fuzzy))
@@ -658,8 +653,13 @@ impl<'a> SearchService<'a> {
     }
 
     /// Finds all notes that contain a specific tag, optionally filtered by a query.
+    ///
+    /// The tag filter comes from the folder index; with an empty query no file
+    /// is read at all (excerpts come from the index), otherwise only the notes
+    /// carrying the tag are read and full-text searched.
     pub fn search_notes_by_tag(
         &self,
+        index: &FolderIndex,
         tag: &str,
         query: &str,
         is_fuzzy: bool,
@@ -668,50 +668,47 @@ impl<'a> SearchService<'a> {
         let tag_lower = tag.to_lowercase();
         let query_empty = query.trim().is_empty();
 
-        let mut results = self.par_map_files(|note_manager, chunk| {
-            let mut matcher = Matcher::new(Config::DEFAULT);
-            let mut query_buf = Vec::new();
-            let query_utf32 = Utf32Str::new(query_normalized.as_str(), &mut query_buf);
-            let mut line_buf = Vec::new();
-            let mut out = Vec::new();
+        let has_tag = |meta: &NoteMeta| meta.tags.iter().any(|t| t.to_lowercase() == tag_lower);
 
-            for path in chunk {
-                let content = match fs::read_to_string(path) {
-                    Ok(c) => c,
-                    Err(_) => continue,
-                };
-
-                let tags = crate::utils::tag_parser::parse_tags_from_content(&content);
-                if !tags.iter().any(|t| t.to_lowercase() == tag_lower) {
-                    continue;
-                }
-
-                if query_empty {
-                    let filename = path
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or_default();
-                    let formatted_name = note_manager.format_note_name(filename);
-
-                    let fm_len = Self::frontmatter_line_count(&content);
-                    // Find first non-empty line after frontmatter
-                    let first_line = content
-                        .lines()
-                        .skip(fm_len)
-                        .find(|l| !l.trim().is_empty())
-                        .map(|l| l.trim().to_string())
-                        .unwrap_or_else(|| formatted_name.clone());
-
-                    out.push(SearchResult {
-                        filename: filename.to_string(),
+        let mut results = if query_empty {
+            // Pure metadata lookup: no file I/O.
+            let mut names: Vec<&String> = index
+                .entries
+                .iter()
+                .filter(|(_, meta)| has_tag(meta))
+                .map(|(name, _)| name)
+                .collect();
+            names.sort_by(|a, b| b.cmp(a));
+            names
+                .into_iter()
+                .map(|name| {
+                    let meta = &index.entries[name];
+                    let formatted_name = self.note_manager.format_note_name(name);
+                    let excerpt = if meta.first_body_line.is_empty() {
+                        formatted_name.clone()
+                    } else {
+                        meta.first_body_line.clone()
+                    };
+                    SearchResult {
+                        filename: name.clone(),
                         formatted_name,
-                        created: note_manager.extract_created_date(&content),
-                        excerpt: first_line,
-                        line_number: fm_len,
+                        created: meta.created.clone(),
+                        excerpt,
+                        line_number: meta.body_start,
                         score: 0,
                         indices: vec![],
-                    });
-                } else {
+                    }
+                })
+                .collect()
+        } else {
+            let candidates = self.index_paths(index, has_tag);
+            self.par_map_paths(&candidates, |note_manager, chunk| {
+                let mut matcher = Matcher::new(Config::DEFAULT);
+                let mut query_buf = Vec::new();
+                let query_utf32 = Utf32Str::new(query_normalized.as_str(), &mut query_buf);
+                let mut line_buf = Vec::new();
+                let mut out = Vec::new();
+                for path in chunk {
                     out.extend(Self::search_file(
                         note_manager,
                         path,
@@ -722,9 +719,9 @@ impl<'a> SearchService<'a> {
                         &mut line_buf,
                     ));
                 }
-            }
-            out
-        })?;
+                out
+            })
+        };
 
         if is_fuzzy && !query_empty {
             results.sort_by(|a, b| b.score.cmp(&a.score));
@@ -737,8 +734,17 @@ impl<'a> SearchService<'a> {
     }
 
     /// Aggregates content from all threads matching the given name across all notes.
-    pub fn aggregate_thread(&self, thread_name: &str) -> Result<ThreadAggregationResult, String> {
-        let items = self.par_map_files(|note_manager, chunk| {
+    ///
+    /// Only notes whose index entry lists the thread name are read from disk.
+    pub fn aggregate_thread(
+        &self,
+        index: &FolderIndex,
+        thread_name: &str,
+    ) -> Result<ThreadAggregationResult, String> {
+        let candidates = self.index_paths(index, |meta| {
+            meta.thread_names.iter().any(|n| n == thread_name)
+        });
+        let items = self.par_map_paths(&candidates, |note_manager, chunk| {
             let mut items = Vec::new();
 
             for path in chunk {
@@ -767,7 +773,7 @@ impl<'a> SearchService<'a> {
                 }
             }
             items
-        })?;
+        });
 
         Ok(ThreadAggregationResult {
             thread_name: thread_name.to_string(),
@@ -776,10 +782,13 @@ impl<'a> SearchService<'a> {
     }
 
     /// Returns all pinned threads across all notes with excerpts.
-    pub fn get_pinned_threads(&self) -> Result<Vec<PinnedThreadItem>, String> {
+    ///
+    /// Only notes whose index entry has a pinned thread are read from disk.
+    pub fn get_pinned_threads(&self, index: &FolderIndex) -> Result<Vec<PinnedThreadItem>, String> {
         use crate::models::note_session::NoteSession;
 
-        let mut pinned_threads = self.par_map_files(|note_manager, chunk| {
+        let candidates = self.index_paths(index, |meta| meta.thread_refs.iter().any(|t| t.pinned));
+        let mut pinned_threads = self.par_map_paths(&candidates, |note_manager, chunk| {
             let mut pinned = Vec::new();
 
             for path in chunk {
@@ -839,7 +848,7 @@ impl<'a> SearchService<'a> {
                 }
             }
             pinned
-        })?;
+        });
 
         // Sort by filename descending (newest first), then by thread name
         pinned_threads.sort_by(|a, b| {
@@ -988,35 +997,35 @@ mod tests {
     #[test]
     fn test_extract_thread_names_empty_content() {
         let content = "";
-        let result = SearchService::extract_thread_names(content);
+        let result = crate::utils::markdown::thread_names(content);
         assert!(result.is_empty());
     }
 
     #[test]
     fn test_extract_thread_names_no_threads() {
         let content = "---\ntitle: Test\n---\nThis is just content\nNo threads here";
-        let result = SearchService::extract_thread_names(content);
+        let result = crate::utils::markdown::thread_names(content);
         assert!(result.is_empty());
     }
 
     #[test]
     fn test_extract_thread_names_single_thread() {
         let content = "---\ntitle: Test\n---\n!!! Main Thread\nSome content";
-        let result = SearchService::extract_thread_names(content);
+        let result = crate::utils::markdown::thread_names(content);
         assert_eq!(result, vec!["Main Thread"]);
     }
 
     #[test]
     fn test_extract_thread_names_multiple_threads() {
         let content = "---\ntitle: Test\n---\n!!! Thread 1\nContent 1\n!!! Thread 2\nContent 2";
-        let result = SearchService::extract_thread_names(content);
+        let result = crate::utils::markdown::thread_names(content);
         assert_eq!(result, vec!["Thread 1", "Thread 2"]);
     }
 
     #[test]
     fn test_extract_thread_names_skips_empty() {
         let content = "!!! \n!!! Valid\n!!!   \n!!! Also Valid";
-        let result = SearchService::extract_thread_names(content);
+        let result = crate::utils::markdown::thread_names(content);
         assert_eq!(result, vec!["Valid", "Also Valid"]);
     }
 
@@ -1024,7 +1033,7 @@ mod tests {
     fn test_extract_thread_names_with_frontmatter() {
         let content = "---
 title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thread B\nMore";
-        let result = SearchService::extract_thread_names(content);
+        let result = crate::utils::markdown::thread_names(content);
         assert_eq!(result, vec!["Thread A", "Thread B"]);
     }
 
@@ -1696,7 +1705,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
     #[test]
     fn test_extract_thread_names_empty_lines() {
         let content = "!!! \n\n!!! Valid\n\n!!!   \n";
-        let result = SearchService::extract_thread_names(content);
+        let result = crate::utils::markdown::thread_names(content);
         assert_eq!(result, vec!["Valid"]);
     }
 
@@ -1762,7 +1771,7 @@ title: Test\nthreads: ThreadA:5,ThreadB:10\n---\n!!! Thread A\nContent\n!!! Thre
     #[test]
     fn test_extract_thread_names_with_frontmatter_and_content() {
         let content = "---\ntitle: Test\ntags: [a, b]\n---\n!!! Thread 1\nContent line 1\n!!! Thread 2\nContent line 2";
-        let result = SearchService::extract_thread_names(content);
+        let result = crate::utils::markdown::thread_names(content);
         assert_eq!(result, vec!["Thread 1", "Thread 2"]);
     }
 }

@@ -33,6 +33,7 @@ use commands::theme::{get_theme_colors, set_theme};
 use models::app_state::AppState;
 use models::config::AppConfig;
 use models::note_session::NoteSession;
+use services::folder_index::FolderIndex;
 use services::note_manager::NoteManager;
 use services::tag_manager::TagManager;
 use std::sync::Mutex;
@@ -71,6 +72,7 @@ pub fn run() {
 
     let app = builder
         .manage(AppState {
+            folder_index: Mutex::new(FolderIndex::empty(note_manager.notes_folder.clone())),
             note_manager: Mutex::new(note_manager),
             tag_manager: Mutex::new(TagManager::new()),
             note_session: Mutex::new(NoteSession::new()),

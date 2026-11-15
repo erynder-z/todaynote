@@ -2,6 +2,7 @@
 
 use crate::models::config::AppConfig;
 use crate::models::note_session::NoteSession;
+use crate::services::folder_index::FolderIndex;
 use crate::services::note_manager::NoteManager;
 use crate::services::tag_manager::TagManager;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -19,14 +20,18 @@ use tauri::Manager;
 /// When more than one mutex is needed, guards must be acquired in this
 /// order and never the reverse (doing so can deadlock the backend):
 ///
-/// `config` → `note_manager` → `tag_manager` → `note_session`
+/// `config` → `note_manager` → `folder_index` → `tag_manager` → `note_session`
 ///
 /// Additionally, guards must be dropped before any blocking file I/O:
 /// clone the needed values (paths, locale, session state), release the
-/// guard, then perform the I/O lock-free.
+/// guard, then perform the I/O lock-free. `folder_index` is a leaf lock:
+/// [`crate::services::folder_index::get_or_refresh`] only holds it for cheap
+/// map comparisons and never across file I/O.
 pub struct AppState {
     /// Service for managing note files and directories.
     pub note_manager: Mutex<NoteManager>,
+    /// Shared mtime-validated index of the notes folder (see `services::folder_index`).
+    pub folder_index: Mutex<FolderIndex>,
     /// Service for managing tag aggregation.
     pub tag_manager: Mutex<TagManager>,
     /// Transient state for the currently active editing session.
@@ -48,6 +53,13 @@ impl AppState {
         self.note_manager
             .lock()
             .map_err(|_| "Note manager is currently unavailable (poisoned lock)".to_string())
+    }
+
+    /// Safely locks the folder index, returning a descriptive error if the lock is poisoned.
+    pub fn folder_index(&self) -> Result<MutexGuard<'_, FolderIndex>, String> {
+        self.folder_index
+            .lock()
+            .map_err(|_| "Folder index is currently unavailable (poisoned lock)".to_string())
     }
 
     /// Safely locks the tag manager, returning a descriptive error if the lock is poisoned.
@@ -150,6 +162,7 @@ mod tests {
     fn make_state() -> AppState {
         AppState {
             note_manager: Mutex::new(NoteManager::new(PathBuf::from("/tmp/notes"), "en".into())),
+            folder_index: Mutex::new(FolderIndex::empty(PathBuf::from("/tmp/notes"))),
             tag_manager: Mutex::new(TagManager::new()),
             note_session: Mutex::new(NoteSession::new()),
             config: Mutex::new(AppConfig::default()),
@@ -162,6 +175,7 @@ mod tests {
 
         assert_eq!(state.config().unwrap().locale, "en");
         assert_eq!(state.note_manager().unwrap().locale, "en");
+        assert!(state.folder_index().unwrap().entries.is_empty());
         assert!(state.tag_manager().unwrap().cached_tags.is_none());
         assert!(state.note_session().unwrap().path.is_none());
     }
@@ -179,6 +193,10 @@ mod tests {
             },
             |s| {
                 let _g = s.note_manager.lock().unwrap();
+                panic!("poison");
+            },
+            |s| {
+                let _g = s.folder_index.lock().unwrap();
                 panic!("poison");
             },
             |s| {
@@ -202,6 +220,10 @@ mod tests {
         assert_eq!(
             state.note_manager().err().unwrap(),
             "Note manager is currently unavailable (poisoned lock)"
+        );
+        assert_eq!(
+            state.folder_index().err().unwrap(),
+            "Folder index is currently unavailable (poisoned lock)"
         );
         assert_eq!(
             state.tag_manager().err().unwrap(),

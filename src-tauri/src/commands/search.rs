@@ -2,14 +2,24 @@ use crate::models::app_state::AppState;
 use crate::models::response_types::{
     PinnedThreadItem, SearchResult, TagSearchResult, ThreadAggregationResult, ThreadSearchResult,
 };
+use crate::services::folder_index;
 use crate::services::note_manager::NoteManager;
 use crate::services::search::SearchService;
-use tauri::State;
+use tauri::{Manager, State};
 
 /// Returns an owned snapshot of the note manager so folder-wide scans run
 /// without holding the lock.
 fn note_manager_snapshot(state: &State<'_, AppState>) -> Result<NoteManager, String> {
     state.note_manager_snapshot()
+}
+
+/// Refreshes the shared folder index for the snapshot's notes folder.
+fn folder_index_for(
+    app: &tauri::AppHandle,
+    note_manager: &NoteManager,
+) -> Result<folder_index::FolderIndex, String> {
+    let state = app.state::<AppState>();
+    folder_index::get_or_refresh(&state, &note_manager.notes_folder)
 }
 
 /// Performs a full-text search across all notes.
@@ -27,67 +37,75 @@ pub async fn search_notes(
     .await
 }
 
-/// Searches for unique thread names across all notes.
+/// Searches for unique thread names across all notes
 #[tauri::command]
 pub async fn search_threads(
     query: String,
     is_fuzzy: bool,
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
 ) -> Result<Vec<ThreadSearchResult>, String> {
     let note_manager = note_manager_snapshot(&state)?;
     super::run_blocking(move || {
+        let index = folder_index_for(&app, &note_manager)?;
         let service = SearchService::new(&note_manager);
-        service.search_threads(&query, is_fuzzy)
+        service.search_threads(&index, &query, is_fuzzy)
     })
     .await
 }
 
-/// Searches for unique tags across all notes.
+/// Searches for unique tags across all notes
 #[tauri::command]
 pub async fn search_tags(
     query: String,
     is_fuzzy: bool,
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
 ) -> Result<Vec<TagSearchResult>, String> {
     let note_manager = note_manager_snapshot(&state)?;
     super::run_blocking(move || {
+        let index = folder_index_for(&app, &note_manager)?;
         let service = SearchService::new(&note_manager);
-        service.search_tags(&query, is_fuzzy)
+        service.search_tags(&index, &query, is_fuzzy)
     })
     .await
 }
 
-/// Finds all notes that contain a specific tag.
+/// Finds all notes that contain a specific tag
 #[tauri::command]
 pub async fn search_notes_by_tag(
     tag: String,
     query: String,
     is_fuzzy: bool,
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
 ) -> Result<Vec<SearchResult>, String> {
     let note_manager = note_manager_snapshot(&state)?;
     super::run_blocking(move || {
+        let index = folder_index_for(&app, &note_manager)?;
         let service = SearchService::new(&note_manager);
-        service.search_notes_by_tag(&tag, &query, is_fuzzy)
+        service.search_notes_by_tag(&index, &tag, &query, is_fuzzy)
     })
     .await
 }
 
-/// Aggregates content from all threads with the given thread name.
+/// Aggregates content from all threads with the given thread name
 #[tauri::command]
 pub async fn aggregate_thread(
     name: String,
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
 ) -> Result<ThreadAggregationResult, String> {
     let note_manager = note_manager_snapshot(&state)?;
     super::run_blocking(move || {
+        let index = folder_index_for(&app, &note_manager)?;
         let service = SearchService::new(&note_manager);
-        service.aggregate_thread(&name)
+        service.aggregate_thread(&index, &name)
     })
     .await
 }
 
-/// Processes search results with filtering and sorting options.
+/// Processes search results with filtering and sorting options
 #[tauri::command]
 pub async fn process_search_results(
     results: Vec<SearchResult>,
@@ -109,20 +127,22 @@ pub async fn process_search_results(
     ))
 }
 
-/// Returns all pinned threads across all notes with excerpts.
+/// Returns all pinned threads across all notes with excerpts
 #[tauri::command]
 pub async fn get_pinned_threads(
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
 ) -> Result<Vec<PinnedThreadItem>, String> {
     let note_manager = note_manager_snapshot(&state)?;
     super::run_blocking(move || {
+        let index = folder_index_for(&app, &note_manager)?;
         let service = SearchService::new(&note_manager);
-        service.get_pinned_threads()
+        service.get_pinned_threads(&index)
     })
     .await
 }
 
-/// Returns the content of a specific thread from a specific note.
+/// Returns the content of a specific thread from a specific note
 #[tauri::command]
 pub async fn get_thread_content(
     filename: String,
@@ -141,6 +161,7 @@ pub async fn get_thread_content(
 mod tests {
     use super::*;
     use crate::models::response_types::ThreadAggregationItem;
+    use crate::services::folder_index::FolderIndex;
     use crate::services::note_manager::NoteManager;
     use crate::services::search::SearchService;
     use std::fs;
@@ -156,6 +177,11 @@ mod tests {
         }
 
         (dir, note_manager)
+    }
+
+    /// Builds a folder index over the temp dir
+    fn setup_index(dir: &tempfile::TempDir) -> FolderIndex {
+        FolderIndex::scan(dir.path()).expect("Failed to scan folder index")
     }
 
     fn make_result(filename: &str, score: i64) -> SearchResult {
@@ -360,9 +386,10 @@ mod tests {
             ),
         ]);
 
+        let index = setup_index(&_dir);
         let service = SearchService::new(&nm);
         let results = service
-            .search_threads("idea", false)
+            .search_threads(&index, "idea", false)
             .expect("Thread search failed");
 
         assert_eq!(results.len(), 1, "Should only match 'Ideas'");
@@ -379,9 +406,10 @@ mod tests {
             ("2024-01-02.md", "---\ntags: [rust, testing]\n---\nContent"),
         ]);
 
+        let index = setup_index(&_dir);
         let service = SearchService::new(&nm);
         let results = service
-            .search_tags("rust", false)
+            .search_tags(&index, "rust", false)
             .expect("Tag search failed");
 
         assert_eq!(results.len(), 1);
@@ -404,9 +432,10 @@ mod tests {
             ),
         ]);
 
+        let index = setup_index(&_dir);
         let service = SearchService::new(&nm);
         let results = service
-            .search_notes_by_tag("important", "rust", false)
+            .search_notes_by_tag(&index, "important", "rust", false)
             .expect("Tag note search failed");
 
         assert_eq!(
@@ -427,9 +456,10 @@ mod tests {
             ("2024-01-02.md", "!!! Journal\nSecond entry"),
         ]);
 
+        let index = setup_index(&_dir);
         let service = SearchService::new(&nm);
         let result = service
-            .aggregate_thread("Journal")
+            .aggregate_thread(&index, "Journal")
             .expect("Aggregation failed");
 
         assert_eq!(result.thread_name, "Journal");
@@ -444,8 +474,11 @@ mod tests {
         let content = "---\nthreads: [{id: t1, line: 0, pinned: true}]\ntags: []\n---\n!!! Tasks\nDo something\n\n";
         let (_dir, nm) = setup_notes(&[("2024-01-01.md", content)]);
 
+        let index = setup_index(&_dir);
         let service = SearchService::new(&nm);
-        let results = service.get_pinned_threads().expect("Pinned threads failed");
+        let results = service
+            .get_pinned_threads(&index)
+            .expect("Pinned threads failed");
 
         assert_eq!(results.len(), 1, "Should find one pinned thread");
         assert_eq!(results[0].thread_id, "t1");

@@ -1,6 +1,7 @@
 //! Manager for folder-wide tag operations and aggregation.
 
 use crate::models::note_session::NoteSession;
+use crate::services::folder_index::FolderIndex;
 use crate::utils::tag_parser;
 use std::collections::HashMap;
 use std::fs;
@@ -67,6 +68,21 @@ impl TagManager {
         tags.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
         Ok(tags.into_iter().map(|(tag, _)| tag).collect())
+    }
+
+    /// Aggregates all unique tags from a folder index, sorted by usage
+    /// frequency (descending) and alphabetical tie-breaker.
+    pub fn tags_from_index(index: &FolderIndex) -> Vec<String> {
+        let mut tag_counts: HashMap<String, usize> = HashMap::new();
+        for meta in index.entries.values() {
+            for tag in &meta.tags {
+                *tag_counts.entry(tag.clone()).or_insert(0) += 1;
+            }
+        }
+
+        let mut tags: Vec<(String, usize)> = tag_counts.into_iter().collect();
+        tags.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        tags.into_iter().map(|(tag, _)| tag).collect()
     }
 
     /// Returns a filtered list of tag suggestions based on a search query.
@@ -300,6 +316,29 @@ mod tests {
         let result2 = manager.get_all_tags(path);
         assert!(result2.is_ok());
         assert_eq!(result1.unwrap(), result2.unwrap());
+    }
+
+    #[test]
+    fn test_tags_from_index_aggregates_sorts_and_skips_dotfiles() {
+        let temp_dir = tempdir().unwrap();
+        let path = temp_dir.path();
+
+        fs::write(
+            path.join("2024-01-01.md"),
+            "---\ntags: [work, urgent]\n---\ncontent",
+        )
+        .unwrap();
+        fs::write(
+            path.join("2024-01-02.md"),
+            "---\ntags: [work, personal]\n---\ncontent",
+        )
+        .unwrap();
+        fs::write(path.join(".hidden.md"), "---\ntags: [secret]\n---\nhidden").unwrap();
+
+        let index = FolderIndex::scan(path).unwrap();
+        let tags = TagManager::tags_from_index(&index);
+        // work (2) first by frequency, then alphabetical for the rest.
+        assert_eq!(tags, vec!["work", "personal", "urgent"]);
     }
 
     ///

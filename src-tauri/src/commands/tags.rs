@@ -4,17 +4,16 @@ use crate::commands::notes::{reconstruct_full_content, session_frontmatter};
 use crate::models::app_state::AppState;
 use crate::models::note_session::NoteSession;
 use crate::models::response_types::NoteContentResponse;
+use crate::services::folder_index;
 use crate::services::tag_manager::TagManager;
 use std::fs;
 use std::path::Path;
-use tauri::State;
+use tauri::{Manager, State};
 
 /// Returns all tags for the folder, using the cache when warm.
-///
-/// The folder scan runs on the blocking thread pool without holding the tag
-/// manager lock; the lock is only taken to read or store the cache.
 async fn cached_all_tags(
     state: &State<'_, AppState>,
+    app: &tauri::AppHandle,
     folder: &Path,
 ) -> Result<Vec<String>, String> {
     {
@@ -25,7 +24,13 @@ async fn cached_all_tags(
     }
 
     let folder = folder.to_path_buf();
-    let scanned = super::run_blocking(move || TagManager::scan_all_tags(&folder)).await?;
+    let app = app.clone();
+    let scanned = super::run_blocking(move || {
+        let state = app.state::<AppState>();
+        let index = folder_index::get_or_refresh(&state, &folder)?;
+        Ok(TagManager::tags_from_index(&index))
+    })
+    .await?;
 
     let mut tag_manager = state.tag_manager()?;
     tag_manager.cached_tags = Some(scanned.clone());
@@ -111,12 +116,15 @@ pub async fn remove_note_tag(
 
 /// Returns all unique tags from all notes, sorted by usage frequency.
 #[tauri::command]
-pub async fn get_all_tags(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+pub async fn get_all_tags(
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+) -> Result<Vec<String>, String> {
     let folder_path = {
         let note_manager = state.note_manager()?;
         note_manager.notes_folder.clone()
     };
-    cached_all_tags(&state, &folder_path).await
+    cached_all_tags(&state, &app, &folder_path).await
 }
 
 /// Returns a filtered list of tag suggestions.
@@ -124,6 +132,7 @@ pub async fn get_all_tags(state: State<'_, AppState>) -> Result<Vec<String>, Str
 pub async fn get_tag_suggestions(
     query: String,
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
 ) -> Result<Vec<String>, String> {
     let folder_path = {
         let note_manager = state.note_manager()?;
@@ -139,7 +148,7 @@ pub async fn get_tag_suggestions(
 
     // Warm the cache without holding the lock during the folder scan; the
     // suggest call below then only reads the in-memory cache.
-    cached_all_tags(&state, &folder_path).await?;
+    cached_all_tags(&state, &app, &folder_path).await?;
 
     let mut tag_manager = state.tag_manager()?;
     Ok(tag_manager.suggest_tags(&folder_path, &query, &active_tags, 20))
