@@ -37,7 +37,6 @@ use services::folder_index::FolderIndex;
 use services::note_manager::NoteManager;
 use services::tag_manager::TagManager;
 use std::sync::Mutex;
-use tauri::Manager;
 use utils::window::show_window;
 
 /// The main entry point of the application's core logic.
@@ -150,9 +149,8 @@ pub fn run() {
 
             let images_dir = config.notes_folder.join("images");
             let _ = std::fs::create_dir_all(&images_dir);
-            let _ = app
-                .asset_protocol_scope()
-                .allow_directory(&images_dir, true);
+            // Per-file asset scope: allow only the images actually referenced by notes
+            let _ = commands::images::allow_referenced_images(app.handle(), &config.notes_folder);
 
             Ok(())
         })

@@ -430,20 +430,30 @@ pub async fn import_notes_archive(
     password: Option<String>,
     overwrite: bool,
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
 ) -> Result<ImportReport, String> {
     let notes_folder = state.note_manager()?.notes_folder.clone();
 
     // Reading the archive, decryption (Argon2id is CPU-heavy) and extracting
     // every entry all run on the blocking thread pool.
-    super::run_blocking(move || {
-        import_archive_from_path(
-            Path::new(&path),
-            &notes_folder,
-            password.as_deref(),
-            overwrite,
-        )
-    })
-    .await
+    let report = {
+        let notes_folder = notes_folder.clone();
+        super::run_blocking(move || {
+            import_archive_from_path(
+                Path::new(&path),
+                &notes_folder,
+                password.as_deref(),
+                overwrite,
+            )
+        })
+        .await?
+    };
+
+    // Imported notes may reference newly imported images: refresh the
+    // per-file asset-protocol scope from the folder index.
+    let _ = super::images::allow_referenced_images(&app, &notes_folder);
+
+    Ok(report)
 }
 
 ///

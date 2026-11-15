@@ -74,10 +74,38 @@ fn base64_exceeds_limit(encoded_len: usize, max: usize) -> bool {
     encoded_len.saturating_mul(3) / 4 > max
 }
 
+/// Allows the asset protocol to serve a single file.
+pub(crate) fn allow_image_file(app: &tauri::AppHandle, path: &Path) {
+    let _ = app.asset_protocol_scope().allow_file(path);
+}
+
+/// Allows the asset protocol to serve exactly the image files referenced by
+/// the notes in `notes_folder` (per-file scope instead of the whole `images/`
+/// directory), driven by the shared mtime-validated folder index.
+pub(crate) fn allow_referenced_images(
+    app: &tauri::AppHandle,
+    notes_folder: &Path,
+) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    let index = crate::services::folder_index::get_or_refresh(&state, notes_folder)?;
+    let images_dir = notes_folder.join("images");
+    for meta in index.entries.values() {
+        for name in &meta.image_files {
+            allow_image_file(app, &images_dir.join(name));
+        }
+    }
+    Ok(())
+}
+
 /// Writes image bytes into the notes images directory under a fresh UUID
 /// filename and returns the stored path relative to the notes folder
 /// (e.g. `images/<uuid>.<ext>`).
-fn store_image_bytes(bytes: &[u8], ext: &str, state: &AppState) -> Result<String, String> {
+fn store_image_bytes(
+    bytes: &[u8],
+    ext: &str,
+    state: &AppState,
+    app: &tauri::AppHandle,
+) -> Result<String, String> {
     if bytes.len() > MAX_DOWNLOAD_BYTES {
         return Err("Image is too large (maximum 25 MB)".to_string());
     }
@@ -87,6 +115,7 @@ fn store_image_bytes(bytes: &[u8], ext: &str, state: &AppState) -> Result<String
     let dest = images_dir.join(&filename);
 
     fs::write(&dest, bytes).map_err(|e| format!("Failed to save image: {}", e))?;
+    allow_image_file(app, &dest);
 
     Ok(format!("images/{}", filename))
 }
@@ -98,6 +127,7 @@ fn store_image_bytes(bytes: &[u8], ext: &str, state: &AppState) -> Result<String
 pub async fn add_image_from_path(
     path: String,
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
 ) -> Result<String, String> {
     let source = Path::new(&path);
     if !source.is_file() {
@@ -115,6 +145,7 @@ pub async fn add_image_from_path(
     let dest = images_dir.join(&filename);
 
     fs::copy(source, &dest).map_err(|e| format!("Failed to copy image: {}", e))?;
+    allow_image_file(&app, &dest);
 
     Ok(format!("images/{}", filename))
 }
@@ -123,7 +154,11 @@ pub async fn add_image_from_path(
 ///
 /// Returns the stored path relative to the notes folder (e.g. `images/<uuid>.png`).
 #[tauri::command]
-pub async fn add_image_from_url(url: String, state: State<'_, AppState>) -> Result<String, String> {
+pub async fn add_image_from_url(
+    url: String,
+    state: State<'_, AppState>,
+    app: tauri::AppHandle,
+) -> Result<String, String> {
     if !(url.starts_with("http://") || url.starts_with("https://")) {
         return Err("Only http:// and https:// URLs are supported".to_string());
     }
@@ -188,7 +223,7 @@ pub async fn add_image_from_url(url: String, state: State<'_, AppState>) -> Resu
         }
     }
 
-    store_image_bytes(&bytes, &ext, &state)
+    store_image_bytes(&bytes, &ext, &state, &app)
 }
 
 /// Stores image bytes sent by the webview (clipboard paste, drag & drop)
@@ -202,6 +237,7 @@ pub async fn add_image_from_bytes(
     mime: String,
     data: String,
     state: State<'_, AppState>,
+    app: tauri::AppHandle,
 ) -> Result<String, String> {
     use base64::Engine;
 
@@ -219,7 +255,7 @@ pub async fn add_image_from_bytes(
     let ext =
         extension_from_source(&mime, &name).ok_or_else(|| "Unsupported image type".to_string())?;
 
-    store_image_bytes(&bytes, &ext, &state)
+    store_image_bytes(&bytes, &ext, &state, &app)
 }
 
 /// Returns the absolute path of the notes images directory.

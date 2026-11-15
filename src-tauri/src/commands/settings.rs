@@ -5,7 +5,7 @@ use crate::models::app_state::{schedule_config_save, AppState};
 use crate::models::config::AppConfig;
 use crate::models::response_types::{AppPayload, ConfigResponse};
 use std::path::PathBuf;
-use tauri::{Manager, State};
+use tauri::State;
 
 /// Updates the entire application configuration and handles side effects.
 #[tauri::command]
@@ -264,10 +264,8 @@ pub async fn switch_notes_folder(
         note_manager.update_config(config.notes_folder.clone(), config.locale.clone());
     }
 
-    let images_dir = config.notes_folder.join("images");
-    let _ = app
-        .asset_protocol_scope()
-        .allow_directory(&images_dir, true);
+    // Per-file asset scope for the new folder: allow only referenced images.
+    let _ = crate::commands::images::allow_referenced_images(&app, &config.notes_folder);
 
     setup::get_initial_state(config, state)
 }

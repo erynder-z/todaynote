@@ -41,39 +41,31 @@ pub struct AppState {
 }
 
 impl AppState {
-    /// Safely locks the configuration, returning a descriptive error if the lock is poisoned.
+    /// Locks the configuration, recovering the guard if the lock was poisoned
+    /// by a panic in another thread (a poisoned lock must not break all later
+    /// commands).
     pub fn config(&self) -> Result<MutexGuard<'_, AppConfig>, String> {
-        self.config
-            .lock()
-            .map_err(|_| "Configuration is currently unavailable (poisoned lock)".to_string())
+        Ok(self.config.lock().unwrap_or_else(|e| e.into_inner()))
     }
 
-    /// Safely locks the note manager, returning a descriptive error if the lock is poisoned.
+    /// Locks the note manager, recovering the guard on a poisoned lock.
     pub fn note_manager(&self) -> Result<MutexGuard<'_, NoteManager>, String> {
-        self.note_manager
-            .lock()
-            .map_err(|_| "Note manager is currently unavailable (poisoned lock)".to_string())
+        Ok(self.note_manager.lock().unwrap_or_else(|e| e.into_inner()))
     }
 
-    /// Safely locks the folder index, returning a descriptive error if the lock is poisoned.
+    /// Locks the folder index, recovering the guard on a poisoned lock.
     pub fn folder_index(&self) -> Result<MutexGuard<'_, FolderIndex>, String> {
-        self.folder_index
-            .lock()
-            .map_err(|_| "Folder index is currently unavailable (poisoned lock)".to_string())
+        Ok(self.folder_index.lock().unwrap_or_else(|e| e.into_inner()))
     }
 
-    /// Safely locks the tag manager, returning a descriptive error if the lock is poisoned.
+    /// Locks the tag manager, recovering the guard on a poisoned lock.
     pub fn tag_manager(&self) -> Result<MutexGuard<'_, TagManager>, String> {
-        self.tag_manager
-            .lock()
-            .map_err(|_| "Tag manager is currently unavailable (poisoned lock)".to_string())
+        Ok(self.tag_manager.lock().unwrap_or_else(|e| e.into_inner()))
     }
 
-    /// Safely locks the note session, returning a descriptive error if the lock is poisoned.
+    /// Locks the note session, recovering the guard on a poisoned lock.
     pub fn note_session(&self) -> Result<MutexGuard<'_, NoteSession>, String> {
-        self.note_session
-            .lock()
-            .map_err(|_| "Note session is currently unavailable (poisoned lock)".to_string())
+        Ok(self.note_session.lock().unwrap_or_else(|e| e.into_inner()))
     }
 
     /// Returns an owned snapshot of the note manager (folder + locale).
@@ -181,7 +173,7 @@ mod tests {
     }
 
     #[test]
-    fn test_accessors_poisoned_error() {
+    fn test_accessors_recover_from_poisoned_lock() {
         let state = Arc::new(make_state());
 
         // Poison each mutex by panicking while holding the lock in a spawned thread.
@@ -213,26 +205,13 @@ mod tests {
             let _ = std::thread::spawn(move || poison(&state)).join();
         }
 
-        assert_eq!(
-            state.config().err().unwrap(),
-            "Configuration is currently unavailable (poisoned lock)"
-        );
-        assert_eq!(
-            state.note_manager().err().unwrap(),
-            "Note manager is currently unavailable (poisoned lock)"
-        );
-        assert_eq!(
-            state.folder_index().err().unwrap(),
-            "Folder index is currently unavailable (poisoned lock)"
-        );
-        assert_eq!(
-            state.tag_manager().err().unwrap(),
-            "Tag manager is currently unavailable (poisoned lock)"
-        );
-        assert_eq!(
-            state.note_session().err().unwrap(),
-            "Note session is currently unavailable (poisoned lock)"
-        );
+        // A poisoned lock must not break later commands: the accessors recover
+        // the guard instead of returning an error.
+        assert_eq!(state.config().unwrap().locale, "en");
+        assert_eq!(state.note_manager().unwrap().locale, "en");
+        assert!(state.folder_index().unwrap().entries.is_empty());
+        assert!(state.tag_manager().unwrap().cached_tags.is_none());
+        assert!(state.note_session().unwrap().path.is_none());
     }
 
     #[test]
