@@ -16,6 +16,7 @@
   let searchQuery = $state('');
   let searchResults = $state<Range[]>([]);
   let currentIndex = $state(0);
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const observer = new DOMObserver();
   const highlightService = new Highlighter();
@@ -88,7 +89,7 @@
   /**
    * Perform a new search.
    */
-  const performSearch = () => {
+  const performSearch = (scrollToMatch = true) => {
     highlightService.clearHighlights();
 
     searchResults = findService.search(searchQuery);
@@ -101,7 +102,20 @@
     if (currentIndex >= searchResults.length) currentIndex = 0;
 
     updateHighlights();
-    scrollToActiveMatch();
+    if (scrollToMatch) scrollToActiveMatch();
+  };
+
+  /**
+   * Debounced re-search for editor DOM mutations: keeps results and
+   * highlights in sync while typing in the note without a full-DOM scan per
+   * keystroke and without moving the scroll position.
+   */
+  const scheduleSearch = () => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      searchTimeout = null;
+      performSearch(false);
+    }, 200);
   };
 
   /**
@@ -115,7 +129,7 @@
       return;
     }
 
-    observer.observe(target, performSearch);
+    observer.observe(target, scheduleSearch);
   };
 
   /**
@@ -154,6 +168,10 @@
    * Resets the search state.
    */
   const resetSearch = () => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+      searchTimeout = null;
+    }
     highlightService.clearHighlights();
     searchResults = [];
     currentIndex = 0;

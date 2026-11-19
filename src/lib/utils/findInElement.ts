@@ -1,6 +1,20 @@
 import { sessionState } from "#lib/stores/sessionState.svelte.ts";
 
 /**
+ * Cheap visibility check that avoids per-node getComputedStyle() calls (each
+ * of which can force a style recalc). Uses checkVisibility() where the
+ * webview supports it, falling back to offsetParent/getClientRects(), which
+ * are null/empty for display:none subtrees.
+ */
+const isElementVisible = (el: HTMLElement): boolean => {
+	if (typeof el.checkVisibility === "function") {
+		return el.checkVisibility({ checkVisibilityCSS: true });
+	}
+
+	return el.offsetParent !== null || el.getClientRects().length > 0;
+};
+
+/**
  * Class for finding text matches within the current view (find-in-page functionality)
  */
 export class FindInElement {
@@ -29,9 +43,10 @@ export class FindInElement {
 	findTextMatches(): Range[] {
 		if (!this.targetElement) return [];
 
-		const textNodes: Text[] = [];
+		const query = this.searchQuery.toLowerCase();
+		const ranges: Range[] = [];
 
-		// Collect all visible text nodes
+		// Walk visible text nodes and find matches in a single pass
 		const walker = document.createTreeWalker(
 			this.targetElement,
 			NodeFilter.SHOW_TEXT,
@@ -40,9 +55,7 @@ export class FindInElement {
 					const parent = node.parentElement;
 					if (!parent) return NodeFilter.FILTER_REJECT;
 
-					const style = window.getComputedStyle(parent);
-					if (style.display === "none" || style.visibility === "hidden")
-						return NodeFilter.FILTER_REJECT;
+					if (!isElementVisible(parent)) return NodeFilter.FILTER_REJECT;
 
 					// Exclude search bar elements
 					if (parent.closest(".search-in-view"))
@@ -53,27 +66,20 @@ export class FindInElement {
 			},
 		);
 
-		let currentNode = walker.nextNode();
+		let currentNode = walker.nextNode() as Text | null;
 		while (currentNode) {
-			textNodes.push(currentNode as Text);
-			currentNode = walker.nextNode();
-		}
-
-		// Find matches
-		const query = this.searchQuery.toLowerCase();
-		const ranges: Range[] = [];
-
-		for (const node of textNodes) {
-			const text = node.textContent?.toLowerCase() || "";
+			const text = currentNode.textContent?.toLowerCase() || "";
 			let startPos = text.indexOf(query);
 
 			while (startPos !== -1) {
 				const range = new Range();
-				range.setStart(node, startPos);
-				range.setEnd(node, startPos + query.length);
+				range.setStart(currentNode, startPos);
+				range.setEnd(currentNode, startPos + query.length);
 				ranges.push(range);
 				startPos = text.indexOf(query, startPos + query.length);
 			}
+
+			currentNode = walker.nextNode() as Text | null;
 		}
 
 		return ranges;
