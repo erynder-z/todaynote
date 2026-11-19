@@ -148,26 +148,92 @@
   $effect(() => {
     if (!container) return;
 
-    const rewrite = () => {
-      container?.querySelectorAll('img').forEach((img) => {
-        if (img.dataset.type === 'image-block') return;
+    const el = container;
 
-        const src = img.getAttribute('src') ?? '';
-        if (!src.startsWith('images/')) return;
+    /**
+     * Rewrite one inline image's relative src into an asset-protocol URL.
+     * data-resolved guards against re-resolving the same src while a
+     * resolve is in flight or after it completed.
+     */
+    const rewriteImage = (img: HTMLImageElement) => {
+      if (img.dataset.type === 'image-block') return;
 
-        const [path] = src.split('#');
-        resolveImageSrc(path).then((resolved) => {
-          if (img.getAttribute('src') === src)
-            img.setAttribute('src', resolved);
-        });
+      const src = img.getAttribute('src') ?? '';
+      if (!src.startsWith('images/')) return;
+      if (img.dataset.resolved === src) return;
+
+      img.dataset.resolved = src;
+      const [path] = src.split('#');
+      resolveImageSrc(path).then((resolved) => {
+        if (img.getAttribute('src') === src) img.setAttribute('src', resolved);
       });
-
-      hasImages = !!container?.querySelector('img[data-type="image-block"]');
     };
 
-    const observer = new MutationObserver(rewrite);
-    observer.observe(container, { childList: true, subtree: true });
-    rewrite();
+    /** Collect img elements in an added subtree, including the node itself. */
+    const collectImages = (node: Node, out: HTMLImageElement[]) => {
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+      const element = node as HTMLElement;
+      if (element.tagName === 'IMG') {
+        out.push(element as HTMLImageElement);
+        return;
+      }
+
+      for (const img of element.querySelectorAll('img'))
+        out.push(img as HTMLImageElement);
+    };
+
+    const isImageBlock = (node: Node): boolean => {
+      if (node.nodeType !== Node.ELEMENT_NODE) return false;
+
+      const element = node as HTMLElement;
+      return (
+        element.matches('img[data-type="image-block"]') ||
+        !!element.querySelector('img[data-type="image-block"]')
+      );
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      const images: HTMLImageElement[] = [];
+      let imageBlockChanged = false;
+
+      for (const mutation of mutations) {
+        if (mutation.type === 'attributes') {
+          // src changed on an existing img (attributeFilter: ['src'])
+          if (mutation.target instanceof HTMLImageElement)
+            images.push(mutation.target);
+          continue;
+        }
+
+        for (const node of mutation.addedNodes) {
+          if (isImageBlock(node)) imageBlockChanged = true;
+          collectImages(node, images);
+        }
+        for (const node of mutation.removedNodes) {
+          if (isImageBlock(node)) imageBlockChanged = true;
+        }
+      }
+
+      // Bail out early: mutations that touched no image need no work.
+      if (images.length === 0 && !imageBlockChanged) return;
+
+      for (const img of images) rewriteImage(img);
+
+      if (imageBlockChanged)
+        hasImages = !!el.querySelector('img[data-type="image-block"]');
+    });
+
+    observer.observe(el, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['src'],
+    });
+
+    // Initial pass over the whole editor (runs once per mount).
+    for (const img of el.querySelectorAll('img'))
+      rewriteImage(img as HTMLImageElement);
+    hasImages = !!el.querySelector('img[data-type="image-block"]');
 
     return () => observer.disconnect();
   });
