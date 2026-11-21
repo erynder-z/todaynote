@@ -14,6 +14,14 @@ export type PopupType =
 	| "addImage"
 	| null;
 
+export type LazyPopup = Exclude<PopupType, null | "threadOptions">;
+
+export type LoadedPopupComponents<
+	Loaders extends Record<string, () => Promise<{ default: unknown }>>,
+> = {
+	[K in keyof Loaders]?: Awaited<ReturnType<Loaders[K]>>["default"];
+};
+
 export type ToastType = "info" | "success" | "warning" | "error";
 
 export type ModalSize = "minimal" | "sm" | "md" | "lg" | "xl" | "full";
