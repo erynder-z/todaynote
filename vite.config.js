@@ -48,19 +48,17 @@ export default defineConfig(async () => ({
 
 	build: {
 		chunkSizeWarningLimit: 1000,
-		// Optimize chunking strategy
-		rollupOptions: {
+		rolldownOptions: {
 			output: {
-				manualChunks /** @type {string | string[]} */: (
-					/** @type {string} */ id,
-				) => {
-					// Put all milkdown/prosemirror libraries in a dedicated vendor chunk
-					if (
-						id.includes("node_modules/@milkdown") ||
-						id.includes("node_modules/prosemirror")
-					) {
-						return "editor-vendor";
-					}
+				codeSplitting: {
+					groups: [
+						{
+							name: "vendor",
+							test: (/** @type {string} */ id) =>
+								/node_modules[\\/]/.test(id) &&
+								!id.includes("node_modules/@sveltejs/kit"),
+						},
+					],
 				},
 			},
 		},
