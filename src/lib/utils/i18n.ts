@@ -44,8 +44,7 @@ export const t = derived(translations, ($translations) => {
 		let text = $translations[key] || key;
 
 		Object.keys(vars).forEach((v) => {
-			const regex = new RegExp(`{{${v}}}`, "g");
-			text = text.replace(regex, String(vars[v]));
+			text = text.split(`{{${v}}}`).join(String(vars[v]));
 		});
 
 		return text;
