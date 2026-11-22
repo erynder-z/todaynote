@@ -79,11 +79,15 @@
     }
   };
 
+  let resizeFontSize = 16;
+
   /**
    * Initiates the resizing process for the sidebar.
    */
   const startResizing = () => {
     isResizing = true;
+    resizeFontSize =
+      parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   };
@@ -105,12 +109,9 @@
   const handleMouseMove = (e: MouseEvent) => {
     if (!isResizing) return;
 
-    const fontSize = parseFloat(
-      getComputedStyle(document.documentElement).fontSize,
-    );
     const minWidthRem = 15;
     const maxWidthRem = 40;
-    const newWidthRem = (window.innerWidth - e.clientX) / fontSize;
+    const newWidthRem = (window.innerWidth - e.clientX) / resizeFontSize;
 
     if (newWidthRem >= minWidthRem && newWidthRem <= maxWidthRem) {
       settings.controlCenterWidth = newWidthRem;
