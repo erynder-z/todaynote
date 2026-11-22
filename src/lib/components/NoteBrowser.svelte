@@ -134,9 +134,7 @@
 
   $effect(() => {
     if (nav.index !== -1 && nav.lastInputSource === 'keyboard') {
-      const selected = document.querySelector(
-        '.note-card.selected, .result-item.selected',
-      );
+      const selected = document.querySelector('.result-item.selected');
       selected?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   });

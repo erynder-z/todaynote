@@ -53,6 +53,8 @@
     cursor: pointer;
     width: 100%;
     transition: background-color 0.1s cubic-bezier(0.2, 0, 0, 1);
+    content-visibility: auto;
+    contain-intrinsic-size: auto 52px;
   }
 
   .result-item:last-child {

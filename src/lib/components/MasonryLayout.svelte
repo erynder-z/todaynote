@@ -163,6 +163,8 @@
     transition:
       background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
       box-shadow 0.15s cubic-bezier(0.2, 0, 0, 1);
+    content-visibility: auto;
+    contain-intrinsic-size: auto 120px;
   }
 
   .item-card.selected {
