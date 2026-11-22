@@ -2,9 +2,14 @@
   /**
    * Floating size/alignment/caption menu for images in the Milkdown editor.
    *
-   * Listens for clicks on images within the editor container, shows the
-   * menu below the clicked image, and persists changes (size, alignment,
+   * Listens for clicks on images within the editor container, anchors the
+   * menu to the clicked image, and persists changes (size, alignment,
    * caption) directly on the image node's attributes.
+   *
+   * Positioning follows the approach of SelectionFloatingAnchor: the menu
+   * is clamped to the viewport (flipping above the image when there is not
+   * enough room below) and re-anchored on scroll/resize so it moves
+   * together with the note instead of closing.
    */
 
   import type { Editor } from '@milkdown/kit/core';
@@ -20,17 +25,25 @@
 
   let { container, instance }: ImageSizeMenuProps = $props();
 
+  /** Distance kept between the menu and the viewport edges / the image. */
+  const SAFE_MARGIN = 12;
+  const SPACING = 6;
+  /** Fallback menu size used before the element can be measured. */
+  const FALLBACK_WIDTH = 230;
+  const FALLBACK_HEIGHT = 118;
+
   /**
    * Menu state for the image that was clicked last.
    */
   let menu = $state<{
-    x: number;
-    y: number;
     pos: number;
     size: ImageSize | null;
     align: ImageAlign | null;
     caption: string;
   } | null>(null);
+  let menuX = $state(0);
+  let menuY = $state(0);
+  let menuEl: HTMLDivElement | null = $state(null);
 
   /**
    * Opens the menu for a clicked image, or closes it when clicking
@@ -52,8 +65,69 @@
   };
 
   /**
+   * Returns the live DOM element of the anchored image, or null when the
+   * document position no longer points at an image block.
+   */
+  const getAnchorEl = (): HTMLElement | null => {
+    if (!menu || !instance) return null;
+    const view = instance.ctx.get(editorViewCtx);
+    const node = view.state.doc.nodeAt(menu.pos);
+    if (node?.type.name !== 'image-block') return null;
+
+    const dom = view.nodeDOM(menu.pos) as HTMLElement | null;
+    if (!dom) return null;
+    return dom.tagName === 'IMG' ? dom : (dom.querySelector('img') ?? dom);
+  };
+
+  /**
+   * Anchors the menu to the image: below it when there is room, above it
+   * otherwise, always clamped to the viewport. Closes the menu when the
+   * image is scrolled fully out of view.
+   */
+  const positionMenu = () => {
+    if (!menu) return;
+    const anchor = getAnchorEl();
+    if (!anchor) {
+      menu = null;
+      return;
+    }
+
+    const rect = anchor.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    if (rect.bottom < 0 || rect.top > viewportHeight) {
+      menu = null;
+      return;
+    }
+
+    const menuWidth = menuEl?.offsetWidth ?? FALLBACK_WIDTH;
+    const menuHeight = menuEl?.offsetHeight ?? FALLBACK_HEIGHT;
+
+    // Keep the menu horizontally inside the viewport, left-aligned with
+    // the image where possible.
+    const maxX = viewportWidth - menuWidth - SAFE_MARGIN;
+    menuX =
+      maxX < SAFE_MARGIN
+        ? Math.max(SAFE_MARGIN, (viewportWidth - menuWidth) / 2)
+        : Math.max(SAFE_MARGIN, Math.min(rect.left, maxX));
+
+    // Prefer below the image, flip above when there is not enough room.
+    const belowY = rect.bottom + SPACING;
+    if (belowY + menuHeight <= viewportHeight - SAFE_MARGIN) {
+      menuY = belowY;
+    } else {
+      const aboveY = rect.top - menuHeight - SPACING;
+      menuY =
+        aboveY >= SAFE_MARGIN
+          ? aboveY
+          : Math.max(SAFE_MARGIN, viewportHeight - menuHeight - SAFE_MARGIN);
+    }
+  };
+
+  /**
    * Maps the clicked image element to its image node in the document and
-   * positions the menu below it.
+   * opens the menu anchored to it.
    */
   const openMenu = (img: HTMLImageElement, instance: Editor) => {
     const view = instance.ctx.get(editorViewCtx);
@@ -69,15 +143,15 @@
     }
     if (node?.type.name !== 'image-block') return;
 
-    const rect = img.getBoundingClientRect();
     menu = {
-      x: rect.left,
-      y: rect.bottom + 6,
       pos,
       size: node.attrs.size,
       align: node.attrs.align,
       caption: String(node.attrs.caption ?? ''),
     };
+    // Anchor immediately with the fallback size; the effect below
+    // re-measures once the menu element is mounted.
+    positionMenu();
   };
 
   /**
@@ -115,7 +189,27 @@
       align: nextAlign,
       caption: nextCaption,
     };
+
+    // Size/alignment changes resize the figure; re-anchor on the next frame.
+    requestAnimationFrame(() => positionMenu());
   };
+
+  // Re-anchor with the measured menu size once the element is mounted.
+  $effect(() => {
+    if (menu && menuEl) positionMenu();
+  });
+
+  // Follow the image while the note scrolls instead of closing the menu.
+  $effect(() => {
+    if (!menu) return;
+    const reposition = () => positionMenu();
+    document.addEventListener('scroll', reposition, true);
+    window.addEventListener('resize', reposition);
+    return () => {
+      document.removeEventListener('scroll', reposition, true);
+      window.removeEventListener('resize', reposition);
+    };
+  });
 </script>
 
 <svelte:document
@@ -124,10 +218,13 @@
     if (e.key === 'Escape') menu = null;
   }}
 />
-<svelte:window onscroll={() => (menu = null)} />
 
 {#if menu}
-  <div class="image-size-menu" style="top: {menu.y}px; left: {menu.x}px">
+  <div
+    bind:this={menuEl}
+    class="image-size-menu"
+    style="top: {menuY}px; left: {menuX}px"
+  >
     <div class="menu-row">
       {#each IMAGE_SIZES as size (size)}
         <button
