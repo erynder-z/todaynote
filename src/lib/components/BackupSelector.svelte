@@ -8,6 +8,7 @@
   import { open, save } from '@tauri-apps/plugin-dialog';
   import { tick } from 'svelte';
   import { sessionState, t, toast } from '#lib';
+  import { notesService } from '#lib/utils/notes.ts';
 
   type PasswordMode = 'export' | 'import' | null;
 
@@ -137,6 +138,11 @@
   const runImport = async (path: string, password: string | null) => {
     busy = true;
     try {
+      const openPath = overwrite ? sessionState.todayNotePath : null;
+      const contentBefore = openPath
+        ? await notesService.readNoteContent(openPath)
+        : null;
+
       const report = await invoke<{
         imported: number;
         skipped: number;
@@ -161,6 +167,15 @@
       }
       // Signal the note browser to reload the list.
       sessionState.notesVersion += 1;
+
+      if (openPath) {
+        const contentAfter = await notesService.readNoteContent(openPath);
+        if (contentAfter && contentAfter.content !== contentBefore?.content) {
+          sessionState.todayNotePath = contentAfter.path;
+          sessionState.todayNoteContent = contentAfter;
+          sessionState.pendingThreadJump = null;
+        }
+      }
     } catch (error) {
       console.error('Import failed:', error);
       toast.error(String(error));
