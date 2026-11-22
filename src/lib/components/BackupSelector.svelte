@@ -1,18 +1,18 @@
 <script lang="ts">
   /**
    * Backup & Restore card. Exports the notes folder to a (optionally encrypted)
-   * zip/tnbk archive and imports notes back, with an overwrite toggle and a
-   * password prompt for encrypted backups.
+   * zip/tnbk archive and imports notes back. Imports ask via an OS dialog
+   * whether existing notes should be overwritten; encrypted backups show a
+   * password prompt first.
    */
   import { invoke } from '@tauri-apps/api/core';
-  import { open, save } from '@tauri-apps/plugin-dialog';
+  import { message, open, save } from '@tauri-apps/plugin-dialog';
   import { tick } from 'svelte';
   import { sessionState, t, toast } from '#lib';
   import { notesService } from '#lib/utils/notes.ts';
 
   type PasswordMode = 'export' | 'import' | null;
 
-  let overwrite = $state(false);
   let busy = $state(false);
   let passwordMode = $state<PasswordMode>(null);
   let pendingPath = $state<string | null>(null);
@@ -82,8 +82,40 @@
       passwordMode = 'import';
       await focusPassword();
     } else {
-      await runImport(path, null);
+      await startImport(path, null);
     }
+  };
+
+  /**
+   * Asks via an OS dialog whether existing notes should be overwritten,
+   * then runs the import with the chosen mode. Cancel (or dismissing the
+   * dialog) aborts the import.
+   *
+   * Note: with custom button labels the dialog resolves with the pressed
+   * button's *label* (localized), not a canonical 'Yes'/'No'/'Cancel' key,
+   * so answers are matched against the labels passed in.
+   */
+  const startImport = async (path: string, password: string | null) => {
+    const yesLabel = $t('settings.backup.overwrite_yes');
+    const noLabel = $t('settings.backup.overwrite_no');
+    const cancelLabel = $t('settings.backup.cancel');
+
+    const answer = await message($t('settings.backup.overwrite_question'), {
+      title: $t('settings.backup.import'),
+      kind: 'warning',
+      buttons: {
+        yes: yesLabel,
+        no: noLabel,
+        cancel: cancelLabel,
+      },
+    });
+
+    if (answer === yesLabel) {
+      await runImport(path, password, true);
+    } else if (answer === noLabel) {
+      await runImport(path, password, false);
+    }
+    // Any other result (cancel button or dialog dismissed) aborts the import.
   };
 
   const focusPassword = async () => {
@@ -110,7 +142,7 @@
     if (mode === 'export' && path) {
       await runExport(path, pw);
     } else if (mode === 'import' && path) {
-      await runImport(path, pw);
+      await startImport(path, pw);
     }
   };
 
@@ -135,7 +167,11 @@
     }
   };
 
-  const runImport = async (path: string, password: string | null) => {
+  const runImport = async (
+    path: string,
+    password: string | null,
+    overwrite: boolean,
+  ) => {
     busy = true;
     try {
       const openPath = overwrite ? sessionState.todayNotePath : null;
@@ -247,6 +283,16 @@
       onclick={handleExport}
       disabled={busy}
     >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        height="1.25rem"
+        width="1.25rem"
+        fill="currentColor"
+        ><path
+          d="M12,18l4-4l-1.4-1.4L13,14.2V10H11v4.2L9.4,12.6L8,14l4,4ZM5,8V19H19V8H5ZM5,21q-0.83,0-1.41-0.59T3,19V6.52Q3,6.18 3.11,5.85t0.34-0.6L4.7,3.72Q4.98,3.38 5.39,3.19T6.25,3h11.5q0.45,0 0.86,0.19T19.3,3.72l1.25,1.53q0.23,0.27 0.34,0.6Q21,6.18 21,6.52V19q0,0.82-0.59,1.41T19,21H5ZM5.4,6H18.6L17.75,5H6.25L5.4,6ZM12,13.5Z"
+        /></svg
+      >
       {$t('settings.backup.export')}
     </button>
     <button
@@ -255,6 +301,16 @@
       onclick={handleExportEncrypted}
       disabled={busy}
     >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        height="1.25rem"
+        width="1.25rem"
+        fill="currentColor"
+        ><path
+          d="M10.5,15h3l-0.57-3.23q0.5-0.25 0.79-0.72T14,10q0-0.83-0.59-1.41T12,8T10.59,8.59T10,10q0,0.57 0.29,1.05t0.79,0.72L10.5,15ZM12,22q-3.47-0.88-5.74-3.99T4,11.1V5l8-3l8,3v6.1q0,3.8-2.26,6.91T12,22Zm0-2.1q2.6-0.82 4.3-3.3T18,11.1V6.38L12,4.13L6,6.38V11.1q0,3.03 1.7,5.5T12,19.9ZM12,12Z"
+        /></svg
+      >
       {$t('settings.backup.export_encrypted')}
     </button>
     <button
@@ -263,14 +319,19 @@
       onclick={handleImport}
       disabled={busy}
     >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        height="1.25rem"
+        width="1.25rem"
+        fill="currentColor"
+        ><path
+          d="M12,14q-0.82,0-1.41-0.59T10,12t0.59-1.41T12,10t1.41,0.59Q14,11.18 14,12t-0.59,1.41T12,14Zm0,7q-3.47,0-6.03-2.29Q3.43,16.43 3.05,13H5.1q0.35,2.6 2.31,4.3T12,19q2.93,0 4.96-2.04Q19,14.93 19,12q0-2.93-2.04-4.96T12,5Q10.28,5 8.78,5.8T6.25,8H9v2H3V4H5V6.35q1.28-1.6 3.11-2.47T12,3q1.88,0 3.51,0.71t2.85,1.93t1.93,2.85T21,12t-0.71,3.51t-1.93,2.85t-2.85,1.93T12,21Z"
+        /></svg
+      >
       {$t('settings.backup.import')}
     </button>
   </div>
-
-  <label class="overwrite-toggle">
-    <input type="checkbox" bind:checked={overwrite} disabled={busy} />
-    <span>{$t('settings.backup.overwrite')}</span>
-  </label>
 </div>
 
 {#if passwordMode}
@@ -299,6 +360,8 @@
   }
 
   .btn-primary {
+    display: flex;
+    gap: 0.25rem;
     padding: 0.5rem 1rem;
     border: none;
     border-radius: 0.5rem;
@@ -320,15 +383,6 @@
   .btn-primary:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-  }
-
-  .overwrite-toggle {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    cursor: pointer;
   }
 
   .pw-overlay {
