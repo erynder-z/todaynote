@@ -127,6 +127,10 @@ export class AppInitializer {
 	syncSessionState(state: AppPayload, syncSession = false) {
 		sessionState.isMac = state.isMac;
 		sessionState.isLinux = state.isLinux;
+		// Flag the root element so global CSS can apply Linux/WebKitGTK
+		// performance overrides (see routes/+page.svelte).
+		if (typeof document !== "undefined")
+			document.documentElement.classList.toggle("linux", state.isLinux);
 		if (state.notesFolder) {
 			if (syncSession || !sessionState.todayNotePath) {
 				sessionState.todayNotePath = state.todayNotePath;

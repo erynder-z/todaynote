@@ -4,6 +4,7 @@
   import { NodeSelection } from '@milkdown/kit/prose/state';
   import { fade, scale } from 'svelte/transition';
   import type { SelectionFloatingAnchorProps } from '#lib/interfaces/editor.ts';
+  import { sessionState } from '#lib/stores/sessionState.svelte.ts';
 
   let {
     children,
@@ -216,11 +217,16 @@
     if (rect.bottom < 0 || rect.top > viewportHeight) visible = false;
   };
 
+  let selectionRaf = 0;
+  let repositionRaf = 0;
+
   /**
-   * Handles selection changes to prepare toolbar positioning but delays showing it.
-   * Uses ProseMirror's selection for stable identification when available.
+   * Runs the actual selection-change logic. On Linux this is coalesced to at
+   * most one run per animation frame: selectionchange fires very frequently
+   * in WebKitGTK and each run does ProseMirror actions plus a forced layout
+   * (getBoundingClientRect in positionToolbar).
    */
-  const handleSelectionChange = () => {
+  const runSelectionChange = () => {
     // Show/hide floating toolbar based on selection state and link input activity
     const domSelection = window.getSelection();
 
@@ -288,15 +294,42 @@
     if (visible) visible = false;
   };
 
-  /**
-   * Repositioning handler for scroll and resize events.
-   */
-  const handleScrollOrResize = () => {
-    if (!visible) return;
+  const handleSelectionChange = () => {
+    const domSelection = window.getSelection();
+    if (domSelection?.isCollapsed && !linkInputActive && !visible) return;
+
+    if (!sessionState.isLinux) {
+      runSelectionChange();
+      return;
+    }
+    if (selectionRaf) return;
+    selectionRaf = requestAnimationFrame(() => {
+      selectionRaf = 0;
+      runSelectionChange();
+    });
+  };
+
+  const repositionToolbar = () => {
     const selection = window.getSelection();
     if (selection && isSelectionValid(selection)) {
       positionToolbar(selection);
     }
+  };
+
+  /**
+   * Repositioning handler for scroll and resize events. On Linux, coalesce to one reposition per frame.
+   */
+  const handleScrollOrResize = () => {
+    if (!visible) return;
+    if (!sessionState.isLinux) {
+      repositionToolbar();
+      return;
+    }
+    if (repositionRaf) return;
+    repositionRaf = requestAnimationFrame(() => {
+      repositionRaf = 0;
+      repositionToolbar();
+    });
   };
 
   /**
@@ -397,6 +430,8 @@
       window.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
+      if (selectionRaf) cancelAnimationFrame(selectionRaf);
+      if (repositionRaf) cancelAnimationFrame(repositionRaf);
     };
   });
 </script>
@@ -415,8 +450,8 @@
       aria-label="Selection options"
       tabindex="-1"
       onmousedown={(e) => e.stopPropagation()}
-      in:scale={{ duration: 120, start: 0.95 }}
-      out:fade={{ duration: 80 }}
+      in:scale={{ duration: sessionState.isLinux ? 0 : 120, start: 0.95 }}
+      out:fade={{ duration: sessionState.isLinux ? 0 : 80 }}
     >
       {@render children(visible)}
     </div>
@@ -449,5 +484,11 @@
     pointer-events: auto;
     max-width: 90vw;
     overflow: hidden;
+  }
+
+  /* WebKitGTK on Linux: backdrop-filter forces repaints of the content
+     behind the toolbar on every frame under software rendering. */
+  :global(html.linux) .floating-toolbar {
+    backdrop-filter: none;
   }
 </style>

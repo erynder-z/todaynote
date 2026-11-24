@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
   import type { ToastProps } from '#lib/interfaces/ui.ts';
+  import { sessionState } from '#lib/stores/sessionState.svelte.ts';
   import { toast } from '#lib/stores/toast.svelte.ts';
   import { t } from '#lib/utils/i18n.ts';
 
@@ -14,7 +15,7 @@
 
 <div
   class="toast {toastData.type}"
-  transition:fly={{ y: 20, duration: 300 }}
+  transition:fly={{ y: 20, duration: sessionState.isLinux ? 0 : 300 }}
   role="alert"
 >
   <div class="icon">

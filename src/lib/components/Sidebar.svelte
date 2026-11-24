@@ -119,7 +119,10 @@
   class="sidebar"
   class:closed={!sessionState.sidebarOpen}
   class:resizing={isResizing}
-  transition:slide={{ duration: 200, axis: 'x' }}
+  transition:slide={{
+    duration: sessionState.isLinux ? 0 : 200,
+    axis: 'x',
+  }}
   style="width: {width}rem; --content-width: {width - 3}rem;"
   onclick={() => (noteOptionsOpen = false)}
 >

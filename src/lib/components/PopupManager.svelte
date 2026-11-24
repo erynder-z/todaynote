@@ -150,7 +150,7 @@
 
 <div class="toast-container">
   {#each toast.toasts as item (item.id)}
-    <div animate:flip={{ duration: 200 }}>
+    <div animate:flip={{ duration: sessionState.isLinux ? 0 : 200 }}>
       <Toast t={item} />
     </div>
   {/each}
@@ -169,6 +169,11 @@
     place-items: center;
     z-index: 2000;
     backdrop-filter: brightness(60%);
+  }
+
+  :global(html.linux) .overlay {
+    backdrop-filter: none;
+    background-color: rgb(0 0 0 / 0.5);
   }
 
   .toast-container {

@@ -221,7 +221,10 @@
 </script>
 
 {#if sessionState.showFindInNote}
-  <div class="search-in-view" transition:fly={{ y: -15, duration: 150 }}>
+  <div
+    class="search-in-view"
+    transition:fly={{ y: -15, duration: sessionState.isLinux ? 0 : 150 }}
+  >
     <div class="search-icon">
       <svg
         xmlns="http://www.w3.org/2000/svg"

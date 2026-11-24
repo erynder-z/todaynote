@@ -183,7 +183,10 @@
 
 <div
   class="thread-options-taskbar"
-  transition:slide={{ duration: 150, axis: 'y' }}
+  transition:slide={{
+    duration: sessionState.isLinux ? 0 : 150,
+    axis: 'y',
+  }}
 >
   <div class="taskbar-content">
     <div class="thread-info">
@@ -321,6 +324,10 @@
     backdrop-filter: brightness(60%);
     min-width: 35ch;
     max-width: calc(100% - 2rem);
+  }
+
+  :global(html.linux) .thread-options-taskbar {
+    backdrop-filter: none;
   }
 
   .taskbar-content {

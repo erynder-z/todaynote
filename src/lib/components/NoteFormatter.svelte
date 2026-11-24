@@ -6,6 +6,7 @@
   import type { EditorState } from '@milkdown/kit/prose/state';
   import type { NoteFormatterProps } from '#lib/interfaces/editor.ts';
   import { inputManager } from '#lib/stores/input.svelte.ts';
+  import { sessionState } from '#lib/stores/sessionState.svelte.ts';
   import { settings } from '#lib/stores/settings.svelte.ts';
   import { t } from '#lib/utils/i18n.ts';
   import { useShortcuts } from '#lib/utils/shortcuts.ts';
@@ -364,15 +365,33 @@
 
   // Listen to window level selection changes to keep format highlights updated while visible
   $effect(() => {
-    const handleSelectionUpdate = () => {
+    let raf = 0;
+
+    const runUpdate = () => {
       const selection = window.getSelection();
       if (selection && !selection.isCollapsed) {
         updateSelectionState();
       }
     };
+
+    // On Linux, coalesce to one update per frame.
+    const handleSelectionUpdate = () => {
+      if (!sessionState.isLinux) {
+        runUpdate();
+        return;
+      }
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        runUpdate();
+      });
+    };
+
     document.addEventListener('selectionchange', handleSelectionUpdate);
-    return () =>
+    return () => {
       document.removeEventListener('selectionchange', handleSelectionUpdate);
+      if (raf) cancelAnimationFrame(raf);
+    };
   });
 
   // Register scoped shortcuts for editor formatting

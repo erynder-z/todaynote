@@ -138,4 +138,15 @@
     scrollbar-color: color-mix(in srgb, var(--text-muted), transparent 40%)
       var(--bg-base);
   }
+
+  /* WebKitGTK on Linux: software rendering makes per-frame animation and
+     transition repaints extremely expensive, so run them at zero duration.
+     Svelte transition:/animate: directives use the Web Animations API and
+     are gated separately via `sessionState.isLinux ? 0 : …` durations. */
+  :global(html.linux *),
+  :global(html.linux *::before),
+  :global(html.linux *::after) {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
 </style>

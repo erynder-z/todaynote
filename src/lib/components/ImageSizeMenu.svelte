@@ -15,6 +15,7 @@
   import type { Editor } from '@milkdown/kit/core';
   import { editorViewCtx } from '@milkdown/kit/core';
   import type { ImageSizeMenuProps } from '#lib/interfaces/editor.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
   import { t } from '../utils/i18n.ts';
   import {
     IMAGE_ALIGNS,
@@ -202,12 +203,25 @@
   // Follow the image while the note scrolls instead of closing the menu.
   $effect(() => {
     if (!menu) return;
-    const reposition = () => positionMenu();
+    let raf = 0;
+    // On Linux, coalesce to one reposition per frame.
+    const reposition = () => {
+      if (!sessionState.isLinux) {
+        positionMenu();
+        return;
+      }
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        positionMenu();
+      });
+    };
     document.addEventListener('scroll', reposition, true);
     window.addEventListener('resize', reposition);
     return () => {
       document.removeEventListener('scroll', reposition, true);
       window.removeEventListener('resize', reposition);
+      if (raf) cancelAnimationFrame(raf);
     };
   });
 </script>

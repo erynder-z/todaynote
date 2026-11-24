@@ -128,7 +128,7 @@
 <div class="note-container">
   {#if !sessionState.sidebarOpen}
     <button
-      transition:fade={{ duration: 200 }}
+      transition:fade={{ duration: sessionState.isLinux ? 0 : 200 }}
       class="sidebar-open-btn desktop-only"
       onclick={() => (sessionState.sidebarOpen = true)}
       title={$t('navigation.toggle_sidebar')}
@@ -306,6 +306,11 @@
       inset: 0;
       backdrop-filter: brightness(60%);
       z-index: 999;
+    }
+
+    :global(html.linux) .vertical-layout {
+      backdrop-filter: none;
+      background-color: rgb(0 0 0 / 0.5);
     }
 
     .desktop-only {

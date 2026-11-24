@@ -394,6 +394,11 @@
     backdrop-filter: brightness(60%);
   }
 
+  :global(html.linux) .pw-overlay {
+    backdrop-filter: none;
+    background-color: rgb(0 0 0 / 0.5);
+  }
+
   .pw-box {
     background-color: var(--bg-base);
     border-radius: 0.75rem;
