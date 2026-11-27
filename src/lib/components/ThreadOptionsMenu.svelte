@@ -328,6 +328,7 @@
 
   :global(html.linux) .thread-options-taskbar {
     backdrop-filter: none;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
   }
 
   .taskbar-content {
@@ -362,7 +363,9 @@
     color: var(--text-muted);
     padding: 0.25rem;
     border-radius: 0.25rem;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
   }
 
   .close-button:hover {

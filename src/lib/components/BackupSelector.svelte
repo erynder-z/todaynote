@@ -399,6 +399,11 @@
     background-color: rgb(0 0 0 / 0.5);
   }
 
+  /* WebKitGTK on Linux: shrink the 50px-blur shadow. */
+  :global(html.linux) .pw-box {
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
+  }
+
   .pw-box {
     background-color: var(--bg-base);
     border-radius: 0.75rem;

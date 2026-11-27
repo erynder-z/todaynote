@@ -110,7 +110,9 @@
     font-size: 0.9rem;
     cursor: pointer;
     text-align: left;
-    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .mode-btn.active {

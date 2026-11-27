@@ -103,7 +103,9 @@
     border-radius: 0.5rem;
     padding: 0 1rem;
     height: 3rem;
-    transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+    transition:
+      background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+      box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .search-input-container:focus-within {
@@ -143,7 +145,10 @@
     font-weight: 700;
     padding: 0.15rem 0.4rem;
     cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      border-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1);
     user-select: none;
     text-transform: uppercase;
     letter-spacing: 0.05em;

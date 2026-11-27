@@ -55,7 +55,7 @@
     color: var(--text-main);
     cursor: pointer;
     font-size: 0.85rem;
-    transition: all 0.1s ease;
+    transition: background-color 0.1s ease;
     text-align: left;
     width: 100%;
   }

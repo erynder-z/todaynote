@@ -308,6 +308,11 @@
     border: 1px solid var(--border);
   }
 
+  /* WebKitGTK on Linux: shrink the 50px-blur shadow (software rendering). */
+  :global(html.linux) .search-container {
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
+  }
+
   .control-center {
     display: grid;
     grid-template-columns: 220px 1fr;

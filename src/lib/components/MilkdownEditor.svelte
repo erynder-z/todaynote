@@ -23,6 +23,7 @@
   } from '../plugins/activeThreadPlugin.ts';
   import { imageBlockPlugin } from '../plugins/imageBlockPlugin.ts';
   import { threadMarkerPlugin } from '../plugins/threadMarkerPlugin.ts';
+  import { sessionState } from '../stores/sessionState.svelte.ts';
   import { handleEditorPaste } from '../utils/imageInput.ts';
   import { resolveImageSrc } from '../utils/images.ts';
   import { parser } from '../utils/milkdownConfig.ts';
@@ -83,10 +84,12 @@
         inst.destroy();
       } else {
         currentInstance = inst;
-        // Force layout recalculation to prevent paint suppression
+        // Force layout recalculation to prevent paint suppression. Skipped
+        // on Linux: under WebKitGTK software rendering the synchronous
+        // layout costs more than the paint suppression it avoids.
         requestAnimationFrame(() => {
           if (container && !isDestroyed) {
-            void container.offsetHeight;
+            if (!sessionState.isLinux) void container.offsetHeight;
             onReady?.(inst);
           }
         });
@@ -169,6 +172,16 @@
       });
     };
 
+    /**
+     * WebKitGTK on Linux decodes every image in the note eagerly; lazy +
+     * async hints defer off-screen images until they are scrolled near.
+     */
+    const applyImageHints = (img: HTMLImageElement) => {
+      if (!sessionState.isLinux) return;
+      if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+      if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+    };
+
     /** Collect img elements in an added subtree, including the node itself. */
     const collectImages = (node: Node, out: HTMLImageElement[]) => {
       if (node.nodeType !== Node.ELEMENT_NODE) return;
@@ -193,7 +206,26 @@
       );
     };
 
+    // WebKitGTK on Linux: the observer fires on every keystroke, so
+    // coalesce pending mutations into a single rAF pass over all imgs
+    // instead of walking every mutation with per-node querySelectorAll.
+    let linuxFlushRaf = 0;
+    const flushImagesLinux = () => {
+      linuxFlushRaf = 0;
+      for (const img of el.querySelectorAll('img')) {
+        applyImageHints(img as HTMLImageElement);
+        rewriteImage(img as HTMLImageElement);
+      }
+      hasImages = !!el.querySelector('img[data-type="image-block"]');
+    };
+
     const observer = new MutationObserver((mutations) => {
+      if (sessionState.isLinux) {
+        if (!linuxFlushRaf)
+          linuxFlushRaf = requestAnimationFrame(flushImagesLinux);
+        return;
+      }
+
       const images: HTMLImageElement[] = [];
       let imageBlockChanged = false;
 
@@ -217,7 +249,10 @@
       // Bail out early: mutations that touched no image need no work.
       if (images.length === 0 && !imageBlockChanged) return;
 
-      for (const img of images) rewriteImage(img);
+      for (const img of images) {
+        applyImageHints(img);
+        rewriteImage(img);
+      }
 
       if (imageBlockChanged)
         hasImages = !!el.querySelector('img[data-type="image-block"]');
@@ -231,11 +266,16 @@
     });
 
     // Initial pass over the whole editor (runs once per mount).
-    for (const img of el.querySelectorAll('img'))
+    for (const img of el.querySelectorAll('img')) {
+      applyImageHints(img as HTMLImageElement);
       rewriteImage(img as HTMLImageElement);
+    }
     hasImages = !!el.querySelector('img[data-type="image-block"]');
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (linuxFlushRaf) cancelAnimationFrame(linuxFlushRaf);
+    };
   });
 </script>
 

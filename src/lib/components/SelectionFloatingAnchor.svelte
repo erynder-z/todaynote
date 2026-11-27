@@ -487,8 +487,9 @@
   }
 
   /* WebKitGTK on Linux: backdrop-filter forces repaints of the content
-     behind the toolbar on every frame under software rendering. */
+     behind the toolbar on every frame.*/
   :global(html.linux) .floating-toolbar {
     backdrop-filter: none;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
   }
 </style>

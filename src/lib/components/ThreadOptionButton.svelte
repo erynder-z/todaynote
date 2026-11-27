@@ -46,7 +46,10 @@
     border-radius: 0.25rem;
     color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      opacity 0.15s cubic-bezier(0.2, 0, 0, 1);
     overflow: hidden;
     flex: 1 1 0;
     min-width: 0;

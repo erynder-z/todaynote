@@ -96,4 +96,10 @@
     transform: translateZ(0);
     overflow: visible;
   }
+
+  /* WebKitGTK on Linux: translateZ(0) creates one compositing layer per
+     icon, which is too expensive. */
+  :global(html.linux) .thread-identicon {
+    transform: none;
+  }
 </style>

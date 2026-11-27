@@ -134,7 +134,7 @@
     color: var(--text-muted);
     padding: 0.25rem;
     border-radius: 0.25rem;
-    transition: all 0.2s ease;
+    transition: color 0.2s ease;
   }
 
   .unpin-button:hover {

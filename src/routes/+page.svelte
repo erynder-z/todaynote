@@ -108,23 +108,26 @@
     }
   }
 
-  :global(::-webkit-scrollbar) {
+  /* Styled ::-webkit-scrollbar scrollbars repaint on every scroll in
+     WebKitGTK, so on Linux keep the native ones and rely on
+     scrollbar-width/scrollbar-color below instead. */
+  :global(html:not(.linux) ::-webkit-scrollbar) {
     width: 8px;
     height: 8px;
   }
 
-  :global(::-webkit-scrollbar-track) {
+  :global(html:not(.linux) ::-webkit-scrollbar-track) {
     background: var(--bg-base);
     border-radius: 4px;
   }
 
-  :global(::-webkit-scrollbar-thumb) {
+  :global(html:not(.linux) ::-webkit-scrollbar-thumb) {
     background: color-mix(in srgb, var(--text-muted), transparent 60%);
     border-radius: 4px;
     border: 2px solid var(--bg-base);
   }
 
-  :global(::-webkit-scrollbar-thumb:hover) {
+  :global(html:not(.linux) ::-webkit-scrollbar-thumb:hover) {
     background: color-mix(in srgb, var(--text-muted), transparent 40%);
   }
 

@@ -180,6 +180,11 @@
     z-index: 100;
   }
 
+  /* WebKitGTK on Linux: shrink the 25px-blur shadow. */
+  :global(html.linux) .navigation {
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
+  }
+
   .nav-icon {
     background: transparent;
     color: var(--text-ui-muted);

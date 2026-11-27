@@ -343,4 +343,9 @@
       pointer-events: none;
     }
   }
+
+  /* WebKitGTK on Linux: shrink the 25px-blur sidebar shadow. :not(.closed) keeps the closed state shadow-free. */
+  :global(html.linux) .sidebar:not(.closed) {
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
+  }
 </style>

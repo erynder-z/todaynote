@@ -57,7 +57,9 @@
     letter-spacing: 0.05em;
     color: var(--text-ui-muted);
     border-radius: 0.25rem;
-    transition: all 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
     height: 1.25rem;
     font-weight: 900;
   }

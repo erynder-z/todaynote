@@ -6,6 +6,7 @@ import type { NodeView, NodeViewConstructor } from "@milkdown/kit/prose/view";
 import type { MarkdownNode } from "@milkdown/kit/transformer";
 import { $nodeSchema, $prose, $remark, $view } from "@milkdown/kit/utils";
 import type { Node as MdastNode } from "unist";
+import { sessionState } from "../stores/sessionState.svelte.ts";
 import {
 	buildImageFragment,
 	IMAGE_ALIGNS,
@@ -177,6 +178,12 @@ class ImageBlockView implements NodeView {
 
 		this.img = document.createElement("img");
 		this.img.setAttribute("data-type", "image-block");
+		// WebKitGTK on Linux decodes all images eagerly; defer off-screen
+		// block images until they are scrolled near.
+		if (sessionState.isLinux) {
+			this.img.setAttribute("loading", "lazy");
+			this.img.setAttribute("decoding", "async");
+		}
 		this.img.addEventListener("load", () => {
 			this.img.classList.remove("img-loading");
 			// Publish the intrinsic aspect ratio so the size classes can cap the rendered height of portrait images

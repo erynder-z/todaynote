@@ -142,6 +142,11 @@
     overflow: hidden;
   }
 
+  /* WebKitGTK on Linux: large-blur shadows repaint expensively, so use one small shadow instead. */
+  :global(html.linux) .popup {
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
+  }
+
   /* Size Variants */
   .size-minimal {
     width: 25rem;

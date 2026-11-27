@@ -329,6 +329,11 @@
     min-width: 20rem;
   }
 
+  /* WebKitGTK on Linux: shrink the shadow. */
+  :global(html.linux) .search-in-view {
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.3);
+  }
+
   .search-icon {
     color: var(--text-muted);
     display: flex;
@@ -373,7 +378,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    transition:
+      background-color 0.15s cubic-bezier(0.2, 0, 0, 1),
+      color 0.15s cubic-bezier(0.2, 0, 0, 1);
   }
 
   .action-btn:hover {
